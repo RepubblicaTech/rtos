@@ -50,14 +50,10 @@ void kmain(void) {
         0
     );
 
-    for (int i = 0; i < 61; i++) {
-        printf("Scrollback test %i\n", i);
-    }
+    printf("Hello!\n");
 
-    clearscreen();
-
-    printf("Screen cleared succesfully! :D");
-    
+    debugf("Hello from the E9 port!\n");
+    debugf("Current video mode is: %dx%d addr: 0x%x", framebuffer->width, framebuffer->height, (uint32_t *)framebuffer->address);
 
     // We're done, just hang...
     hcf();
