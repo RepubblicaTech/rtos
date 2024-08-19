@@ -42,3 +42,6 @@ From now on, a simple `make` should compile the project's source code and create
 `make run` Compiles the code, creates a bootable ISO image and launches qemu with such image
 
 `make debug` Same as above, but launches GDB according to the settings given by the `debug.gdb` file. Useful for kernel debugging with QEMU.
+
+# Other useful stuff
+I included a `.vscode` folder which includes the `c_cpp_properties.json` settings file that provides an enviroment specific to this project when using VSCode.
