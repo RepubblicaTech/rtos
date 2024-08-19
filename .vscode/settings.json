@@ -1,0 +1,27 @@
+{
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        "chrono": "c",
+        "span": "c",
+        "flanterm.h": "c",
+        "stdarg.h": "c",
+        "fb.h": "c",
+        "vga.h": "c",
+        "stdbool.h": "c",
+        "buffer": "cpp",
+        "cstdlib": "c",
+        "base.h": "c",
+        "stdint.h": "c",
+        "stdio.h": "c",
+        "inttypes.h": "c",
+        "va_list.h": "c",
+        "io.h": "c",
+        "stddef.h": "c",
+        "cstdint": "c",
+        "nanoprintf.h": "c",
+        "*.def": "c",
+        "*.inc": "c"
+    },
+    "dotnet.defaultSolution": "disable",
+    "cmake.configureOnOpen": false
+}
