@@ -12,7 +12,7 @@ The bootloader part is done by Limine, which offers a 64-bit environment out of 
 The core of this project is an adaptation of the code found in the [Limine Bare Bones](https://wiki.osdev.org/Limine_Bare_Bones) page of the OSDev wiki, which is a fundamental source when doing OS development.
 
 ## How to compile and run the OS
-### REMINDER: Building of this project has been only tested on Linux (specifically Fedora), but if you can report anything about its state on other platforms (Windows, MacOS, Ubuntu) feel free to open an issue/PR!
+### REMINDER: Building of this project has been only tested on Linux (specifically Fedora), but if you can report anything about its state on other platforms (Windows, MacOS, Ubuntu, ...) feel free to open an issue/PR!
 
 First, clone the repository:
 `git clone https://github.com/RepubblicaTech/rtos.git`
