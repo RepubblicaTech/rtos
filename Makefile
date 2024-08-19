@@ -164,7 +164,7 @@ $(OBJS_DIR)/%.asm.o: src/%.asm Makefile always
 	@echo "--> Compiled:	" $<
 
 run: $(OS_CODENAME).iso
-	qemu-system-x86_64 -cdrom $<
+	qemu-system-x86_64 -debugcon stdio -cdrom $<
 
 debug: $(OS_CODENAME).iso
 	gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
