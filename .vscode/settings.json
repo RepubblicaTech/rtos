@@ -45,7 +45,9 @@
         "sstream": "c",
         "system_error": "c",
         "dynamic_bitset": "c",
-        "memory.h": "c"
+        "memory.h": "c",
+        "gdt.h": "c",
+        "stdint-gcc.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false
