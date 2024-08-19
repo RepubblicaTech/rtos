@@ -53,7 +53,7 @@ void kmain(void) {
     printf("Hello!\n");
 
     debugf("Hello from the E9 port!\n");
-    debugf("Current video mode is: %dx%d addr: 0x%x", framebuffer->width, framebuffer->height, (uint32_t *)framebuffer->address);
+    debugf("Current video mode is: %dx%d address: 0x%x", framebuffer->width, framebuffer->height, (uint32_t *)framebuffer->address);
 
     // We're done, just hang...
     hcf();
