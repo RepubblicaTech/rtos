@@ -5,6 +5,8 @@
 
 #include <va_list.h>
 
+#include <io.h>
+
 extern struct flanterm_context *ft_ctx;
 extern struct limine_framebuffer *framebuffer;
 
@@ -42,6 +44,29 @@ int kprintf(const char* fmt, ...) {
 
     for (int i = 0; i < length; ++i) {
         putc(buffer[i]);
+    }
+
+    return length;
+}
+
+void dputc(char c) {
+    outb(0xE9, c);
+}
+
+int kdprintf(const char* fmt, ...) {
+    char buffer[1024];
+    va_list args;
+
+    va_start(args, fmt);
+    int length = npf_vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    if (length < 0 || length >= (int)sizeof(buffer)) {
+        return -1;
+    }
+
+    for (int i = 0; i < length; ++i) {
+        dputc(buffer[i]);
     }
 
     return length;
