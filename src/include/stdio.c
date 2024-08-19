@@ -1,9 +1,12 @@
 #include <flanterm/flanterm.h>
 #include <flanterm/backends/fb.h>
 
-#include <va_list.h>
-extern struct flanterm_context *ft_ctx;
+#include <limine.h>
 
+#include <va_list.h>
+
+extern struct flanterm_context *ft_ctx;
+extern struct limine_framebuffer *framebuffer;
 
 #define NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS 1
 #define NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS 1
@@ -16,6 +19,10 @@ typedef long ssize_t;
 
 #define NANOPRINTF_IMPLEMENTATION
 #include <nanoprintf.h>
+
+void clearscreen() {
+    ft_ctx->clear(ft_ctx, true);
+}
 
 void putc(char c) {
     flanterm_write(ft_ctx, &c, sizeof(c));

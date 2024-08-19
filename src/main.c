@@ -5,6 +5,8 @@
 
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
+struct flanterm_fb_context *ft_fb_ctx;
+
 
 // Halt and catch fire function.
 static void hcf(void) {
@@ -48,7 +50,14 @@ void kmain(void) {
         0
     );
 
-    printf("Hello from nanoprintf %d 0x%x\n", 13, 0x5c);
+    for (int i = 0; i < 61; i++) {
+        printf("Scrollback test %i\n", i);
+    }
+
+    clearscreen();
+
+    printf("Screen cleared succesfully! :D");
+    
 
     // We're done, just hang...
     hcf();

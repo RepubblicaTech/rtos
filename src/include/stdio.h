@@ -3,6 +3,8 @@
 
 #include <base.h>
 
+void clearscreen();
+
 void putc(char c);
 int kprintf(const char* fmt, ...);
 
