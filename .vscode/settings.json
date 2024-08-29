@@ -47,7 +47,9 @@
         "dynamic_bitset": "c",
         "memory.h": "c",
         "gdt.h": "c",
-        "stdint-gcc.h": "c"
+        "stdint-gcc.h": "c",
+        "ranges": "c",
+        "regex": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false
