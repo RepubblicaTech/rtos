@@ -2,6 +2,7 @@
 #include <memory.h>
 
 #include <stdio.h>
+#include <gdt.h>
 
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
@@ -53,7 +54,10 @@ void kmain(void) {
     printf("Hello!\n");
 
     debugf("Hello from the E9 port!\n");
-    debugf("Current video mode is: %dx%d address: 0x%x", framebuffer->width, framebuffer->height, (uint32_t *)framebuffer->address);
+    debugf("Current video mode is: %dx%d address: 0x%x\n\n", framebuffer->width, framebuffer->height, (uint32_t *)framebuffer->address);
+
+    gdt_init();
+    debugf("[ INFO ]    GDT Init done\n");
 
     // We're done, just hang...
     hcf();
