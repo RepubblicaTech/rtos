@@ -1,7 +1,7 @@
 #ifndef STDIO_H
 #define STDIO_H 1
 
-#include <base.h>
+#include <stdint.h>
 
 void clearscreen();
 
