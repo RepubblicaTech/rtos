@@ -17,7 +17,7 @@ The core of this project is an adaptation of the code found in the [Limine Bare 
 First, clone the repository:
 `git clone https://github.com/RepubblicaTech/rtos.git`
 
-To compile the OS, you'll not be able to use the system default C compiler (gcc), but you'll need a cross-compile which will target a generic x86_64 platform rather than your specific one.
+To compile the OS, you'll not be able to use the system default C compiler (gcc), but you'll need a cross-compiler which will target a generic x86_64 platform rather than your specific one.
 
 First, make sure to install the required dependencies for building gcc and binutils from source, and since they may vary for each distribution make sure to check out [this article](https://wiki.osdev.org/GCC_Cross-Compiler#Installing_Dependencies) on the OSDev wiki.
  
