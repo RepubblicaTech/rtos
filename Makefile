@@ -92,7 +92,7 @@ override KNASMFLAGS += \
     -f elf64
 
 # Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
-# $(OBJS_DIR)ect and header dependency file names.
+# object and header dependency file names.
 override CFILES := $(shell cd src && find -L * -type f -name '*.c')
 override ASFILES := $(shell cd src && find -L * -type f -name '*.S')
 override NASMFILES := $(shell cd src && find -L * -type f -name '*.asm')
@@ -100,9 +100,9 @@ override OBJ := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o) $(
 override HEADER_DEPS := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
 
 # Default target.
-.PHONY: all
+.PHONY: all limine_build
 
-all: $(OS_CODENAME).iso
+all: clean $(OS_CODENAME).iso
 
 $(OS_CODENAME).iso: bootloader
 	@# Create the bootable ISO.
@@ -115,7 +115,7 @@ $(OS_CODENAME).iso: bootloader
 	@# Install Limine stage 1 and 2 for legacy BIOS boot.
 	./limine/limine bios-install $(OS_CODENAME).iso
 
-bootloader: limine $(BUILD_DIR)/$(KERNEL)
+bootloader: limine_build $(BUILD_DIR)/$(KERNEL)
 	mkdir -p $(ISO_DIR)
 	@# Copy the relevant files over.
 	mkdir -p $(ISO_DIR)/boot
@@ -129,12 +129,13 @@ bootloader: limine $(BUILD_DIR)/$(KERNEL)
 	cp -v limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
 	cp -v limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
 
+limine_build: limine
+	@# Build "limine" utility
+	make -C limine
+
 limine:
 	@# Download the latest Limine binary release for the 8.x branch
 	git clone https://github.com/limine-bootloader/limine.git --branch=v8.x-binary --depth=1
-	
-	@# Build "limine" utility
-	make -C limine
 
 # Link rules for the final kernel executable.
 $(BUILD_DIR)/$(KERNEL): Makefile src/linker.ld $(OBJ) always
