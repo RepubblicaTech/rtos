@@ -3,11 +3,13 @@
 
 #include <stdio.h>
 #include <gdt.h>
+#include <idt.h>
 
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
 struct flanterm_fb_context *ft_fb_ctx;
 
+extern void crash_test();
 
 // Halt and catch fire function.
 static void hcf(void) {
@@ -59,6 +61,11 @@ void kmain(void) {
     gdt_init();
     debugf("[ INFO ]    GDT Init done\n");
 
+    idt_init();
+    debugf("[ INFO ]    IDT Init done\n");
+    
+    printf("Testing exception \"Division by zero\"\n\n");
+    crash_test();
     // We're done, just hang...
     hcf();
 }
