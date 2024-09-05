@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-extern uint16_t GDT_CODE_SEGMENT;
-extern uint16_t GDT_DATA_SEGMENT;
+#define GDT_CODE_SEGMENT 0x08
+#define GDT_DATA_SEGMENT 0x10
 
 typedef struct {
     uint16_t limit_low;
