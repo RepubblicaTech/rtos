@@ -3,9 +3,9 @@
 
 #include <limine.h>
 
-#include <va_list.h>
+#include <util/va_list.h>
 
-#include <io.h>
+#include <io/io.h>
 
 extern struct flanterm_context *ft_ctx;
 extern struct limine_framebuffer *framebuffer;

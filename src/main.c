@@ -1,5 +1,5 @@
-#include <base.h>
-#include <memory.h>
+#include <util/base.h>
+#include <util/memory.h>
 
 #include <stdio.h>
 
@@ -66,16 +66,16 @@ void kmain(void) {
     debugf("Current video mode is: %dx%d address: 0x%x\n\n", framebuffer->width, framebuffer->height, (uint32_t *)framebuffer->address);
 
     gdt_init();
-    debugf("[ INFO ]    GDT init done\n");
+    printf("[ INFO ]    GDT init done\n");
 
     idt_init();
-    debugf("[ INFO ]    IDT init done\n");
+    printf("[ INFO ]    IDT init done\n");
 
     isr_init();
-    debugf("[ INFO ]    ISR init done\n");
+    printf("[ INFO ]    ISR init done\n");
     
     irq_init();
-    debugf("[ INFO ]    IRQ and PIC init done\n");
+    printf("[ INFO ]    IRQ and PIC init done\n");
 
     
     irq_registerHandler(0, timer);
