@@ -2,14 +2,21 @@
 #include <memory.h>
 
 #include <stdio.h>
+
 #include <gdt.h>
 #include <idt.h>
+#include <isr.h>
+#include <irq.h>
 
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
 struct flanterm_fb_context *ft_fb_ctx;
 
 extern void crash_test();
+
+void timer(registers* regs) {
+    printf(".");
+}
 
 // Halt and catch fire function.
 static void hcf(void) {
@@ -59,13 +66,22 @@ void kmain(void) {
     debugf("Current video mode is: %dx%d address: 0x%x\n\n", framebuffer->width, framebuffer->height, (uint32_t *)framebuffer->address);
 
     gdt_init();
-    debugf("[ INFO ]    GDT Init done\n");
+    debugf("[ INFO ]    GDT init done\n");
 
     idt_init();
-    debugf("[ INFO ]    IDT Init done\n");
+    debugf("[ INFO ]    IDT init done\n");
+
+    isr_init();
+    debugf("[ INFO ]    ISR init done\n");
     
-    printf("Testing exception \"Division by zero\"\n\n");
-    crash_test();
+    irq_init();
+    debugf("[ INFO ]    IRQ and PIC init done\n");
+
+    
+    irq_registerHandler(0, timer);
+
+    for (;;);
+
     // We're done, just hang...
-    hcf();
+    // hcf();
 }
