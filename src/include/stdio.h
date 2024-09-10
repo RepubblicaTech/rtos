@@ -6,13 +6,12 @@
 void clearscreen();
 
 void putc(char c);
-int kprintf(const char* fmt, ...);
-
 void dputc(char c);
-int kdprintf(const char* fmt, ...);
 
-#define printf(fmt, ...) kprintf(fmt, ##__VA_ARGS__)
+int kprintf(void (*putc_function)(char), const char* fmt, ...);
 
-#define debugf(fmt, ...) kdprintf(fmt, ##__VA_ARGS__)
+#define printf(fmt, ...) kprintf(putc, fmt, ##__VA_ARGS__)
+
+#define debugf(fmt, ...) kprintf(dputc, fmt, ##__VA_ARGS__)
 
 #endif
