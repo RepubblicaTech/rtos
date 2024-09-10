@@ -30,4 +30,7 @@ typedef enum
 void idt_init();
 void idt_set_gate(uint8_t index, void* base, uint16_t selector, uint8_t flags);
 
+void idt_gate_enable(int interrupt);
+void idt_gate_disable(int interrupt);
+
 #endif

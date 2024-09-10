@@ -4,6 +4,8 @@
 #include <gdt.h>
 #include <isr.h>
 
+#include <util/binary.h>
+
 typedef struct {
 	uint16_t base_low;      // The lower 16 bits of the ISR's address
 	uint16_t kernel_cs;     // The GDT segment selector that the CPU will load into CS before calling the ISR
@@ -45,4 +47,12 @@ void idt_set_gate(uint8_t index, void* base, uint16_t selector, uint8_t flags) {
     idt_entries[index].base_mid       = ((uint64_t)base >> 16) & 0xFFFF;
     idt_entries[index].base_high      = ((uint64_t)base >> 32) & 0xFFFFFFFF;
     idt_entries[index].reserved       = 0;
+}
+
+void idt_gate_enable(int interrupt) {
+    FLAG_SET(idt_entries[interrupt].attributes, IDT_FLAG_PRESENT);
+}
+
+void idt_gate_disable(int interrupt) {
+    FLAG_UNSET(idt_entries[interrupt].attributes, IDT_FLAG_PRESENT);
 }
