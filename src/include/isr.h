@@ -40,6 +40,7 @@ typedef struct {
 
 typedef void (*isrHandler)(registers* regs);
 
-void isr_handler(registers* regs);
+void isr_init();
+void isr_registerHandler(int interrupt, isrHandler handler);
 
 #endif

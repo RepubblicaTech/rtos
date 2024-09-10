@@ -43,6 +43,15 @@ static const char* const exceptions[] = {
 
 extern void panic();
 
+void isr_init() {
+    for (int i = 0; i < 256; i++) {
+        idt_gate_enable(i);
+    }
+
+    idt_gate_disable(0x80);
+    
+}
+
 void isr_handler(registers* regs) {
     if (isr_handlers[regs->interrupt] != NULL) {
         isr_handlers[regs->interrupt](regs);
@@ -63,4 +72,9 @@ void isr_handler(registers* regs) {
         panic();
     }
     
+}
+
+void isr_registerHandler(int interrupt, isrHandler handler) {
+    isr_handlers[interrupt] = handler;
+    idt_gate_enable(interrupt);
 }
