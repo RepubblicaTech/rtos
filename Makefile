@@ -141,7 +141,7 @@ limine:
 $(BUILD_DIR)/$(KERNEL): Makefile src/linker.ld $(OBJ) always
 	mkdir -p "$$(dirname $@)"
 	$(KLD) $(OBJ) $(KLDFLAGS) -o $@
-	@echo "--> Built:	" $(BUILD_DIR)/$(KERNEL)
+	@echo "--> Built:	" $@
 
 # Include header dependencies.
 -include $(HEADER_DEPS)
@@ -165,7 +165,9 @@ $(OBJS_DIR)/%.asm.o: src/%.asm Makefile always
 	@echo "--> Compiled:	" $<
 
 run: $(OS_CODENAME).iso
-	qemu-system-x86_64 -debugcon stdio -cdrom $<
+	qemu-system-x86_64 \
+		-debugcon stdio \
+		-cdrom $<
 
 debug: $(OS_CODENAME).iso
 	gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
