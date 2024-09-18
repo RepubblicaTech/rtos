@@ -61,11 +61,11 @@ void isr_handler(registers* regs) {
     else {
         printf("Unhandled exception %d: \"%s\"\n", regs->interrupt, exceptions[regs->interrupt]);
 
-        debugf("  rax=0x%x  rbx=0x%x  rcx=0x%x  rdx=0x%x  rsi=0x%x  rdi=0x%x\n",
+        printf("  rax=0x%x  rbx=0x%x  rcx=0x%x  rdx=0x%x  rsi=0x%x  rdi=0x%x\n",
                regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi);
-        debugf("  rsp=0x%x  rbp=0x%x  rip=0x%x  eflags=0x%x  cs=0x%x  ds=0x%x  ss=0x%x\n",
+        printf("  rsp=0x%x  rbp=0x%x  rip=0x%x  eflags=0x%x  cs=0x%x  ds=0x%x  ss=0x%x\n",
                regs->rsp, regs->rbp, regs->rip, regs->eflags, regs->cs, regs->ds, regs->ss);
-        debugf("  interrupt=0x%x  errorcode=0x%x\n", regs->interrupt, regs->error);
+        printf("  interrupt=0x%x  errorcode=0x%x\n", regs->interrupt, regs->error);
 
         printf("KERNEL PANIC!\n");
 
