@@ -1,12 +1,6 @@
 #include "pic.h"
 #include <io/io.h>
 
-#define PIC1_COMMAND	0x20
-#define PIC1_DATA	    0x21
-#define PIC2_COMMAND	0xA0
-#define PIC2_DATA	    0xA1
-
-#define PIC_EOI		0x20		/* End-of-interrupt command code */
 
 void pic_sendEOI(uint8_t irq) {
 	if(irq >= 8) outb(PIC2_COMMAND, PIC_EOI);
@@ -123,15 +117,13 @@ void irq_unmask(uint8_t irq_line) {
     outb(port, value);        
 }
 
+// Masks all interrupts
 void pic_disable(void) {
     outb(PIC1_DATA, 0xff);
     io_wait();
     outb(PIC2_DATA, 0xff);
     io_wait();
 }
-
-#define PIC_READ_IRR                0x0a    /* OCW3 irq ready next CMD read */
-#define PIC_READ_ISR                0x0b    /* OCW3 irq service next CMD read */
 
 /* Helper func */
 static uint16_t __pic_get_irq_reg(int ocw3) {
