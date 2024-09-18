@@ -349,7 +349,7 @@ panic:
 
 global crash_test
 crash_test:
-    ; div by 0
+    ; division by 0 exception
     mov ecx, 0x1337
     mov eax, 0
     div eax
