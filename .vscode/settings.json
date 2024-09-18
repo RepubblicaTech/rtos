@@ -50,7 +50,11 @@
         "stdint-gcc.h": "c",
         "ranges": "c",
         "regex": "c",
-        "idt.h": "c"
+        "idt.h": "c",
+        "*.x": "c",
+        "random": "c",
+        "cpudet.h": "c",
+        "cpu.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false
