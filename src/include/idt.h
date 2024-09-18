@@ -1,7 +1,7 @@
 #ifndef IDT_H
 #define IDT_H 1
 
-#define IDT_MAX_DESCRIPTORS 255
+#define IDT_MAX_DESCRIPTORS 256
 
 #include <stdint.h>
 
