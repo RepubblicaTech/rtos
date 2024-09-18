@@ -30,6 +30,10 @@ void putc(char c) {
     flanterm_write(ft_ctx, &c, sizeof(c));
 }
 
+void dputc(char c) {
+    outb(0xE9, c);
+}
+
 int kprintf(void (*putc_function)(char), const char* fmt, ...) {
     char buffer[1024];
     va_list args;
@@ -47,8 +51,4 @@ int kprintf(void (*putc_function)(char), const char* fmt, ...) {
     }
 
     return length;
-}
-
-void dputc(char c) {
-    outb(0xE9, c);
 }
