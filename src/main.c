@@ -8,6 +8,8 @@
 #include <isr.h>
 #include <irq.h>
 
+#include <util/cpu.h>
+
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
 struct flanterm_fb_context *ft_fb_ctx;
@@ -29,7 +31,7 @@ static void hcf(void) {
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.
-void kmain(void) {
+void kstart(void) {
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {
         hcf();
@@ -43,6 +45,7 @@ void kmain(void) {
 
     // Fetch the first framebuffer.
     framebuffer = framebuffer_request.response->framebuffers[0];
+
 
     ft_ctx = flanterm_fb_init(
         NULL,
@@ -77,7 +80,6 @@ void kmain(void) {
     irq_init();
     printf("[ INFO ]    IRQ and PIC init done\n");
 
-    
     irq_registerHandler(0, timer);
 
     for (;;);
