@@ -111,7 +111,7 @@ $(OS_CODENAME).iso: bootloader
 	        --efi-boot boot/limine/limine-uefi-cd.bin \
 	        -efi-boot-part --efi-boot-image --protective-msdos-label \
 	        $(ISO_DIR) -o $(OS_CODENAME).iso
-	
+
 	@# Install Limine stage 1 and 2 for legacy BIOS boot.
 	./limine/limine bios-install $(OS_CODENAME).iso
 
@@ -123,7 +123,7 @@ bootloader: limine_build $(BUILD_DIR)/$(KERNEL)
 	mkdir -p $(ISO_DIR)/boot/limine
 	cp -v src/limine.conf limine/limine-bios.sys limine/limine-bios-cd.bin \
 	      limine/limine-uefi-cd.bin $(ISO_DIR)/boot/limine/
-	
+
 	@# Create the EFI boot tree and copy Limine's EFI executables over.
 	mkdir -p $(ISO_DIR)/EFI/BOOT
 	cp -v limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
