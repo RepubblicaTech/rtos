@@ -1,0 +1,39 @@
+// Folder-specific settings
+//
+// For a full list of overridable settings, and general information on folder-specific settings,
+// see the documentation: https://zed.dev/docs/configuring-zed#settings-files
+{
+  "languages": {
+    "C": {
+      "language_server": {
+        "command": "clangd",
+        "args": ["--background-index"]
+      },
+      "compiler_path": "/home/repubblicatech/Documenti/VSCode/OS/rtos/toolchain/x86_64-elf/bin/x86_64-elf-gcc",
+      "compiler_flags": [
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-std=gnu11",
+        "-ffreestanding",
+        "-fomit-frame-pointer",
+        "-fno-stack-protector",
+        "-fno-stack-check",
+        "-fno-lto",
+        "-fno-PIC",
+        "-m64",
+        "-march=x86-64",
+        "-mno-80387",
+        "-mno-mmx",
+        "-mno-sse",
+        "-mno-sse2",
+        "-mno-red-zone",
+        "-mcmodel=kernel"
+      ],
+      "include_paths": [
+        "/home/repubblicatech/Documenti/VSCode/OS/rtos/src/include/",
+        "/home/repubblicatech/Documenti/VSCode/OS/rtos/toolchain/x86_64-elf/lib/gcc/x86_64-elf/14.2.0/include/"
+      ]
+    }
+  }
+}
