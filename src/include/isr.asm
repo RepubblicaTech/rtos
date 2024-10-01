@@ -336,10 +336,10 @@ isr_no_err_stub 255
 
 global isr_stub_table
 isr_stub_table:
-%assign i 0 
+%assign i 0
 %rep    256
     dq isr_stub_%+i ; use DQ if targeting 64-bit
-%assign i i+1 
+%assign i i+1
 %endrep
 
 global panic
@@ -350,7 +350,7 @@ panic:
 global crash_test
 crash_test:
     ; division by 0 exception
-    mov ecx, 0x1337
+    mov ecx, 0x4E
     mov eax, 0
     div eax
 
