@@ -76,9 +76,11 @@ void kstart(void) {
 
     isr_init();
     printf("[ INFO ]    ISR init done\n");
-    
+
     irq_init();
     printf("[ INFO ]    IRQ and PIC init done\n");
+
+    // crash_test();
 
     irq_registerHandler(0, timer);
 
