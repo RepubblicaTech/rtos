@@ -14,8 +14,8 @@ The core of this project is an adaptation of the code found in the [Limine Bare 
 ## How to compile and run the OS
 ### REMINDER: Building of this project has been only tested on Linux, but if you can report anything about its state on other platforms (Windows, MacOS, Ubuntu, ...) feel free to open an issue/PR! Here is a list of currently tested (and supported) platorms:
 
-- Fedora Workstation 40
-- Debian 12 on WSL2 (Windows 10 21H2 19044)
+- Fedora Workstation 40 (Main machine)
+- Debian 12 on WSL2 (Windows 10 21H2 19044, last tested on September 2024)
 
 ### Prequisites
 The necessary tools will be needed, make sure to check your distro's repos for how to install them:
