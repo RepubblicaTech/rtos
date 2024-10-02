@@ -16,6 +16,7 @@ The core of this project is an adaptation of the code found in the [Limine Bare 
 
 - Fedora Workstation 40 (Main machine)
 - Debian 12 on WSL2 (Windows 10 21H2 build 19044, last tested on September 2024)
+- Arch Linux (tested on October 2024)
 
 ### Prequisites
 There are some packages that are needed for building and running the OS, make sure to check your distro's repos for how to install them:
