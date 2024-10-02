@@ -176,7 +176,11 @@ debug: $(OS_CODENAME).iso
 .PHONY: clean always
 
 clean:
-	rm -rf $(BUILD_DIR)/*
+	rm -rf $(BUILD_DIR)
+	rm -rf $(ISO_DIR)
+
+clean-all: clean
+	rm -rf limine
 
 always:
 	mkdir -p $(BUILD_DIR)

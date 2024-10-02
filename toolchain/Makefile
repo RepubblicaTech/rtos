@@ -8,7 +8,7 @@ export BUILD_DIR = $(abspath build)
 
 .PHONY:  toolchain toolchain_binutils toolchain_gcc clean-toolchain clean-toolchain-all
 
-BINUTILS_VERSION = 2.41
+BINUTILS_VERSION = 2.43
 BINUTILS_URL = https://ftp.gnu.org/gnu/binutils/binutils-$(BINUTILS_VERSION).tar.xz
 
 GCC_VERSION = 14.2.0
@@ -19,9 +19,9 @@ toolchain: toolchain_binutils toolchain_gcc
 BINUTILS_SRC = binutils-$(BINUTILS_VERSION)
 BINUTILS_BUILD = binutils-build-$(BINUTILS_VERSION)
 
-toolchain_binutils: $(TOOLCHAIN_PREFIX)/bin/i686-elf-ld
+toolchain_binutils: $(TOOLCHAIN_PREFIX)/bin/$(TARGET)-ld
 
-$(TOOLCHAIN_PREFIX)/bin/i686-elf-ld: $(BINUTILS_SRC).tar.xz
+$(TOOLCHAIN_PREFIX)/bin/$(TARGET)-ld: $(BINUTILS_SRC).tar.xz
 	tar -xf binutils-$(BINUTILS_VERSION).tar.xz
 	mkdir $(BINUTILS_BUILD)
 	cd $(BINUTILS_BUILD) && CFLAGS= ASMFLAGS= CC= CXX= LD= ASM= LINKFLAGS= LIBS= ../binutils-$(BINUTILS_VERSION)/configure \
@@ -39,9 +39,9 @@ $(BINUTILS_SRC).tar.xz:
 GCC_SRC = gcc-$(GCC_VERSION)
 GCC_BUILD = gcc-build-$(GCC_VERSION)
 
-toolchain_gcc: $(TOOLCHAIN_PREFIX)/bin/i686-elf-gcc
+toolchain_gcc: $(TOOLCHAIN_PREFIX)/bin/$(TARGET)-gcc
 
-$(TOOLCHAIN_PREFIX)/bin/i686-elf-gcc: $(TOOLCHAIN_PREFIX)/bin/i686-elf-ld $(GCC_SRC).tar.xz
+$(TOOLCHAIN_PREFIX)/bin/$(TARGET)-gcc: $(TOOLCHAIN_PREFIX)/bin/$(TARGET)-ld $(GCC_SRC).tar.xz
 	tar -xf gcc-$(GCC_VERSION).tar.xz
 	mkdir $(GCC_BUILD)
 	cd $(GCC_BUILD) && CFLAGS= ASMFLAGS= CC= CXX= LD= ASM= LINKFLAGS= LIBS= ../gcc-$(GCC_VERSION)/configure \
@@ -60,4 +60,4 @@ clean-toolchain:
 	rm -rf $(GCC_BUILD) $(GCC_SRC) $(BINUTILS_BUILD) $(BINUTILS_SRC)
 
 clean-toolchain-all:
-	rm -rf *
+	rm -rf $(GCC_BUILD) $(GCC_SRC) $(BINUTILS_BUILD) $(BINUTILS_SRC) $(BINUTILS_SRC).tar.xz $(GCC_SRC).tar.xz $(TOOLCHAIN_PREFIX)
