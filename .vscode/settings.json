@@ -55,7 +55,8 @@
         "random": "c",
         "cpudet.h": "c",
         "cpu.h": "c",
-        "pr38811.C": "cpp"
+        "pr38811.C": "cpp",
+        "irq.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false
