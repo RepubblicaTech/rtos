@@ -8,6 +8,9 @@ An OS is mainly made out of two parts: the bootloader and the kernel.
 
 The bootloader part is done by Limine, which offers a 64-bit environment out of the box (GRUB simply doesn't and you'll need to make your own "jump" from 32-bit to 64-bit), which is fine for our purpose of simply understanding how an OS works.
 
+## Current development state
+Go check [The roadmap](docs/Roadmap.md)
+
 ## The base
 The core of this project is an adaptation of the code found in the [Limine Bare Bones](https://wiki.osdev.org/Limine_Bare_Bones) page of the OSDev wiki, which is a fundamental source when doing OS development.
 
