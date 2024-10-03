@@ -66,7 +66,7 @@ void kstart(void) {
     printf("Hello!\n");
 
     debugf("Hello from the E9 port!\n");
-    debugf("Current video mode is: %dx%d address: 0x%x\n\n", framebuffer->width, framebuffer->height, (uint32_t *)framebuffer->address);
+    debugf("Current video mode is: %dx%d address: 0x%x\n\n", framebuffer->width, framebuffer->height, (uint64_t *)framebuffer->address);
 
     gdt_init();
     printf("[ INFO ]    GDT init done\n");
