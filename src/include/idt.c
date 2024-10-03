@@ -6,6 +6,8 @@
 
 #include <util/binary.h>
 
+#include <stdio.h>
+
 typedef struct {
 	uint16_t base_low;      // The lower 16 bits of the ISR's address
 	uint16_t kernel_cs;     // The GDT segment selector that the CPU will load into CS before calling the ISR
@@ -21,8 +23,10 @@ typedef struct {
 	idt_entry_t* base;
 } __attribute__((packed)) idtr_t;
 
-idt_entry_t idt_entries[IDT_MAX_DESCRIPTORS];
-idtr_t idtr;
+__attribute__((aligned(0x10)))
+static idt_entry_t idt_entries[IDT_MAX_DESCRIPTORS];
+
+static idtr_t idtr;
 
 static bool vectors[IDT_MAX_DESCRIPTORS];
 
@@ -31,7 +35,7 @@ void idt_init() {
     idtr.limit = (uint16_t)sizeof(idt_entry_t) * IDT_MAX_DESCRIPTORS - 1;
 
     for (uint16_t vector = 0; vector < IDT_MAX_DESCRIPTORS; vector++) {
-        // printf("Enabling gate %d\n", vector);
+        printf("Enabling gate %d\n", vector);
         idt_set_gate(vector, isr_stub_table[vector], GDT_CODE_SEGMENT, 0x8E);
         vectors[vector] = true;
     }

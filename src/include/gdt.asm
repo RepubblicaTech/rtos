@@ -3,5 +3,4 @@
 global load_gdt
 load_gdt:
     lgdt [rdi]
-
     ret
