@@ -41,8 +41,6 @@ static const char* const exceptions[] = {
     ""
 };
 
-extern void panic();
-
 void isr_init() {
     for (int i = 0; i < 256; i++) {
         idt_gate_enable(i);
