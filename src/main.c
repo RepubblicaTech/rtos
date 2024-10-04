@@ -23,7 +23,7 @@
     base revision described by the Limine boot protocol specification.
     See specification for further info.
 
-    --- DON'T PUT THIS ANYWHERE ELSE OTHER THAN HERE. ---
+    (Note for Omar) --- DON'T EVEN DARE TO PUT THIS ANYWHERE ELSE OTHER THAN HERE. ---
 */
 
 __attribute__((used, section(".requests")))
