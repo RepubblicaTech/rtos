@@ -12,10 +12,9 @@
             "cppStandard": "gnu++17",
             "intelliSenseMode": "clang-x64",
             "compilerArgs": [
-                "-pipe",
+                "-g",
                 "-Wall",
                 "-Wextra",
-                "-g",
                 "-std=gnu11",
                 "-ffreestanding",
                 "-fno-stack-protector",
@@ -29,9 +28,7 @@
                 "-mno-sse",
                 "-mno-sse2",
                 "-mno-red-zone",
-                "-mcmodel=kernel",
-                "-MMD",
-                "-MP"
+                "-mcmodel=kernel"
             ]
         }
     ],
