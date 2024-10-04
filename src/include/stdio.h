@@ -1,7 +1,7 @@
 #ifndef STDIO_H
 #define STDIO_H 1
 
-#define PRINTF_MIRROR
+// #define PRINTF_MIRROR
 
 #include <stdint.h>
 
