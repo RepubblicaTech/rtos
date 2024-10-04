@@ -40,6 +40,7 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
     .revision = 0
 };
 
+
 // Finally, define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 
@@ -52,6 +53,8 @@ static volatile LIMINE_REQUESTS_END_MARKER;
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
 struct flanterm_fb_context *ft_fb_ctx;
+
+struct limine_memmap_entry *memmap_entry;
 
 extern void crash_test();
 
@@ -77,9 +80,8 @@ void kstart(void) {
     }
 
     // Ensure we got a framebuffer.
-    if (framebuffer_request.response == NULL
-     || framebuffer_request.response->framebuffer_count < 1) {
-        hcf();
+    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
+        panic();
     }
 
     // Fetch the first framebuffer.
@@ -122,6 +124,19 @@ void kstart(void) {
     // crash_test();
 
     irq_registerHandler(0, timer);
+
+    if (memmap_request.response == NULL || memmap_request.response->entry_count < 1) {
+        // ERROR
+        debugf("ERROR: No memory map received\n");
+        panic();
+    }
+    
+
+    for (int i = 0; i < memmap_request.response->entry_count; i++)
+    {
+        memmap_entry = memmap_request.response->entries[i];
+        debugf("Found memory at address: 0x%lX; length: %lu KBytes; type: %s\n", memmap_entry->base, memmap_entry->length / 1024, memory_block_type[memmap_entry->type]);
+    }
 
     for (;;);
 

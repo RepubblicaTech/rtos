@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include <limine.h>
+
 /*
     GCC and Clang reserve the right to generate calls to the following
     4 functions even if they are not directly called.
@@ -17,5 +19,24 @@ void *memcpy(void *dest, const void *src, size_t n);
 void *memset(void *s, int c, size_t n);
 void *memmove(void *dest, const void *src, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
+
+// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#memory-map-feature
+
+__attribute__((used, section(".requests")))
+static volatile struct limine_memmap_request memmap_request = {
+    .id = LIMINE_MEMMAP_REQUEST,
+    .revision = 0
+};
+
+static const char* const memory_block_type[] = {
+    "USABLE",
+    "RESERVED",
+    "ACPI_RECLAIMABLE",
+    "ACPI_NVS",
+    "BAD",
+    "BOOTLOADER_RECLAIMABLE",
+    "KERNEL_AND_MODULES",
+    "FRAMEBUFFER"
+};
 
 #endif
