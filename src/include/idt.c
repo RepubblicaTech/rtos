@@ -35,7 +35,7 @@ void idt_init() {
     idtr.limit = (uint16_t)sizeof(idt_entry_t) * IDT_MAX_DESCRIPTORS - 1;
 
     for (uint16_t vector = 0; vector < IDT_MAX_DESCRIPTORS; vector++) {
-        printf("Enabling gate %d\n", vector);
+        debugf("Enabling gate %d\n", vector);
         idt_set_gate(vector, isr_stub_table[vector], GDT_CODE_SEGMENT, 0x8E);
         vectors[vector] = true;
     }
