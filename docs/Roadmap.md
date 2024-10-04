@@ -10,7 +10,8 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [X] PIC support
 
 - [ ] Memory
-    - [ ] Memory map
+    - [X] Get memory map
+    - [ ] Plan a memory map
     - [ ] Memory detection (?)
     - [ ] Paging
     - [ ] Allocation/heap (`malloc`, `free`)
