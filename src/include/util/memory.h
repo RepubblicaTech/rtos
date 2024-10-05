@@ -20,14 +20,6 @@ void *memset(void *s, int c, size_t n);
 void *memmove(void *dest, const void *src, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
 
-// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#memory-map-feature
-
-__attribute__((used, section(".requests")))
-static volatile struct limine_memmap_request memmap_request = {
-    .id = LIMINE_MEMMAP_REQUEST,
-    .revision = 0
-};
-
 static const char* const memory_block_type[] = {
     "USABLE",
     "RESERVED",

@@ -41,6 +41,14 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
 };
 
 
+// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#memory-map-feature
+
+__attribute__((used, section(".requests")))
+static volatile struct limine_memmap_request memmap_request = {
+    .id = LIMINE_MEMMAP_REQUEST,
+    .revision = 0
+};
+
 // Finally, define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 
