@@ -5,8 +5,6 @@
 #include <flanterm/flanterm.h>
 #include <flanterm/backends/fb.h>
 
-#include <util/memory.h>
-
 #include <stdio.h>
 
 #include <gdt.h>
@@ -17,6 +15,7 @@
 #include <limine.h>
 
 #include <util/cpu.h>
+#include <util/memory.h>
 
 /*
     Set the base revision to 2, this is recommended as this is the latest
@@ -40,16 +39,14 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
     .revision = 0
 };
 
-
 // https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#memory-map-feature
-
 __attribute__((used, section(".requests")))
 static volatile struct limine_memmap_request memmap_request = {
     .id = LIMINE_MEMMAP_REQUEST,
     .revision = 0
 };
 
-// Finally, define the start and end markers for the Limine requests.
+// Define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 
 __attribute__((used, section(".requests_start_marker")))
@@ -138,7 +135,6 @@ void kstart(void) {
         debugf("ERROR: No memory map received\n");
         panic();
     }
-    
 
     for (int i = 0; i < memmap_request.response->entry_count; i++)
     {
