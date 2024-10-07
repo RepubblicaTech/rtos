@@ -139,7 +139,7 @@ void kstart(void) {
 
     if (memmap_request.response == NULL || memmap_request.response->entry_count < 1) {
         // ERROR
-        kprintf("ERROR: No memory map received\n");
+        kprintf("--- PANIC! --- No memory map received\n");
         panic();
     }
 
@@ -149,7 +149,18 @@ void kstart(void) {
         kprintf("Found memory at address: 0x%lX; length: %lu KBytes; type: %s\n", memmap_entry->base, memmap_entry->length / 1024, memory_block_type[memmap_entry->type]);
     }
 
-    debugf("%dth level paging is enabled\n", paging_mode_response == 0 ? 4 : 5);
+    if (paging_mode_request.response == NULL) {
+        debugf("--- PANIC! ---  We've got no paging!\n");
+        panic();
+    }
+
+    paging_mode_response = paging_mode_request.response;
+
+    if (paging_mode_response->mode < (uint64_t)paging_mode_request.min_mode || paging_mode_response->mode > (uint64_t)paging_mode_request.max_mode) {
+        debugf("--- PANIC --- %luth paging mode is not supported!\n");
+    }
+
+    kprintf("%luth level paging is enabled\n", 4 + paging_mode_response->mode);
 
     for (;;);
 
