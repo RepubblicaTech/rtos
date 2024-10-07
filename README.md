@@ -1,3 +1,6 @@
+## WARNING: this is the `dev-unstable` branch.
+This branch is mainly used when asking for support on forums, etc. thus it might be unstable and more prone to errors. Also, new features are commited here for testing before merging them into the `main` branch, that you may want to check out if you want a more stable build of this project.
+
 # [this project doesn't have an official name yet]
  A freestading 64-bit kernel (currently in a very early development stage)
 
