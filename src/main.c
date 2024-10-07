@@ -46,6 +46,13 @@ static volatile struct limine_memmap_request memmap_request = {
     .revision = 0
 };
 
+// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#paging-mode-feature
+__attribute__((used, section(".requests")))
+static volatile struct limine_paging_mode_request paging_mode_request = {
+    .id = LIMINE_PAGING_MODE_REQUEST,
+    .revision = 0
+};
+
 // Define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 
@@ -60,11 +67,12 @@ struct flanterm_context *ft_ctx;
 struct flanterm_fb_context *ft_fb_ctx;
 
 struct limine_memmap_entry *memmap_entry;
+struct limine_paging_mode_response *paging_mode_response;
 
 extern void crash_test();
 
 void timer(registers* regs) {
-    printf(".");
+    kprintf(".");
 }
 
 // Halt and catch fire function.
@@ -92,7 +100,6 @@ void kstart(void) {
     // Fetch the first framebuffer.
     framebuffer = framebuffer_request.response->framebuffers[0];
 
-
     ft_ctx = flanterm_fb_init(
         NULL,
         NULL,
@@ -109,22 +116,22 @@ void kstart(void) {
         0
     );
 
-    printf("Hello!\n");
+    kprintf("Hello!\n");
 
     debugf("Hello from the E9 port!\n");
     debugf("Current video mode is: %dx%d address: 0x%x\n\n", framebuffer->width, framebuffer->height, (uint64_t *)framebuffer->address);
 
     gdt_init();
-    printf("[ INFO ]    GDT init done\n");
+    kprintf("[ INFO ]    GDT init done\n");
 
     idt_init();
-    printf("[ INFO ]    IDT init done\n");
+    kprintf("[ INFO ]    IDT init done\n");
 
     isr_init();
-    printf("[ INFO ]    ISR init done\n");
+    kprintf("[ INFO ]    ISR init done\n");
 
     irq_init();
-    printf("[ INFO ]    IRQ and PIC init done\n");
+    kprintf("[ INFO ]    IRQ and PIC init done\n");
 
     // crash_test();
 
@@ -132,15 +139,17 @@ void kstart(void) {
 
     if (memmap_request.response == NULL || memmap_request.response->entry_count < 1) {
         // ERROR
-        debugf("ERROR: No memory map received\n");
+        kprintf("ERROR: No memory map received\n");
         panic();
     }
 
-    for (int i = 0; i < memmap_request.response->entry_count; i++)
+    for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
     {
         memmap_entry = memmap_request.response->entries[i];
-        debugf("Found memory at address: 0x%lX; length: %lu KBytes; type: %s\n", memmap_entry->base, memmap_entry->length / 1024, memory_block_type[memmap_entry->type]);
+        kprintf("Found memory at address: 0x%lX; length: %lu KBytes; type: %s\n", memmap_entry->base, memmap_entry->length / 1024, memory_block_type[memmap_entry->type]);
     }
+
+    debugf("%dth level paging is enabled\n", paging_mode_response == 0 ? 4 : 5);
 
     for (;;);
 
