@@ -39,7 +39,7 @@ void mputc(char c) {
     dputc(c);
 }
 
-int kprintf(void (*putc_function)(char), const char* fmt, ...) {
+int printf(void (*putc_function)(char), const char* fmt, ...) {
     char buffer[1024];
     va_list args;
 

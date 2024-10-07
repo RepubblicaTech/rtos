@@ -12,14 +12,14 @@ void dputc(char c);
 
 void mputc(char c);
 
-int kprintf(void (*putc_function)(char), const char* fmt, ...);
+int printf(void (*putc_function)(char), const char* fmt, ...);
 
 #ifndef PRINTF_MIRROR
-    #define printf(fmt, ...) kprintf(putc, fmt, ##__VA_ARGS__)
+    #define kprintf(fmt, ...) printf(putc, fmt, ##__VA_ARGS__)
 #else
-    #define printf(fmt, ...) kprintf(mputc, fmt, ##__VA_ARGS__)
+    #define kprintf(fmt, ...) printf(mputc, fmt, ##__VA_ARGS__)
 #endif
 
-#define debugf(fmt, ...) kprintf(dputc, fmt, ##__VA_ARGS__)
+#define debugf(fmt, ...) printf(dputc, fmt, ##__VA_ARGS__)
 
 #endif
