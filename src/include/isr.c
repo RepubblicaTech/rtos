@@ -57,14 +57,14 @@ void isr_handler(registers* regs) {
         debugf("Unhandled interrupt %d\n", regs->interrupt);
     }
     else {
-        printf("\n-----------------------------------------------------------------\n");
-        printf("PANIC! --- \"%s\" (Exception n. %d)\n", exceptions[regs->interrupt], regs->interrupt);
-        printf("  rax=0x%X  rbx=0x%X  rcx=0x%X  rdx=0x%X  rsi=0x%X  rdi=0x%X\n",
+        kprintf("\n-----------------------------------------------------------------\n");
+        kprintf("PANIC! --- \"%s\" (Exception n. %d)\n", exceptions[regs->interrupt], regs->interrupt);
+        kprintf("  rax=0x%X  rbx=0x%X  rcx=0x%X  rdx=0x%X  rsi=0x%X  rdi=0x%X\n",
                regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi);
-        printf("  rsp=0x%X  rbp=0x%X  rip=0x%X  eflags=0x%X  cs=0x%X  ds=0x%X  ss=0x%X\n",
+        kprintf("  rsp=0x%X  rbp=0x%X  rip=0x%X  eflags=0x%X  cs=0x%X  ds=0x%X  ss=0x%X\n",
                regs->rsp, regs->rbp, regs->rip, regs->eflags, regs->cs, regs->ds, regs->ss);
-        printf("  interrupt=0x%X  errorcode=0x%X\n", regs->interrupt, regs->error);
-        printf("-----------------------------------------------------------------\n");
+        kprintf("  interrupt=0x%X  errorcode=0x%X\n", regs->interrupt, regs->error);
+        kprintf("-----------------------------------------------------------------\n");
 
         panic();
     }
