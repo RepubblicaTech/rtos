@@ -11,12 +11,10 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 
 - [ ] Memory
     - [X] Get memory map
-    - [ ] Plan a memory map
-    - [ ] Memory detection (?)
     - [ ] Paging
     - [ ] Allocation/heap (`malloc`, `free`)
-- [ ] Microkernel ([Eleanore Semaphore](https://wiki.osdev.org/Eleanore_Semaphore))
+- [ ] File system support (FAT32/extX)
+- [ ] Microkernel environment ([Eleanore Semaphore](https://wiki.osdev.org/Eleanore_Semaphore))
 - [ ] Jump to userspace
 
 ## 2nd Milestone
-(TODO)
