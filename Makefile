@@ -135,7 +135,7 @@ limine_build: limine
 	@# Build "limine" utility
 	make -C limine
 	@# Always update limine.h in case of updates
-	cp -vf limine/limine.h src/include/limine.h
+	cp -vf limine/limine.h src/arch/x86_64/limine.h
 
 limine:
 	@# Download the latest Limine binary release for the 8.x branch
