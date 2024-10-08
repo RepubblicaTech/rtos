@@ -1,3 +1,5 @@
+#include <limine.h>
+
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -12,8 +14,6 @@
 #include <isr.h>
 #include <irq.h>
 
-#include <limine.h>
-
 #include <util/cpu.h>
 #include <util/memory.h>
 
@@ -22,9 +22,9 @@
     base revision described by the Limine boot protocol specification.
     See specification for further info.
 
-    (Note for Omar) --- DON'T EVEN DARE TO PUT THIS ANYWHERE ELSE OTHER THAN HERE. ---
+    (Note for Omar) 
+    --- DON'T EVEN DARE TO PUT THIS ANYWHERE ELSE OTHER THAN HERE. ---
 */
-
 __attribute__((used, section(".requests")))
 static volatile LIMINE_BASE_REVISION(2);
 
@@ -32,7 +32,6 @@ static volatile LIMINE_BASE_REVISION(2);
 // the compiler does not optimise them away, so, usually, they should
 // be made volatile or equivalent, _and_ they should be accessed at least
 // once or marked as used with the "used" attribute as done here.
-
 __attribute__((used, section(".requests")))
 static volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST,
@@ -53,21 +52,22 @@ static volatile struct limine_paging_mode_request paging_mode_request = {
     .revision = 0
 };
 
+// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#hhdm-higher-half-direct-map-feature
+__attribute__((used, section(".requests")))
+static volatile struct limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST,
+    .revision = 0
+};
+
+
 // Define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
-
 __attribute__((used, section(".requests_start_marker")))
 static volatile LIMINE_REQUESTS_START_MARKER;
 
 __attribute__((used, section(".requests_end_marker")))
 static volatile LIMINE_REQUESTS_END_MARKER;
 
-struct limine_framebuffer *framebuffer;
-struct flanterm_context *ft_ctx;
-struct flanterm_fb_context *ft_fb_ctx;
-
-struct limine_memmap_entry *memmap_entry;
-struct limine_paging_mode_response *paging_mode_response;
 
 extern void crash_test();
 
@@ -82,6 +82,14 @@ static void hcf(void) {
         asm ("hlt");
     }
 }
+
+struct limine_framebuffer *framebuffer;
+struct flanterm_context *ft_ctx;
+struct flanterm_fb_context *ft_fb_ctx;
+
+struct limine_memmap_entry *memmap_entry;
+struct limine_hhdm_response *hhdm_response;
+struct limine_paging_mode_response *paging_mode_response;
 
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
@@ -153,14 +161,21 @@ void kstart(void) {
         debugf("--- PANIC! ---  We've got no paging!\n");
         panic();
     }
-
     paging_mode_response = paging_mode_request.response;
 
     if (paging_mode_response->mode < (uint64_t)paging_mode_request.min_mode || paging_mode_response->mode > (uint64_t)paging_mode_request.max_mode) {
         debugf("--- PANIC --- %luth paging mode is not supported!\n");
+        panic();
     }
-
     kprintf("%luth level paging is enabled\n", 4 + paging_mode_response->mode);
+
+    if (hhdm_request.response == NULL) {
+        debugf("--- PANIC --- Couldn't get any Higher Half Direct Map\n");
+        panic();
+    }
+    hhdm_response = hhdm_request.response;
+
+    debugf("Virtual address offset of HHDM: 0x%lX\n", hhdm_response->offset);
 
     for (;;);
 
