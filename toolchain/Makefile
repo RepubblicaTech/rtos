@@ -1,8 +1,9 @@
-TARGET=x86_64-elf
+TARGET_BASE=x86_64
+TARGET=$(TARGET_BASE)-elf
 TOOLCHAIN_PREFIX = $(abspath $(TARGET))
 export PATH := $(TOOLCHAIN_PREFIX)/bin:$(PATH)
 
-CPU_CORES=8
+CPU_CORES?=$(shell nproc)
 
 export BUILD_DIR = $(abspath build)
 
