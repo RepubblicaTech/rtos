@@ -1,8 +1,8 @@
 #include <stdbool.h>
 
-#include <idt.h>
-#include <gdt.h>
-#include <isr.h>
+#include "idt.h"
+#include "gdt.h"
+#include "isr.h"
 
 #include <util/binary.h>
 

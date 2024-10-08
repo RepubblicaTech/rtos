@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#include <gdt.h>
+#include "gdt.h"
 
 gdt_pointer_t gdtr;
 

@@ -1,7 +1,7 @@
-#include <irq.h>
+#include "irq.h"
 #include <util/pic.h>
 
-#include <isr.h>
+#include "isr.h"
 
 #include <io/io.h>
 #include <stdio.h>

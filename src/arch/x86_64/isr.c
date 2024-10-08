@@ -1,6 +1,6 @@
-#include <isr.h>
-#include <idt.h>
-#include <gdt.h>
+#include "isr.h"
+#include "idt.h"
+#include "gdt.h"
 #include <stdio.h>
 #include <stddef.h>
 
@@ -68,7 +68,7 @@ void isr_handler(registers* regs) {
 
         panic();
     }
-    
+
 }
 
 void isr_registerHandler(int interrupt, isrHandler handler) {
