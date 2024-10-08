@@ -42,15 +42,17 @@ First, make sure to install the required dependencies for building gcc and binut
 
 Thankfully, the [toolchain script made by nanobyte](https://github.com/nanobyte-dev/nanobyte_os/blob/videos/part7/build_scripts/toolchain.mk) comes in handy regarding the whole downloading and compiling binutils and gcc from source, and I integrated it here to be simply run by a single command in the project directory:
 
-(before running this command, enter the toolchain directory and change the CPU_CORES variable in the makefile according to the number of cores present in your CPU)
+*(arguments in square brackets are optional)*
 
-`make -C toolchain`
+`make -C toolchain [CPU_CORES=<number of desired cores, defaults to $(nproc)>]`
 
 Since it needs to compile both binutils and gcc from source, it will take a long time (depending on your CPU cores and speed), so "you can go make yourself some coffee, and maybe watch the latest video from your favourite YouTube channel..."
 
 \- [Nanobyte, 2021](https://youtu.be/TgIdFVOV_0U?t=709)
 
-After this, you now have built your own toolchain for building this project but also any other one that relies on the base mentioned earlier (i'd suggest to update both `BINUTILS_VERSION` `GCC_VERSION` in the Makefile when an update of such package is available on your system and maybe re-run the `make -C toolchain` command, *if you always have time and will to do so*)
+After this, you now have built your own toolchain for building this project but also any other one that relies on the base mentioned earlier (i'd suggest to update both `BINUTILS_VERSION` `GCC_VERSION` in the Makefile when an update of such package is available on your system and maybe re-run the `make -C toolchain` command, *if you always have time and will to do so*).
+
+As of October 2024, project gets compiled with binutils version 2.41 and gcc 14.2.0, which are the versions mentioned in th Makefile.
 
 From now on, a simple `make` should compile the project's source code and create a bootable ISO image compatible with most computers with a 64-bit CPU.
 
