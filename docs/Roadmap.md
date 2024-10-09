@@ -11,6 +11,9 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 
 - [ ] Memory
     - [X] Get memory map
+    - [ ] Memory management
+        - [ ] PMM
+        - [ ] VMM
     - [ ] Paging
     - [ ] Allocation/heap (`malloc`, `free`)
 - [ ] File system support (FAT32/extX)
