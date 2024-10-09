@@ -1,5 +1,5 @@
 #include "irq.h"
-#include <util/pic.h>
+#include "pic.h"
 
 #include "isr.h"
 

@@ -14,7 +14,7 @@
 #include <isr.h>
 #include <irq.h>
 
-#include <util/cpu.h>
+#include <cpu.h>
 #include <util/memory.h>
 
 /*

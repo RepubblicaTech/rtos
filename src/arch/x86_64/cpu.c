@@ -1,7 +1,7 @@
 #include "cpu.h"
 
 #include <cpuid.h>
-#include <util/pic.h>
+#include "pic.h"
 
 /* Get CPU's model number */
 static int get_model(void) {
