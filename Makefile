@@ -131,7 +131,7 @@ bootloader: limine_build $(BUILD_DIR)/$(KERNEL)
 	cp -v limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
 	cp -v limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
 
-limine_build: limine
+limine_build: update_limine
 	@# Build "limine" utility
 	make -C limine
 	@# Always update limine.h in case of updates
