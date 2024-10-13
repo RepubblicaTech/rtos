@@ -4,11 +4,10 @@
             "name": "OSDev",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/src/include",
+                "${workspaceFolder}/src/kernel/include",
                 "${workspaceFolder}/src/arch/x86_64"
             ],
             "defines": [],
-            "compilerPath": "${workspaceFolder}/toolchain/x86_64-elf/bin/x86_64-elf-gcc",
             "cStandard": "gnu11",
             "cppStandard": "gnu++17",
             "intelliSenseMode": "clang-x64",
