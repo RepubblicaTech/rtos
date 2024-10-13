@@ -59,8 +59,13 @@
         "pr38811.C": "cpp",
         "irq.h": "c",
         "paging.h": "c",
-        "pic.h": "c"
+        "pic.h": "c",
+        "cerrno": "cpp",
+        "compiler.h": "c",
+        "interception-malloc-test-1.C": "cpp",
+        "string.h": "c"
     },
     "dotnet.defaultSolution": "disable",
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "C_Cpp.default.compilerPath": "${workspaceFolder}/toolchain/x86_64-elf/bin/x86_64-elf-gcc"
 }
