@@ -1,4 +1,5 @@
-TARGET=x86_64-elf
+TARGET_BASE=x86_64
+TARGET=$(TARGET_BASE)-elf
 TOOLCHAIN_PREFIX=$(abspath toolchain/$(TARGET))
 export PATH:=$(TOOLCHAIN_PREFIX)/bin:$(PATH)
 
@@ -58,6 +59,8 @@ override KCFLAGS += \
     -Wextra \
     -std=gnu11 \
     -ffreestanding \
+    -I src/kernel/include \
+	-I src/arch/$(TARGET_BASE) \
     -fno-stack-protector \
     -fno-stack-check \
     -fno-lto \
@@ -73,7 +76,6 @@ override KCFLAGS += \
 
 # Internal C preprocessor flags that should not be changed by the user.
 override KCPPFLAGS := \
-    -I src/include \
     $(KCPPFLAGS) \
     -MMD \
     -MP
@@ -100,7 +102,7 @@ override OBJ := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o) $(
 override HEADER_DEPS := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
 
 # Default target.
-.PHONY: all limine_build
+.PHONY: all limine_build toolchain
 
 all: clean $(OS_CODENAME).iso
 
@@ -129,9 +131,11 @@ bootloader: limine_build $(BUILD_DIR)/$(KERNEL)
 	cp -v limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
 	cp -v limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
 
-limine_build: limine
+limine_build: update_limine
 	@# Build "limine" utility
 	make -C limine
+	@# Always update limine.h in case of updates
+	cp -vf limine/limine.h src/kernel/include/limine.h
 
 limine:
 	@# Download the latest Limine binary release for the 8.x branch
@@ -183,7 +187,10 @@ clean:
 clean-all: clean
 	rm -rf limine
 
-always:
+always: update_limine
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(OBJS_DIR)
 	mkdir -p $(ISO_DIR)
+
+update_limine: limine
+	cd $< && git pull

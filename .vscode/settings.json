@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.embeddedhtml": "html",
+        "*.s": "gas",
         "chrono": "c",
         "span": "c",
         "flanterm.h": "c",
@@ -57,7 +58,23 @@
         "cpu.h": "c",
         "pr38811.C": "cpp",
         "irq.h": "c",
+        "paging.h": "c",
+        "pic.h": "c",
+        "cerrno": "cpp",
+        "compiler.h": "c",
+        "interception-malloc-test-1.C": "cpp",
+        "string.h": "c",
+        "errno.h": "c",
+        "assert.h": "c",
+        "stacktrace": "c",
+        "stdlib.h": "c",
+        "system.h": "c",
+        "freelist.h": "c",
+        "string_view": "c",
+        "bitset": "c",
+        "limine.h": "c"
     },
     "dotnet.defaultSolution": "disable",
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "C_Cpp.default.compilerPath": "${workspaceFolder}/toolchain/x86_64-elf/bin/x86_64-elf-gcc"
 }

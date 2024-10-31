@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <isr.h>
+#include "isr.h"
 
 typedef void (*irq_handler)(registers* regs);
 

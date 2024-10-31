@@ -1,7 +1,7 @@
-#include <irq.h>
-#include <util/pic.h>
+#include "irq.h"
+#include "pic.h"
 
-#include <isr.h>
+#include "isr.h"
 
 #include <io/io.h>
 #include <stdio.h>
@@ -24,7 +24,7 @@ void irqHandler(registers* regs) {
     if (irq_handlers[irq] != NULL) {
         irq_handlers[irq](regs);                // tries to handle the interrupt
     } else {
-        debugf("Unhandled IRQ %d  ISR=%X  IRR=%X...\n", irq, pic_isr, pic_irr);
+        debugf("Unhandled IRQ %d  ISR=%X  IRR=%X\n", irq, pic_isr, pic_irr);
     }
 
     pic_sendEOI(irq);
