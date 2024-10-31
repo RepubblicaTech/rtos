@@ -1,5 +1,3 @@
-#include <limine.h>
-
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -16,6 +14,9 @@
 
 #include <cpu.h>
 #include <util/memory.h>
+#include <memory/pmm.h>
+
+#include "kernel.h"
 
 /*
     Set the base revision to 2, this is recommended as this is the latest
@@ -52,14 +53,6 @@ static volatile struct limine_paging_mode_request paging_mode_request = {
     .revision = 0
 };
 
-// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#hhdm-higher-half-direct-map-feature
-__attribute__((used, section(".requests")))
-static volatile struct limine_hhdm_request hhdm_request = {
-    .id = LIMINE_HHDM_REQUEST,
-    .revision = 0
-};
-
-
 // Define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 __attribute__((used, section(".requests_start_marker")))
@@ -68,11 +61,10 @@ static volatile LIMINE_REQUESTS_START_MARKER;
 __attribute__((used, section(".requests_end_marker")))
 static volatile LIMINE_REQUESTS_END_MARKER;
 
-
 extern void crash_test();
 
 void timer(registers* regs) {
-    kprintf(".");
+    return;
 }
 
 // Halt and catch fire function.
@@ -87,7 +79,7 @@ struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
 struct flanterm_fb_context *ft_fb_ctx;
 
-struct limine_memmap_entry *memmap_entry;
+struct limine_memmap_entry *entry;
 struct limine_hhdm_response *hhdm_response;
 struct limine_paging_mode_response *paging_mode_response;
 
@@ -151,10 +143,18 @@ void kstart(void) {
         panic();
     }
 
-    for (uint64_t i = 0; i < memmap_request.response->entry_count; i++)
+    struct limine_memmap_response *memmap_response = memmap_request.response;
+
+    parsed_limine_data.memory_entries = memmap_response->entries;
+    parsed_limine_data.entry_count = memmap_response->entry_count;
+
+    // Load limine's memory map into OUR struct
+    for (uint64_t i = 0; i < parsed_limine_data.entry_count; i++)
     {
-        memmap_entry = memmap_request.response->entries[i];
-        kprintf("Found memory at address: 0x%lX; length: %lu KBytes; type: %s\n", memmap_entry->base, memmap_entry->length / 1024, memory_block_type[memmap_entry->type]);
+        entry = parsed_limine_data.memory_entries[i];
+        kprintf("Region start: 0x%lX; length: %lu; type: %s\n", entry->base, entry->length, memory_block_type[entry->type]);
+
+        entry = NULL;           // "non si sa mai" :)
     }
 
     if (paging_mode_request.response == NULL) {
@@ -163,19 +163,13 @@ void kstart(void) {
     }
     paging_mode_response = paging_mode_request.response;
 
-    if (paging_mode_response->mode < (uint64_t)paging_mode_request.min_mode || paging_mode_response->mode > (uint64_t)paging_mode_request.max_mode) {
+    if (paging_mode_response->mode < paging_mode_request.min_mode || paging_mode_response->mode > paging_mode_request.max_mode) {
         debugf("--- PANIC --- %luth paging mode is not supported!\n");
         panic();
     }
     kprintf("%luth level paging is enabled\n", 4 + paging_mode_response->mode);
 
-    if (hhdm_request.response == NULL) {
-        debugf("--- PANIC --- Couldn't get any Higher Half Direct Map\n");
-        panic();
-    }
-    hhdm_response = hhdm_request.response;
-
-    debugf("Virtual address offset of HHDM: 0x%lX\n", hhdm_response->offset);
+    // crash_test();
 
     for (;;);
 
