@@ -63,7 +63,16 @@
         "cerrno": "cpp",
         "compiler.h": "c",
         "interception-malloc-test-1.C": "cpp",
-        "string.h": "c"
+        "string.h": "c",
+        "errno.h": "c",
+        "assert.h": "c",
+        "stacktrace": "c",
+        "stdlib.h": "c",
+        "system.h": "c",
+        "freelist.h": "c",
+        "string_view": "c",
+        "bitset": "c",
+        "limine.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
