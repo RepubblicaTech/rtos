@@ -62,7 +62,7 @@ toolchain/x86_64-elf
 limine
 
 # Limine header file will be copied from the cloned repo
-src/arch/x86_64/limine.h
+src/kernel/include/limine.h
 
 # ISO files
 *.iso
