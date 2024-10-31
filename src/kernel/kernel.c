@@ -14,7 +14,6 @@
 
 #include <cpu.h>
 #include <util/memory.h>
-#include <memory/pmm.h>
 
 #include "kernel.h"
 
