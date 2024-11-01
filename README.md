@@ -12,7 +12,7 @@ An OS is mainly made out of two parts: the bootloader and the kernel.
 The bootloader part is done by Limine, which offers a 64-bit environment out of the box (GRUB simply doesn't and you'll need to make your own "jump" from 32-bit to 64-bit), which is fine for our purpose of simply understanding how an OS works.
 
 ## Current development state
-Go check [The roadmap](docs/Roadmap.md)
+Go check [The roadmap](docs/Roadmap.md).
 
 ## The base
 The core of this project is an adaptation of the code found in the [Limine Bare Bones](https://wiki.osdev.org/Limine_Bare_Bones) page of the OSDev wiki, which is a fundamental source when doing OS development.
@@ -52,7 +52,7 @@ Since it needs to compile both binutils and gcc from source, it will take a long
 
 After this, you now have built your own toolchain for building this project but also any other one that relies on the base mentioned earlier (i'd suggest to update both `BINUTILS_VERSION` `GCC_VERSION` in the Makefile when an update of such package is available on your system and maybe re-run the `make -C toolchain` command, *if you always have time and will to do so*).
 
-As of October 2024, project gets compiled with binutils version 2.41 and gcc 14.2.0, which are the versions mentioned in th Makefile.
+As of November 2024, project gets compiled with binutils version 2.43 and gcc 14.2.0, which are the versions mentioned in the Makefile.
 
 From now on, a simple `make` should compile the project's source code and create a bootable ISO image compatible with most computers with a 64-bit CPU.
 
