@@ -9,12 +9,12 @@
 
 #include <limine.h>
 
-struct parse_bootloader {
+typedef struct parse_bootloader {
 	uint64_t memory_total;
 	uint64_t entry_count;
 
 	LIMINE_PTR(struct limine_memmap_entry **) memory_entries;
-};
+} parse_bootloader;
 
 static struct parse_bootloader parsed_limine_data;
 

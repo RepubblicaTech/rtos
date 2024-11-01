@@ -14,8 +14,9 @@
 
 #include <cpu.h>
 #include <util/memory.h>
+#include <memory/pmm.h>
 
-#include "kernel.h"
+#include <kernel.h>
 
 /*
     Set the base revision to 2, this is recommended as this is the latest
@@ -169,6 +170,8 @@ void kstart(void) {
     kprintf("%luth level paging is enabled\n", 4 + paging_mode_response->mode);
 
     // crash_test();
+
+    pmm_init(parsed_limine_data);
 
     for (;;);
 
