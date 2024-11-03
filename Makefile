@@ -14,7 +14,7 @@ override MAKEFLAGS += -rR
 
 # This is the name that our final kernel executable will have.
 # Change as needed.
-override KERNEL := kernel
+override KERNEL := kernel.elf
 
 # Convenience macro to reliably declare user overridable variables.
 define DEFAULT_VAR =
@@ -37,7 +37,7 @@ override DEFAULT_KLD := $(TARGET)-ld
 $(eval $(call DEFAULT_VAR,KLD,$(DEFAULT_KLD)))
 
 # User controllable C flags.
-override DEFAULT_KCFLAGS := -g -O2 -pipe
+override DEFAULT_KCFLAGS := -g -O0 -pipe
 $(eval $(call DEFAULT_VAR,KCFLAGS,$(DEFAULT_KCFLAGS)))
 
 # User controllable C preprocessor flags. We set none by default.
@@ -54,7 +54,6 @@ $(eval $(call DEFAULT_VAR,KLDFLAGS,$(DEFAULT_KLDFLAGS)))
 
 # Internal C flags that should not be changed by the user.
 override KCFLAGS += \
-	-g \
     -Wall \
     -Wextra \
     -std=gnu11 \
