@@ -170,8 +170,6 @@ void kstart(void) {
 
     // crash_test();
 
-    pmm_init(parsed_limine_data);
-
     for (;;);
 
     // We're done, just hang...
