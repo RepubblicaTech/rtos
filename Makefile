@@ -85,7 +85,8 @@ override KLDFLAGS += \
     -nostdlib \
     -static \
     -z max-page-size=0x1000 \
-    -T src/linker.ld
+    -T src/linker.ld \
+	-Map=$(BUILD_DIR)/kernel.map
 
 # Internal nasm flags that should not be changed by the user.
 override KNASMFLAGS += \
