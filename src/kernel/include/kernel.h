@@ -13,6 +13,7 @@ typedef struct parse_bootloader {
 
 	// Memory Map
 	uint64_t memory_total;
+	uint64_t memory_usable_total;
 	uint64_t entry_count;
 
 	LIMINE_PTR(struct limine_memmap_entry **) memory_entries;
