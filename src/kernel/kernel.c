@@ -17,6 +17,8 @@
 
 #include <kernel.h>
 
+#include <memory/page.h>
+
 /*
     Set the base revision to 2, this is recommended as this is the latest
     base revision described by the Limine boot protocol specification.
@@ -86,6 +88,7 @@ struct limine_paging_mode_response *paging_mode_response;
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.
 void kstart(void) {
+    asm ("cli");
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {
         hcf();
@@ -115,6 +118,14 @@ void kstart(void) {
         0
     );
 
+    set_screen_bg_fg(0x0f0f0f, 0xffffff);
+    for (size_t i = 0; i < ft_ctx->rows; i++)
+    {
+        for (size_t i = 0; i < ft_ctx->cols; i++)  kprintf(" ");
+    }
+    clearscreen();
+    
+
     kprintf("Hello!\n");
 
     debugf("Hello from the E9 port!\n");
@@ -135,6 +146,7 @@ void kstart(void) {
     // crash_test();
 
     irq_registerHandler(0, timer);
+    isr_registerHandler(14, pf_handler);
 
     if (memmap_request.response == NULL || memmap_request.response->entry_count < 1) {
         // ERROR
@@ -151,10 +163,22 @@ void kstart(void) {
     for (uint64_t i = 0; i < parsed_limine_data.entry_count; i++)
     {
         entry = parsed_limine_data.memory_entries[i];
-        kprintf("Region start: 0x%lX; length: %lu; type: %s\n", entry->base, entry->length, memory_block_type[entry->type]);
-
-        entry = NULL;           // "non si sa mai" :)
+        kprintf("Entry n. %ld; Region start: 0x%lX; length: 0x%lX; type: %s\n", i, entry->base, entry->length, memory_block_type[entry->type]);
     }
+
+    entry = parsed_limine_data.memory_entries[parsed_limine_data.entry_count - 1];
+    parsed_limine_data.memory_total = entry->base + entry->length;
+    
+    for (uint64_t i = 0; i < parsed_limine_data.entry_count; i++)
+    {
+        entry = parsed_limine_data.memory_entries[i];
+        if (entry->type == LIMINE_MEMMAP_USABLE) parsed_limine_data.memory_usable_total += entry->length;
+    }
+
+
+    kprintf("Total Memory size: %lu KBytes\n", parsed_limine_data.memory_total / 2 / 8 / 1024 / 1024);
+    
+    kprintf("Totale usable memory: %lu KBytes\n", parsed_limine_data.memory_usable_total / 2 / 8 / 1024 / 1024);
 
     if (paging_mode_request.response == NULL) {
         debugf("--- PANIC! ---  We've got no paging!\n");
@@ -163,7 +187,7 @@ void kstart(void) {
     paging_mode_response = paging_mode_request.response;
 
     if (paging_mode_response->mode < paging_mode_request.min_mode || paging_mode_response->mode > paging_mode_request.max_mode) {
-        debugf("--- PANIC --- %luth paging mode is not supported!\n");
+        debugf("--- PANIC --- %luth paging mode is not supported!\n", paging_mode_response->mode);
         panic();
     }
     kprintf("%luth level paging is enabled\n", 4 + paging_mode_response->mode);
