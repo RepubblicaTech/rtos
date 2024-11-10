@@ -1,6 +1,7 @@
 #include "isr.h"
 #include "idt.h"
 #include "gdt.h"
+
 #include <stdio.h>
 #include <stddef.h>
 
@@ -55,8 +56,9 @@ void isr_handler(registers* regs) {
         isr_handlers[regs->interrupt](regs);
     } else if (regs->interrupt >= 32) {
         debugf("Unhandled interrupt %d\n", regs->interrupt);
-    }
-    else {
+    } else {
+        rsod_init();
+        
         kprintf("\n-----------------------------------------------------------------\n");
         kprintf("PANIC! --- \"%s\" (Exception n. %d)\n", exceptions[regs->interrupt], regs->interrupt);
         kprintf("  rax=0x%X  rbx=0x%X  rcx=0x%X  rdx=0x%X  rsi=0x%X  rdi=0x%X\n",
