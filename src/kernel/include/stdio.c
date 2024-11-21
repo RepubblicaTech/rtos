@@ -22,12 +22,30 @@ typedef long ssize_t;
 #define NANOPRINTF_IMPLEMENTATION
 #include <nanoprintf.h>
 
+void set_screen_bg_fg(uint32_t bg_rgb, uint32_t fg_rgb) {
+    ft_ctx->set_text_bg_rgb(ft_ctx, bg_rgb);
+    ft_ctx->set_text_fg_rgb(ft_ctx, fg_rgb);
+}
+
 void clearscreen() {
     ft_ctx->clear(ft_ctx, true);
 }
 
 void putc(char c) {
     flanterm_write(ft_ctx, &c, sizeof(c));
+}
+
+void rsod_init() {
+    set_screen_bg_fg(0xff0000, 0xffffff);
+
+    ft_ctx->set_cursor_pos(ft_ctx, 0, 0);
+
+    for (size_t i = 0; i < ft_ctx->rows; i++)
+    {
+        for (size_t i = 0; i < ft_ctx->cols; i++) putc(' ');
+    }
+
+    clearscreen();
 }
 
 void dputc(char c) {

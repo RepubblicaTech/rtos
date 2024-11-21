@@ -8,14 +8,16 @@
 #define KERNEL_H 1
 
 #include <limine.h>
+typedef struct bootloader_data {
 
-typedef struct parse_bootloader {
+	// Memory Map
 	uint64_t memory_total;
+	uint64_t memory_usable_total;
 	uint64_t entry_count;
 
 	LIMINE_PTR(struct limine_memmap_entry **) memory_entries;
-} parse_bootloader;
 
-static struct parse_bootloader parsed_limine_data;
+	uint64_t hhdm_offset;
+} bootloader_data;
 
 #endif

@@ -1,6 +1,7 @@
 #include "isr.h"
 #include "idt.h"
 #include "gdt.h"
+
 #include <stdio.h>
 #include <stddef.h>
 
@@ -55,15 +56,16 @@ void isr_handler(registers* regs) {
         isr_handlers[regs->interrupt](regs);
     } else if (regs->interrupt >= 32) {
         debugf("Unhandled interrupt %d\n", regs->interrupt);
-    }
-    else {
+    } else {
+        rsod_init();
+        
         kprintf("\n-----------------------------------------------------------------\n");
         kprintf("PANIC! --- \"%s\" (Exception n. %d)\n", exceptions[regs->interrupt], regs->interrupt);
-        kprintf("  rax=0x%X  rbx=0x%X  rcx=0x%X  rdx=0x%X  rsi=0x%X  rdi=0x%X\n",
+        kprintf("  rax=%#x  rbx=%#x  rcx=%#x  rdx=%#x  rsi=%#x  rdi=%#x\n",
                regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi);
-        kprintf("  rsp=0x%X  rbp=0x%X  rip=0x%X  eflags=0x%X  cs=0x%X  ds=0x%X  ss=0x%X\n",
+        kprintf("  rsp=%#x  rbp=%#x  rip=%#x  eflags=%#x  cs=%#x  ds=%#x  ss=%#x\n",
                regs->rsp, regs->rbp, regs->rip, regs->eflags, regs->cs, regs->ds, regs->ss);
-        kprintf("  interrupt=0x%X  errorcode=0x%X\n", regs->interrupt, regs->error);
+        kprintf("  interrupt=%#x  errorcode=%#x\n", regs->interrupt, regs->error);
         kprintf("-----------------------------------------------------------------\n");
 
         panic();

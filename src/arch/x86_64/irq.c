@@ -24,7 +24,7 @@ void irqHandler(registers* regs) {
     if (irq_handlers[irq] != NULL) {
         irq_handlers[irq](regs);                // tries to handle the interrupt
     } else {
-        debugf("Unhandled IRQ %d  ISR=%X  IRR=%X\n", irq, pic_isr, pic_irr);
+        debugf("Unhandled IRQ %d  ISR=%#x  IRR=%#x\n", irq, pic_isr, pic_irr);
     }
 
     pic_sendEOI(irq);
