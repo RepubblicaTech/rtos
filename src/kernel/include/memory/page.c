@@ -10,7 +10,7 @@
 +---+--  --+---+-----+---+--  --+---+----+----+---+---+---+---+---+
 
 Bit			Name					Description
-P	 	Present 					1 -> page-protection violation;
+P	 	Present 					1 -> page-protection fault;
 									0 -> non-present page
 
 W	 	Write 						1 -> write access; 
@@ -30,44 +30,34 @@ SGX 	Software Guard Extensions 	1 -> SGX violation. The fault is unrelated to or
 
 */
 
+#define PRESENT(x)					(x & 0x01)
+#define WR_RD(x)					((x >> 1) & 0x01)
+#define RING(x)						((x >> 2) & 0x01)
+#define RESERVED(x)					((x >> 3) & 0x01)
+#define IF(x)						((x >> 4) & 0x01)
+#define PK(x)						((x >> 5) & 0x01)
+#define SS(x)						((x >> 6) & 0x01)
+#define SGX(x)						((x >> 14) & 0x01)
+
 void pf_handler(registers* regs) {
 	rsod_init();
 
 	uint64_t pf_error_code = (uint64_t)regs->error;
 
 	kprintf("--- PANIC! ---\n");
+	kprintf("Page fault code %#06lx\n\n-------------------------------\n", pf_error_code);
 
-	switch (pf_error_code)
-	{
-		case 0b000:
-			kprintf("Kernel read attempt on a non-present page entry\n");
-			break;
-		case 0b010:
-			kprintf("Kernel write attempt on a non-present page entry\n");
-			break;
-		case 0b001:
-			kprintf("Kernel protection fault on read attempt\n");
-			break;
-		case 0b011:
-			kprintf("Kernel protection fault on write access\n");
-			break;
-		case 0b100:
-			kprintf("User read attempt on a non-present page entry\n");
-			break;
-		case 0b110:
-			kprintf("User write attempt on a non-present page entry\n");
-			break;
-		case 0b101:
-			kprintf("User protection fault on read attempt\n");
-			break;
-		case 0b111:
-			kprintf("User protection fault on write access\n");
-			break;
+	kprintf("SGX_VIOLATION: %d\n", SGX(pf_error_code));
+	kprintf("SHADOW_STACK_ACCESS: %d\n", SS(pf_error_code));
+	kprintf("PROTECTION_KEY_VIOLATION: %d\n", PK(pf_error_code));
+	kprintf("INSTRUCTION_FETCH: %d\n", IF(pf_error_code));
+	kprintf("RESERVED WRITE: %d\n", RESERVED(pf_error_code));
 
-		default:
-			kprintf("Unknown Error\n");
-			break;
-	}
+	kprintf("CPL: %d\n", RING(pf_error_code) == 0 ? 0 : 3);
+	kprintf("READ_WRITE_ACCESS: %d\n", WR_RD(pf_error_code));
+	kprintf("PRESENT: %d\n-------------------------------\n", PRESENT(pf_error_code));
+
+	kprintf("Instruction address: %#lx\n", regs->rip);
 
 	kprintf("--- PANIC LOG END --- HALTING\n");
 
