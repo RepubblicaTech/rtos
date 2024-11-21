@@ -72,7 +72,8 @@
         "freelist.h": "c",
         "string_view": "c",
         "bitset": "c",
-        "limine.h": "c"
+        "limine.h": "c",
+        "kernel.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
