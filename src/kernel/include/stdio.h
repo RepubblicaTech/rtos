@@ -1,7 +1,8 @@
 #ifndef STDIO_H
 #define STDIO_H 1
 
-// #define PRINTF_MIRROR
+// #define PRINTF_MIRROR            // printf() will be mirrored to the E9 port
+#define BETTER_DEBUG                // better debug info (with function names and line)
 
 #include <stdint.h>
 
@@ -24,6 +25,10 @@ int printf(void (*putc_function)(char), const char* fmt, ...);
     #define kprintf(fmt, ...) printf(mputc, fmt, ##__VA_ARGS__)
 #endif
 
-#define debugf(fmt, ...) printf(dputc, fmt, ##__VA_ARGS__)
+#ifndef BETTER_DEBUG
+    #define debugf(fmt, ...) printf(dputc, fmt, ##__VA_ARGS__)
+#else
+    #define debugf(fmt, ...) printf(dputc, "[ %s()::DEBUG ] " fmt, __FUNCTION__, ##__VA_ARGS__)
+#endif
 
 #endif
