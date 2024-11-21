@@ -20,6 +20,8 @@ void *memset(void *s, int c, size_t n);
 void *memmove(void *dest, const void *src, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
 
+uint64_t *phys_to_virtual(uint64_t physical_address);
+
 static const char* const memory_block_type[] = {
     "USABLE",
     "RESERVED",
