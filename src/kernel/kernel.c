@@ -15,9 +15,11 @@
 #include <cpu.h>
 #include <util/memory.h>
 
-#include <kernel.h>
+#include "kernel.h"
 
 #include <memory/page.h>
+#include <memory/pmm.h>
+#include <memory/freelist/freelist.h>
 
 /*
     Set the base revision to 2, this is recommended as this is the latest
@@ -54,6 +56,13 @@ static volatile struct limine_paging_mode_request paging_mode_request = {
     .revision = 0
 };
 
+// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#hhdm-higher-half-direct-map-feature
+__attribute__((used, section(".requests"))) 
+static volatile struct limine_hhdm_request hhdm_request = {
+    .id = LIMINE_HHDM_REQUEST,
+    .revision = 0
+};
+
 // Define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 __attribute__((used, section(".requests_start_marker")))
@@ -83,6 +92,8 @@ struct flanterm_fb_context *ft_fb_ctx;
 struct limine_memmap_entry *entry;
 struct limine_hhdm_response *hhdm_response;
 struct limine_paging_mode_response *paging_mode_response;
+
+struct bootloader_data limine_parsed_data;
 
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
@@ -129,19 +140,19 @@ void kstart(void) {
     kprintf("Hello!\n");
 
     debugf("Hello from the E9 port!\n");
-    debugf("Current video mode is: %dx%d address: 0x%x\n\n", framebuffer->width, framebuffer->height, (uint64_t *)framebuffer->address);
+    debugf("Current video mode is: %dx%d address: %#lx\n\n", framebuffer->width, framebuffer->height, (uint64_t *)framebuffer->address);
 
     gdt_init();
-    kprintf("[ INFO ]    GDT init done\n");
+    kprintf("[ %s():%d::INFO ]    GDT init done\n", __FUNCTION__, __LINE__);
 
     idt_init();
-    kprintf("[ INFO ]    IDT init done\n");
+    kprintf("[ %s():%d::INFO ]    IDT init done\n", __FUNCTION__, __LINE__);
 
     isr_init();
-    kprintf("[ INFO ]    ISR init done\n");
+    kprintf("[ %s():%d::INFO ]    ISR init done\n", __FUNCTION__, __LINE__);
 
     irq_init();
-    kprintf("[ INFO ]    IRQ and PIC init done\n");
+    kprintf("[ %s():%d::INFO ]    IRQ and PIC init done\n", __FUNCTION__, __LINE__);
 
     // crash_test();
 
@@ -156,29 +167,25 @@ void kstart(void) {
 
     struct limine_memmap_response *memmap_response = memmap_request.response;
 
-    parsed_limine_data.memory_entries = memmap_response->entries;
-    parsed_limine_data.entry_count = memmap_response->entry_count;
+    limine_parsed_data.memory_entries = memmap_response->entries;
+    limine_parsed_data.entry_count = memmap_response->entry_count;
 
     // Load limine's memory map into OUR struct
-    for (uint64_t i = 0; i < parsed_limine_data.entry_count; i++)
+    for (uint64_t i = 0; i < limine_parsed_data.entry_count; i++)
     {
-        entry = parsed_limine_data.memory_entries[i];
-        kprintf("Entry n. %ld; Region start: 0x%lX; length: 0x%lX; type: %s\n", i, entry->base, entry->length, memory_block_type[entry->type]);
+        entry = limine_parsed_data.memory_entries[i];
+
+        if (entry->type == LIMINE_MEMMAP_USABLE) limine_parsed_data.memory_usable_total += entry->length;
+
+        kprintf("Entry n. %ld; Region start: %#lx; length: %#lx; type: %s\n", i, entry->base, entry->length, memory_block_type[entry->type]);
     }
 
-    entry = parsed_limine_data.memory_entries[parsed_limine_data.entry_count - 1];
-    parsed_limine_data.memory_total = entry->base + entry->length;
-    
-    for (uint64_t i = 0; i < parsed_limine_data.entry_count; i++)
-    {
-        entry = parsed_limine_data.memory_entries[i];
-        if (entry->type == LIMINE_MEMMAP_USABLE) parsed_limine_data.memory_usable_total += entry->length;
-    }
+    entry = limine_parsed_data.memory_entries[limine_parsed_data.entry_count - 1];
+    limine_parsed_data.memory_total = entry->base + entry->length;
 
-
-    kprintf("Total Memory size: %lu KBytes\n", parsed_limine_data.memory_total / 2 / 8 / 1024 / 1024);
+    kprintf("Total Memory size: %#lx (%lu KBytes)\n", limine_parsed_data.memory_total, limine_parsed_data.memory_total / 16384 / 1024);
     
-    kprintf("Totale usable memory: %lu KBytes\n", parsed_limine_data.memory_usable_total / 2 / 8 / 1024 / 1024);
+    kprintf("Total usable memory: %#lx (%lu KBytes)\n", limine_parsed_data.memory_usable_total, limine_parsed_data.memory_usable_total / 16384 / 1024);
 
     if (paging_mode_request.response == NULL) {
         debugf("--- PANIC! ---  We've got no paging!\n");
@@ -192,6 +199,23 @@ void kstart(void) {
     }
     kprintf("%luth level paging is enabled\n", 4 + paging_mode_response->mode);
 
+    if (hhdm_request.response == NULL) {
+        kprintf("--- PANIC --- couldn't get Higher Half Map!\n");
+        panic();
+    }
+
+    hhdm_response = hhdm_request.response;
+
+    kprintf("Higher Half Direct Map offset: %#lx\n", hhdm_response->offset);
+    limine_parsed_data.hhdm_offset = hhdm_response->offset;
+
+    pmm_init();
+    kprintf("[ %s():%d::INFO ]    PMM init done\n", __FUNCTION__, __LINE__);
+    
+    // Allocation test
+    void *allocator_test1 = kmalloc(200);    
+    kfree(allocator_test1);
+    
     // crash_test();
 
     for (;;);
