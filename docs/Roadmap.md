@@ -13,10 +13,10 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [ ] Memory
   - [X] Get memory map
   - [ ] Memory management
-    - [ ] PMM
-      - [ ] Allocation/heap (`malloc`, `free`)
+    - [X] PMM
+      - [X] Allocation/heap (`malloc`, `free`)
     - [ ] VMM
-  - [ ] Paging
+    - [ ] Paging
 - [ ] File system support (FAT32/extX)
 - [ ] Microkernel environment ([Eleanore Semaphore](https://wiki.osdev.org/Eleanore_Semaphore))
 - [ ] Jump to userspace
