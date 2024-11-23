@@ -29,7 +29,7 @@ void pmm_init() {
 		if (memmap_entry->type != LIMINE_MEMMAP_USABLE) continue;
 
 		// get virtually mapped address
-		void *virtual_addr = (void*)(phys_to_virtual(memmap_entry->base));
+		void *virtual_addr = (void*)(PHYS_TO_VIRTUAL(memmap_entry->base));
 		freelist_entry *fl_entry = (freelist_entry*)virtual_addr;		// point the entry to that address
 
 		fl_entries[usable_entry_count] = fl_entry;
