@@ -129,30 +129,31 @@ void kstart(void) {
         0
     );
 
-    set_screen_bg_fg(0x0f0f0f, 0xffffff);
+    set_screen_bg_fg(0x000116, 0xeeeeee);           // dark blue, white-ish
     for (size_t i = 0; i < ft_ctx->rows; i++)
     {
         for (size_t i = 0; i < ft_ctx->cols; i++)  kprintf(" ");
     }
     clearscreen();
     
-
     kprintf("Hello!\n");
+
+    debugf("Kernel built on %s\n", __DATE__);
 
     debugf("Hello from the E9 port!\n");
     debugf("Current video mode is: %dx%d address: %#lx\n\n", framebuffer->width, framebuffer->height, (uint64_t *)framebuffer->address);
 
     gdt_init();
-    kprintf("[ %s():%d::INFO ]    GDT init done\n", __FUNCTION__, __LINE__);
+    kprintf("[ %s():%d::INFO ] GDT init done\n", __FUNCTION__, __LINE__);
 
     idt_init();
-    kprintf("[ %s():%d::INFO ]    IDT init done\n", __FUNCTION__, __LINE__);
+    kprintf("[ %s():%d::INFO ] IDT init done\n", __FUNCTION__, __LINE__);
 
     isr_init();
-    kprintf("[ %s():%d::INFO ]    ISR init done\n", __FUNCTION__, __LINE__);
+    kprintf("[ %s():%d::INFO ] ISR init done\n", __FUNCTION__, __LINE__);
 
     irq_init();
-    kprintf("[ %s():%d::INFO ]    IRQ and PIC init done\n", __FUNCTION__, __LINE__);
+    kprintf("[ %s():%d::INFO ] IRQ and PIC init done\n", __FUNCTION__, __LINE__);
 
     // crash_test();
 
@@ -187,18 +188,6 @@ void kstart(void) {
     
     kprintf("Total usable memory: %#lx (%lu KBytes)\n", limine_parsed_data.memory_usable_total, limine_parsed_data.memory_usable_total / 16384 / 1024);
 
-    if (paging_mode_request.response == NULL) {
-        debugf("--- PANIC! ---  We've got no paging!\n");
-        panic();
-    }
-    paging_mode_response = paging_mode_request.response;
-
-    if (paging_mode_response->mode < paging_mode_request.min_mode || paging_mode_response->mode > paging_mode_request.max_mode) {
-        debugf("--- PANIC --- %luth paging mode is not supported!\n", paging_mode_response->mode);
-        panic();
-    }
-    kprintf("%luth level paging is enabled\n", 4 + paging_mode_response->mode);
-
     if (hhdm_request.response == NULL) {
         kprintf("--- PANIC --- couldn't get Higher Half Map!\n");
         panic();
@@ -210,11 +199,24 @@ void kstart(void) {
     limine_parsed_data.hhdm_offset = hhdm_response->offset;
 
     pmm_init();
-    kprintf("[ %s():%d::INFO ]    PMM init done\n", __FUNCTION__, __LINE__);
+    kprintf("[ %s():%d::INFO ] PMM init done\n", __FUNCTION__, __LINE__);
     
     // Allocation test
     void *allocator_test1 = kmalloc(200);    
     kfree(allocator_test1);
+    allocator_test1 = NULL;
+    
+    if (paging_mode_request.response == NULL) {
+        debugf("--- PANIC! ---  We've got no paging!\n");
+        panic();
+    }
+    paging_mode_response = paging_mode_request.response;
+
+    if (paging_mode_response->mode < paging_mode_request.min_mode || paging_mode_response->mode > paging_mode_request.max_mode) {
+        debugf("--- PANIC --- %luth paging mode is not supported!\n", paging_mode_response->mode);
+        panic();
+    }
+    kprintf("%luth level paging is enabled\n", 4 + paging_mode_response->mode);
     
     // crash_test();
 
