@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 
 #include "gdt.h"
 
@@ -40,6 +41,11 @@ void gdt_init() {
     gdtr.size = (uint16_t)(sizeof(gdt) - 1);
     gdtr.pointer = (gdt_entry_t*)&gdt;
 
+	debugf("GDTR:\n");
+	debugf("\tsize: %u\n", gdtr.size);
+	debugf("\tpointer: %p\n", gdtr.pointer);
+
+	debugf("Loading GDTR %#lx\n", (uint64_t)&gdtr);
     load_gdt(&gdtr);
 
     reload_segments();
