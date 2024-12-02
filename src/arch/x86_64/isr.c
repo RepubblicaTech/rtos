@@ -51,6 +51,60 @@ void isr_init() {
     
 }
 
+void print_reg_dump(registers* regs) {
+    kprintf("Register dump:\n");
+
+	kprintf("--- GENERAL PURPOSE ---\n");
+	kprintf("\trax: %#llx\n"
+			"\trbx: %#llx\n"
+			"\trcx: %#llx\n"
+			"\trdx: %#llx\n",
+			regs->rax,
+			regs->rbx,
+			regs->rcx,
+			regs->rdx);
+	
+	kprintf("--- SEGMENT REGS ---\n");
+	kprintf("\tcs (Code segment):   %#llx\n"
+			"\tds (Data segment):   %#llx\n"
+			"\tss (Stack segment):  %#llx\n",
+			regs->cs,
+			regs->ds,
+			regs->ss);
+	
+	kprintf("--- FLAGS, POINTER AND INDEX REGISTERS ---\n");
+	kprintf("\teflags:%#llx\n"
+			"\trip (Instruction address):  %#llx\n"
+			"\trbp (Base pointer):         %#llx\n"
+			"\trsp (Stack pointer):        %#llx\n"
+			"\trdi:                        %#llx\n"
+			"\trsi:                        %#llx\n",
+			regs->eflags,
+			regs->rip,
+			regs->rbp,
+			regs->rsp,
+			regs->rdi,
+			regs->rsi);
+
+	kprintf("--- OTHER REGISTERS ---\n");
+	kprintf("\tr8:  %#llx\n"
+			"\tr9:  %#llx\n"
+			"\tr10: %#llx\n"
+			"\tr11: %#llx\n"
+			"\tr12: %#llx\n"
+			"\tr13: %#llx\n"
+			"\tr14: %#llx\n"
+			"\tr15: %#llx\n",
+			regs->r8,
+			regs->r9,
+			regs->r10,
+			regs->r11,
+			regs->r12,
+			regs->r13,
+			regs->r14,
+			regs->r15);
+}
+
 void isr_handler(registers* regs) {
     if (isr_handlers[regs->interrupt] != NULL) {
         isr_handlers[regs->interrupt](regs);
@@ -58,17 +112,18 @@ void isr_handler(registers* regs) {
         debugf("Unhandled interrupt %d\n", regs->interrupt);
     } else {
         rsod_init();
-        
-        kprintf("\n-----------------------------------------------------------------\n");
-        kprintf("PANIC! --- \"%s\" (Exception n. %d)\n", exceptions[regs->interrupt], regs->interrupt);
-        kprintf("  rax=%#x  rbx=%#x  rcx=%#x  rdx=%#x  rsi=%#x  rdi=%#x\n",
-               regs->rax, regs->rbx, regs->rcx, regs->rdx, regs->rsi, regs->rdi);
-        kprintf("  rsp=%#x  rbp=%#x  rip=%#x  eflags=%#x  cs=%#x  ds=%#x  ss=%#x\n",
-               regs->rsp, regs->rbp, regs->rip, regs->eflags, regs->cs, regs->ds, regs->ss);
-        kprintf("  interrupt=%#x  errorcode=%#x\n", regs->interrupt, regs->error);
-        kprintf("-----------------------------------------------------------------\n");
 
-        panic();
+        kprintf_panic("KERNEL PANIC! \"%s\" (Exception n. %d)\n", exceptions[regs->interrupt], regs->interrupt);
+
+        kprintf("\terrcode: %#llx\n",
+                regs->error);
+        
+        print_reg_dump(regs);
+
+
+        kprintf("PANIC LOG END --- HALTING ---\n");
+
+        _panic();
     }
 
 }
