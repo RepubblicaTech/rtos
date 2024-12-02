@@ -73,7 +73,13 @@
         "string_view": "c",
         "bitset": "c",
         "limine.h": "c",
-        "kernel.h": "c"
+        "kernel.h": "c",
+        "pmm.h": "c",
+        "vmm.h": "c",
+        "rsdp.h": "c",
+        "acpi.h": "c",
+        "apic.h": "c",
+        "madt.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
