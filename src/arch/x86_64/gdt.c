@@ -9,7 +9,7 @@ struct __attribute__((packed)) {
     gdt_entry_t gdt_entries[5];
 } gdt;
 
-extern void load_gdt(gdt_pointer_t* descriptor);
+extern void _load_gdt(gdt_pointer_t* descriptor);
 
 void reload_segments() {
     __asm__ volatile (
@@ -45,8 +45,8 @@ void gdt_init() {
 	debugf("\tsize: %u\n", gdtr.size);
 	debugf("\tpointer: %p\n", gdtr.pointer);
 
-	debugf("Loading GDTR %#lx\n", (uint64_t)&gdtr);
-    load_gdt(&gdtr);
+	debugf("Loading GDTR %#llx\n", (uint64_t)&gdtr);
+    _load_gdt(&gdtr);
 
     reload_segments();
 }
