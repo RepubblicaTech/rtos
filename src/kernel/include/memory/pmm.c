@@ -1,3 +1,9 @@
+/*
+	Freelist memory allocator/manager
+
+	(C) RepubblicaTech 2024
+*/
+
 #include "pmm.h"
 
 #include <limine.h>
@@ -8,18 +14,21 @@
 #include <stddef.h>
 #include <stdio.h>
 
-extern struct bootloader_data limine_parsed_data;
-extern void panic();
+#include <memory/paging/paging.h>
 
-freelist_entry *fl_head;			// is set to the first entry
-freelist_entry **fl_entries_ptr;
+extern struct bootloader_data limine_parsed_data;
+extern void _panic();
+
+freelist_node *fl_head;		// is set to the first entry
+	
+freelist_node **fl_entries_ptr;
 
 int usable_entry_count = 0;
 
 void pmm_init() {
 
 	// array of freelist entries
-	freelist_entry *fl_entries[limine_parsed_data.entry_count];
+	freelist_node *fl_entries[limine_parsed_data.entry_count];
 
 	// create a freelist entry that points to the start of each usable address
 	for (uint64_t i = 0; i < limine_parsed_data.entry_count; i++)
@@ -30,24 +39,25 @@ void pmm_init() {
 
 		// get virtually mapped address
 		void *virtual_addr = (void*)(PHYS_TO_VIRTUAL(memmap_entry->base));
-		freelist_entry *fl_entry = (freelist_entry*)virtual_addr;		// point the entry to that address
+		freelist_node *fl_entry = (freelist_node*)virtual_addr;		// point the entry to that address
+		fl_entry->size = ((size_t)memmap_entry->length + 0x1000);
 
 		fl_entries[usable_entry_count] = fl_entry;
 
 		usable_entry_count++;
 	}
 
-	kprintf("[ %s():%d::INFO ] Found %d usable entries\n", __FUNCTION__, __LINE__, usable_entry_count);
+	fl_entries[usable_entry_count] = NULL;
+
+	kprintf_info("Found %d usable entries\n", usable_entry_count);
 
 	// scan the entries to point each to the next one
-	for (int i = 0; i < usable_entry_count; i++)
+	for (int i = 0; fl_entries[i] != NULL; i++)
 	{
-		if (fl_entries[i] == NULL) break;		// breaks the loop if there are no more entries to scan
-
-		freelist_entry *fl_entry = fl_entries[i];
+		freelist_node *fl_entry = fl_entries[i];
 
 		// the next entry will be the next one in the array
-		freelist_entry *fl_entry_next = fl_entries[i + 1];
+		freelist_node *fl_entry_next = fl_entries[i + 1];
 		fl_entry->next = fl_entry_next;
 
 		// if it's the first entry...
@@ -59,7 +69,7 @@ void pmm_init() {
 		}
 
 		// the prev entry will be the previous one in the array
-		freelist_entry *fl_entry_prev = fl_entries[i - 1];
+		freelist_node *fl_entry_prev = fl_entries[i - 1];
 		fl_entry->prev = fl_entry_prev;
 
 		// if it's the last entry, point next to NULL
@@ -73,29 +83,26 @@ void pmm_init() {
 	// prints all entries and their links
 	for (int i = 0; i < usable_entry_count; i++)
 	{
-		freelist_entry *fl_entry = fl_entries[i];
+		freelist_node *fl_entry = fl_entries[i];
 
 		kprintf("ENTRY n. %d\n", i);
-		kprintf("\taddress: %p\n", fl_entry);
+		kprintf("address: %p\n", fl_entry);
 		kprintf("\tprev: %p\n", fl_entry->prev);
 		kprintf("\tnext: %p\n", fl_entry->next);
+		kprintf("\tsize: %#llx\n", fl_entry->size);
 	}
 
 	fl_entries_ptr = fl_entries;
 }
 
-// given an array of entries, returns the count of the entries.
-// @param fl_entries an array of freelist entry pointers, or a pointer to it
-int get_freelist_entry_count(freelist_entry **fl_entries) {
-	int fl_entry_count = 1;
+// Returns the count of the entries.
+int get_freelist_entry_count() {
+	freelist_node *fl_en = fl_head;
+	for (usable_entry_count = 0; fl_en != NULL; usable_entry_count++);
+	
+	debugf("entry count: %d\n", usable_entry_count);
 
-	for (int i = 0; fl_entries[i] != 0x0; i++) {
-		fl_entry_count++;
-	}
-
-	debugf("entry count: %d\n", fl_entry_count);
-
-	return fl_entry_count;
+	return usable_entry_count;
 }
 
 /*
@@ -103,113 +110,104 @@ int get_freelist_entry_count(freelist_entry **fl_entries) {
 
 	@returns pointer to array of entries
 */
-freelist_entry **fl_update_entries() {
+freelist_node **fl_update_entries() {
 
-	fl_entries_ptr[0] = fl_head;
+	freelist_node *fl_en = fl_head;
 
-	for (int i = 0; i < usable_entry_count - 1; i++)
+	for (usable_entry_count = 0; fl_en != NULL; usable_entry_count++)
 	{
-		fl_entries_ptr[i]->next = fl_entries_ptr[i + 1];
+		fl_entries_ptr[usable_entry_count] = fl_en;
 
-		if (i == 0) continue;
-		fl_entries_ptr[i]->prev = fl_entries_ptr[i - 1];
+		fl_en = fl_en->next;
 	}
 
 	return fl_entries_ptr;
 }
 
-int kmallocs = 0;					// keeping track of how many times kmalloc was called
-int kfrees = 0;					// keeping track of how many times kfree was called
+int kmallocs = 0;					// keeping track of how many times fl_alloc was called
+int kfrees = 0;						// keeping track of how many times fl_free was called
 
-void *kmalloc(size_t bytes) {
-	kmallocs++;
-	debugf("--- Allocation n.%d ---\n", kmallocs);
-
-	void *ptr;
-	size_t s_fl_entry, s_fl_entry_next;
-
-	// start with the head
-	freelist_entry *fl_entry = fl_head;
-
-	do
-	{
-		debugf("Looking for available memory at entry %p\n", fl_entry);
-
-		// get current and next entry address
-		s_fl_entry = (size_t)fl_entry;
-		s_fl_entry_next = (size_t)fl_entry->next;
-
-		// does <bytes> fit into the section between the two entries?
-		if (bytes > (s_fl_entry_next - s_fl_entry)) {
-			debugf("Not enough memory found. Looking for next address...\n");
-
-			fl_entry = fl_entry->next;
-		}
-
-		// we have found a block
-		debugf("Found enough memory at address %p\n", fl_entry);
-		break;		// quit from the loop
-
-	} while (fl_entry->next != NULL);
-
-	// give that address to the pointer
-	ptr = (void*)fl_entry;
-
-	kprintf("[ %s():%d::INFO ] allocated %lu bytes at address %p\n", __FUNCTION__, __LINE__, bytes, fl_entry);
-
-	// shift the entry by <bytes>
-	s_fl_entry += bytes;
-
-	debugf("head points to %p\n", fl_head);
-	// if memory gets allocated from the entry head, we should change it
-	if ((size_t)fl_entry == (size_t)fl_head) {
-		fl_entry = (freelist_entry*)s_fl_entry;
-		fl_head = fl_entry;
-
-		debugf("head %p now points to %p\n", ptr, fl_head);
+void *fl_alloc(size_t bytes) {
+	if (bytes < 1) {
+		// debugf("Bro are you ok with %lu bytes?\n", bytes);
+		return NULL;
 	}
 
-	fl_update_entries();
+	kmallocs++;
+	// debugf("--- Allocation n.%d ---\n", kmallocs);
 
-	debugf("\tprev: %p\n", fl_head->prev);
-	debugf("\tnext: %p\n", fl_head->next);
+	void *ptr;
 
-	return ptr;
+	// start with the head
+	freelist_node *fl_entry;
+
+	for (fl_entry = fl_head; fl_entry != NULL; fl_entry = fl_entry->next)
+	{
+		// debugf("Looking for memory to allocate at address %p\n", fl_entry);
+
+		// if the requested size fits in the freelist region...
+		if (bytes <= fl_entry->size) {
+			// we have found a block
+			fl_entry->size -= bytes;		// subract the allocated size from entry's length
+
+			break;							// quit from the loop since we found a block
+		}
+		// if not, go to the next block
+		// debugf("Not enough memory found. Looking for next address...\n");
+	}
+	
+	debugf("allocated %lu byte%sat address %p\n", bytes, bytes > 1? "s " : " ",  fl_entry);
+
+	// if memory gets allocated from the entry head, we should change it
+	if ((size_t)fl_entry == (size_t)fl_head) {
+		// if there are no more bytes in that entry, we'll move the head to the next free entry
+		if (fl_entry->size == 0) {
+			fl_head = fl_head->next;
+		} else {		// there's still some memory left
+			fl_head = (freelist_node*)((size_t)fl_entry + bytes);
+			fl_head->next = fl_entry->next;
+			fl_head->size = fl_entry->size;
+		}
+	}
+
+	ptr = (void*)((size_t)fl_entry);
+
+	// freelist_node **fl_entries = fl_update_entries();
+
+	// debugf("old head %p is now %p\n", ptr, fl_head);
+	// debugf("\tprev: %p\n", fl_head->prev);
+	// debugf("\tnext: %p\n", fl_head->next);
+	// debugf("\tsize: %#llx\n", fl_head->size);
+	
+	// we need the physical address of the free entry
+	return (ptr - limine_parsed_data.hhdm_offset);
 }
 
-void kfree(void *ptr) {
+void fl_free(void *ptr) {
 	kfrees++;
-	debugf("--- Deallocation n.%d ---\n", kfrees);
+	// debugf("--- Deallocation n.%d ---\n", kfrees);
 
 	size_t s_fl_head, s_fl_ptr;
 
-	freelist_entry *fl_ptr = (freelist_entry*)ptr;
+	// the entry will point to the virtual address of the deallocated pointer
+	freelist_node *fl_ptr = (freelist_node*)(ptr + limine_parsed_data.hhdm_offset);
 
-	freelist_entry **fl_entries = fl_update_entries();
-
-	fl_head = fl_entries[0];
 	s_fl_head = (size_t)fl_head;
 	s_fl_ptr = (size_t)fl_ptr;
 
-	debugf("pointer %p is now a freelist entry\n", fl_ptr);
-	debugf("head is at location %p\n", fl_head);
+	// debugf("pointer %p is now a freelist entry\n", fl_ptr);
+	// debugf("head is at location %p\n", fl_head);
 
-	kprintf("[ %s():%d::INFO ] deallocating pointer %p\n", __FUNCTION__, __LINE__, fl_ptr);
+	debugf("deallocating pointer %p\n", fl_ptr);
 
 	// ---------------------- //
 	// --| POSSIBLE CASES |-- //
 	// ---------------------- //
 
 	// 1. the pointer comes before the head
-	// --- AND ---
-	// 	  both pointer->next and head->next point to the same thing
-
-	// the head becomes the pointer
 	if (s_fl_head > s_fl_ptr) {
+		// the head becomes the pointer
 		fl_head = fl_ptr;
-
-		// always update the list
-		fl_update_entries();
 
 		debugf("%p is the new head\n", fl_head);
 
@@ -221,38 +219,38 @@ void kfree(void *ptr) {
 	// we should cycle through all the entries
 	for (int i = 0; fl_entries_ptr[i] != NULL; i++)
 	{
-		freelist_entry *fl_entry = fl_entries_ptr[i];
+		freelist_node *fl_entry = fl_entries_ptr[i];
 		size_t s_fl_entry = (size_t)fl_entry;
 		size_t s_fl_entry_next = (size_t)fl_entry->next;
 
 		// is the entry < pointer AND entry->next > pointer?
 		if (s_fl_entry < s_fl_ptr && s_fl_entry_next > s_fl_ptr) {
-			// entry->next->next becomes pointer->next
+			// entry->next becomes pointer->next
 			fl_ptr->next = fl_entry->next;
 
-			// entry->next becoumes the pointer 
+			// entry->next becomes the pointer 
 			fl_entry->next = fl_ptr;
 
 			debugf("%p now points to %p\n", fl_entry, fl_entry->next);
-
-			// always update the list
-			fl_update_entries();
 
 			return;		// deallocation is done
 		}
 	}
 	
 	// 3. the pointer comes after all the entries
-	int fl_last_entry = get_freelist_entry_count(fl_entries) - 1;
+	freelist_node *last_fl;
+	freelist_node *fl_en;
+	for (fl_en = fl_head; fl_en->next; fl_en = fl_en->next) last_fl = fl_en;
 
-	if (s_fl_ptr > (size_t)fl_entries[fl_last_entry]) {
-		fl_entries[fl_last_entry + 1] = fl_ptr;
+	if (s_fl_ptr > (size_t)last_fl) {
+		last_fl->next = fl_ptr;
 
 		// just in case, the entry after it will be NULL'd
-		fl_entries[fl_last_entry + 2] = NULL;
+		last_fl->next->next = NULL;
 
-		// always update the list
-		fl_update_entries();
+		// update the entries (?)
+		fl_en->prev->next = last_fl;
+		last_fl->prev = fl_en->prev;
 
 		debugf("%p is at the end of the free list\n", fl_ptr);
 
