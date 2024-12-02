@@ -117,8 +117,9 @@ void irq_unmask(uint8_t irq_line) {
     outb(port, value);        
 }
 
-// Masks all interrupts
-void pic_disable(void) {
+// Disable the PIC
+void pic_disable() {
+    // Masks all interrupts
     outb(PIC1_DATA, 0xff);
     io_wait();
     outb(PIC2_DATA, 0xff);
