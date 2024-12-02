@@ -3,8 +3,9 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
+
 #include <cpuid.h>
-#include "pic.h"
 
 // Vendor strings from CPUs.
 #define CPUID_VENDOR_AMD           "AuthenticAMD"
@@ -103,26 +104,26 @@
 #define CPUID_FEAT_EDX_IA64             1 << 30
 #define CPUID_FEAT_EDX_PBE              1 << 31
 
+// gets a value from a CRX register
+// by https://github.com/Tix3Dev/apoptOS/blob/370fd34a6d3c87a9d1a16d1a2ec072bd1836ba6c/src/kernel/utility/utils.h#L26
+#define cpu_get_cr(reg)				    					\
+({							    							\
+    uint64_t val = 0;					    				\
+    asm volatile("mov %%cr" #reg ", %0" : "=r" (val));    	\
+    val;						    						\
+})
+
 /* Get CPU's model number */
-static int get_model(void) {
-    int ebx, unused;
-    __cpuid(0, unused, ebx, unused, unused);
-    return ebx;
-}
+static int get_model(void);
 
-bool check_msr() {
-   static uint32_t a, unused, d; // eax, edx
-   __get_cpuid(1, &a, &unused, &unused, &d);
-   return d & CPUID_FEAT_EDX_MSR;
-}
+bool check_pae();
+bool check_msr();
+bool check_apic();
 
-void cpu_get_msr(uint32_t msr, uint32_t *lo, uint32_t *hi) {
-   asm volatile("rdtsc" : "=a"(*lo), "=d"(*hi) : "c"(msr));
-}
+void cpu_get_msr(uint32_t msr, uint32_t *lo, uint32_t *hi);
+void cpu_set_msr(uint32_t msr, uint32_t lo, uint32_t hi);
 
-void cpu_set_msr(uint32_t msr, uint32_t lo, uint32_t hi) {
-   asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
-}
-
+void write_reg(size_t addr, uint32_t val);
+uint32_t read_reg(size_t addr);
 
 #endif
