@@ -25,6 +25,10 @@ int printf(void (*putc_function)(char), const char* fmt, ...);
     #define kprintf(fmt, ...) printf(mputc, fmt, ##__VA_ARGS__)
 #endif
 
+#define kprintf_info(fmt, ...)  kprintf("[ %s():%d::INFO ] " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define kprintf_warn(fmt, ...)  kprintf("--- [ WARNING @ s():%d ] --- " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define kprintf_panic(fmt, ...) kprintf("--- [ PANIC @ %s():%d ] --- " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+
 #ifndef BETTER_DEBUG
     #define debugf(fmt, ...) printf(dputc, fmt, ##__VA_ARGS__)
 #else

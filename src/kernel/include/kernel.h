@@ -18,6 +18,23 @@ typedef struct bootloader_data {
 	LIMINE_PTR(struct limine_memmap_entry **) memory_entries;
 
 	uint64_t hhdm_offset;
+
+	uint64_t kernel_base_physical;
+	uint64_t kernel_base_virtual;
+
+	// ACPI/MMIO related stuff
+	uint64_t *rsdp_table_address;
+	
+	uint64_t p_lapic_base;
 } bootloader_data;
+
+// these come from the linker
+// from https://github.com/malwarepad/cavOS/blob/3ddf0b2f8d72aee57a13a906c19bde403e425c0d/src/kernel/include/bootloader.h#L7
+extern uint64_t __kernel_text_start, __kernel_text_end;
+extern uint64_t __kernel_rodata_start, __kernel_rodata_end;
+extern uint64_t __kernel_data_start, __kernel_data_end;
+extern uint64_t __kernel_start, __kernel_end;
+
+extern uint64_t __limine_reqs_start, __limine_reqs_end;
 
 #endif

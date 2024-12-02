@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 
 #include "gdt.h"
 
@@ -8,7 +9,7 @@ struct __attribute__((packed)) {
     gdt_entry_t gdt_entries[5];
 } gdt;
 
-extern void load_gdt(gdt_pointer_t* descriptor);
+extern void _load_gdt(gdt_pointer_t* descriptor);
 
 void reload_segments() {
     __asm__ volatile (
@@ -40,7 +41,12 @@ void gdt_init() {
     gdtr.size = (uint16_t)(sizeof(gdt) - 1);
     gdtr.pointer = (gdt_entry_t*)&gdt;
 
-    load_gdt(&gdtr);
+	debugf("GDTR:\n");
+	debugf("\tsize: %u\n", gdtr.size);
+	debugf("\tpointer: %p\n", gdtr.pointer);
+
+	debugf("Loading GDTR %#llx\n", (uint64_t)&gdtr);
+    _load_gdt(&gdtr);
 
     reload_segments();
 }

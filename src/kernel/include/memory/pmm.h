@@ -3,13 +3,11 @@
 
 #include <stddef.h>
 
-#include <memory/freelist/freelist.h>
+#include <memory/freelists/freelist.h>
 
 void pmm_init();
 
-freelist_entry **fl_update_entries();
-
-void *kmalloc(size_t bytes);
-void kfree(void *ptr);
+void *fl_alloc(size_t bytes);
+void fl_free(void *ptr);
 
 #endif

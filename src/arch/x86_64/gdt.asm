@@ -1,6 +1,6 @@
 [bits 64]
 
-global load_gdt
-load_gdt:
+global _load_gdt
+_load_gdt:
     lgdt [rdi]
     ret

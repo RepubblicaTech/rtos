@@ -10,7 +10,7 @@
             "defines": [],
             "cStandard": "gnu11",
             "cppStandard": "gnu++17",
-            "intelliSenseMode": "clang-x64",
+            "intelliSenseMode": "${default}",
             "compilerArgs": [
                 "-g",
                 "-Wall",
@@ -29,7 +29,8 @@
                 "-mno-sse2",
                 "-mno-red-zone",
                 "-mcmodel=kernel"
-            ]
+            ],
+            "compilerPath": "${workspaceFolder}/toolchain/x86_64-elf/bin/x86_64-elf-gcc"
         }
     ],
     "version": 4

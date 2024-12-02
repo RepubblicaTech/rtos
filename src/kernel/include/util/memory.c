@@ -1,6 +1,5 @@
 #include "memory.h"
 #include <io/io.h>
-#include <kernel.h>
 
 // GCC and Clang reserve the right to generate calls to the following
 // 4 functions even if they are not directly called.
@@ -57,10 +56,4 @@ int memcmp(const void *s1, const void *s2, size_t n) {
     }
 
     return 0;
-}
-
-extern struct bootloader_data limine_parsed_data;
-
-uint64_t *phys_to_virtual(uint64_t physical_address) {
-    return (uint64_t*)(limine_parsed_data.hhdm_offset | physical_address);
 }

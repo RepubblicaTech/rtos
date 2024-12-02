@@ -40,9 +40,11 @@ typedef struct {
 
 typedef void (*isrHandler)(registers* regs);
 
+void print_reg_dump(registers* regs);
+
 void isr_init();
 void isr_registerHandler(int interrupt, isrHandler handler);
 
-extern void panic();
+extern void _panic();
 
 #endif

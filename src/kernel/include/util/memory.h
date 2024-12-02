@@ -6,6 +6,14 @@
 #include <stdbool.h>
 
 #include <limine.h>
+#include <kernel.h>
+
+extern struct bootloader_data limine_parsed_data;
+
+#define HHDM_OFFSET         limine_parsed_data.hhdm_offset
+
+#define PHYS_TO_VIRTUAL(ADDR)       ((uint64_t)ADDR + HHDM_OFFSET)
+#define VIRT_TO_PHYSICAL(ADDR)      ((uint64_t)ADDR - HHDM_OFFSET)
 
 /*
     GCC and Clang reserve the right to generate calls to the following
@@ -14,13 +22,10 @@
     DO NOT remove or rename these functions, or stuff will eventually break!
     They CAN be moved to a different .c file.
 */
-
 void *memcpy(void *dest, const void *src, size_t n);
 void *memset(void *s, int c, size_t n);
 void *memmove(void *dest, const void *src, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
-
-uint64_t *phys_to_virtual(uint64_t physical_address);
 
 static const char* const memory_block_type[] = {
     "USABLE",

@@ -342,13 +342,13 @@ isr_stub_table:
 %assign i i+1
 %endrep
 
-global panic
-panic:
+global _panic
+_panic:
     cli
     hlt
 
-global crash_test
-crash_test:
+global _crash_test
+_crash_test:
     ; division by 0 exception
     mov ecx, 0x4E
     mov eax, 0

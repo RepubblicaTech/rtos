@@ -13,7 +13,7 @@
 
 irq_handler irq_handlers[16];
 
-extern void enable_interrupts();
+extern void _enable_interrupts();
 
 void irqHandler(registers* regs) {
     int irq = regs->interrupt - PIC_REMAP_OFFSET;
@@ -37,7 +37,7 @@ void irq_init() {
         isr_registerHandler(PIC_REMAP_OFFSET + i, irqHandler);
     }
 
-    enable_interrupts();
+    _enable_interrupts();
     
 }
 
