@@ -6,19 +6,36 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 ## 1st Milestone
 
 - [X] Bare bones (Limine and 64-bit kernel)
-- [X] `printf` support (+ E9 port "debugging")
+
+- [X] `printf` implementation (+ E9 port "debugging")
+
 - [X] GDT
 - [X] Interrupt handling (IDT, ISRs, IRQs)
 - [X] PIC support
+
+- [ ] ACPI/MMIO
+  - [X] Get RSDP/RSDT information
+  - [ ] MADT (LAPIC initialization)
+
 - [ ] Memory
   - [X] Get memory map
   - [ ] Memory management
-    - [ ] PMM
-      - [ ] Allocation/heap (`malloc`, `free`)
+    - [X] PMM
+      - [X] Allocation/heap (`malloc`, `free`)
     - [ ] VMM
-  - [ ] Paging
-- [ ] File system support (FAT32/extX)
+      - [X] Paging
+      - [ ] Mapping devices to memory
+        - [ ] LAPIC
+        - [ ] _leave this in case of other devices to map_
+      - [ ] Actual VMM stuff (allocating, freeing pages etc.)
+
+- [ ] File system support (ISO 9660, maybe FAT32/EXTx)
+
 - [ ] Microkernel environment ([Eleanore Semaphore](https://wiki.osdev.org/Eleanore_Semaphore))
 - [ ] Jump to userspace
 
 ## 2nd Milestone
+- [ ] Basic shell
+  - [ ] (decent) Keyboard driver
+  - [ ] some kind of PATH
+  - [ ] basic commands
