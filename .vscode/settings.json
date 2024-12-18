@@ -63,7 +63,6 @@
         "cerrno": "cpp",
         "compiler.h": "c",
         "interception-malloc-test-1.C": "cpp",
-        "string.h": "c",
         "errno.h": "c",
         "assert.h": "c",
         "stacktrace": "c",
@@ -83,7 +82,8 @@
         "isr.h": "c",
         "pit.h": "c",
         "util.h": "c",
-        "mmio.h": "c"
+        "mmio.h": "c",
+        "io_apic.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
