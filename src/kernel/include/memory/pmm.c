@@ -158,7 +158,7 @@ void *fl_alloc(size_t bytes) {
 		// debugf_debug("Not enough memory found. Looking for next address...\n");
 	}
 	
-	debugf_debug("allocated %lu byte%sat address %p\n", bytes, bytes > 1? "s " : " ",  fl_entry);
+	// debugf_debug("allocated %lu byte%sat address %p\n", bytes, bytes > 1? "s " : " ",  fl_entry);
 
 	// if memory gets allocated from the entry head, we should change it
 	if ((size_t)fl_entry == (size_t)fl_head) {
