@@ -338,12 +338,12 @@ global isr_stub_table
 isr_stub_table:
 %assign i 0
 %rep    256
-    dq isr_stub_%+i ; use DQ if targeting 64-bit
+    dq isr_stub_%+i
 %assign i i+1
 %endrep
 
-global _panic
-_panic:
+global _hcf
+_hcf:
     cli
     hlt
 
