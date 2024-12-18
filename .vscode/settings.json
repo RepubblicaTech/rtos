@@ -46,7 +46,7 @@
         "sstream": "c",
         "system_error": "c",
         "dynamic_bitset": "c",
-        "memory.h": "c",
+        "string.h": "c",
         "gdt.h": "c",
         "stdint-gcc.h": "c",
         "ranges": "c",
@@ -79,7 +79,11 @@
         "rsdp.h": "c",
         "acpi.h": "c",
         "apic.h": "c",
-        "madt.h": "c"
+        "madt.h": "c",
+        "isr.h": "c",
+        "pit.h": "c",
+        "util.h": "c",
+        "mmio.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
