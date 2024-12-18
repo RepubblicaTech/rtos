@@ -1,9 +1,6 @@
 #include "io_apic.h"
 #include "apic.h"
 
-#include <idt.h>
-#include <irq.h>
-
 #include <kernel.h>
 
 #include <stdio.h>
