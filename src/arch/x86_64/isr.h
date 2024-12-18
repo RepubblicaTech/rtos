@@ -45,6 +45,6 @@ void print_reg_dump(registers* regs);
 void isr_init();
 void isr_registerHandler(int interrupt, isrHandler handler);
 
-extern void _panic();
+extern void _hcf();
 
 #endif
