@@ -78,7 +78,7 @@ void pf_handler(registers* regs);
  *   PAGING STUFF   *
  ********************/
 
-uint64_t *get_pml4();
+extern uint64_t _get_pml4();
 
 // sets the PML4 table to use
 // note: given address MUST be physical, NOT a virtual one

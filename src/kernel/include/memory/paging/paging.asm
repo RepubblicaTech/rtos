@@ -13,3 +13,10 @@ _load_pml4:
 	mov cr3, rax
 
 	ret
+
+; uint64_t _get_pml4()
+global _get_pml4
+_get_pml4:
+	mov rax, cr3
+
+	ret
