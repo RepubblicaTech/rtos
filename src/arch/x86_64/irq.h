@@ -7,6 +7,9 @@
 
 typedef void (*irq_handler)(registers* regs);
 
+extern void _enable_interrupts();
+extern void _disable_interrupts();
+
 void irq_init();
 void irq_registerHandler(int irq, irq_handler handler);
 
