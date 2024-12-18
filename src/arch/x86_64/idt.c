@@ -2,7 +2,6 @@
 
 #include "idt.h"
 #include "gdt.h"
-#include "isr.h"
 
 #include <util/binary.h>
 
@@ -34,17 +33,17 @@ void idt_init() {
     idtr.base = (idt_entry_t*)&idt_entries[0];
     idtr.limit = (uint16_t)sizeof(idt_entry_t) * IDT_MAX_DESCRIPTORS - 1;
 
-    debugf("IDTR:\n");
-    debugf("\tbase: %p\n", idtr.base);
-    debugf("\tlimit: %#x\n", idtr.limit);
+    debugf_debug("IDTR:\n");
+    debugf_debug("\tbase: %p\n", idtr.base);
+    debugf_debug("\tlimit: %#x\n", idtr.limit);
 
     for (uint16_t vector = 0; vector < IDT_MAX_DESCRIPTORS; vector++) {
         idt_set_gate(vector, isr_stub_table[vector], GDT_CODE_SEGMENT, 0x8E);
         vectors[vector] = true;
     }
 
-    debugf("All 256 gates enabled\n");
-    debugf("Loading IDTR\n");
+    debugf_debug("All 256 gates enabled\n");
+    debugf_debug("Loading IDTR\n");
 
     __asm__ volatile ("lidt %0" : : "m"(idtr)); // load the new IDT
     __asm__ volatile ("sti"); // set the interrupt flag
