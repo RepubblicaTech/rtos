@@ -117,10 +117,10 @@ uint64_t *get_create_pmlt(uint64_t *pml_table, uint64_t pmlt_index, uint64_t fla
 
 // map a page frame to a physical address that gets mapped to a virtual one
 void map_phys_to_page(uint64_t* pml4_table, uint64_t physical, uint64_t virtual, uint64_t flags) {
-	if (virtual % PMLT_SIZE) {
-		kprintf_panic("Attempted to map non-aligned addresses (phys)%#llx (virt)%#llx! Halting...\n", physical, virtual);
-		_hcf();
-	}
+	// if (virtual % PMLT_SIZE) {
+	// 	kprintf_panic("Attempted to map non-aligned addresses (phys)%#llx (virt)%#llx! Halting...\n", physical, virtual);
+	// 	_hcf();
+	// }
 	
 	uint64_t pml4_index = PML4_INDEX(virtual);
 	uint64_t pdp_index	= PDP_INDEX(virtual);
