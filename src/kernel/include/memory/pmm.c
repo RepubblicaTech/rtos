@@ -9,15 +9,15 @@
 #include <limine.h>
 #include <kernel.h>
 
-#include <util/memory.h>
+#include <util/string.h>
 
 #include <stddef.h>
 #include <stdio.h>
 
 #include <memory/paging/paging.h>
 
-extern struct bootloader_data limine_parsed_data;
-extern void _panic();
+static struct bootloader_data limine_data;
+extern void _hcf();
 
 freelist_node *fl_head;		// is set to the first entry
 	
@@ -27,13 +27,15 @@ int usable_entry_count = 0;
 
 void pmm_init() {
 
+	limine_data = get_bootloader_data();
+
 	// array of freelist entries
-	freelist_node *fl_entries[limine_parsed_data.entry_count];
+	freelist_node *fl_entries[limine_data.entry_count];
 
 	// create a freelist entry that points to the start of each usable address
-	for (uint64_t i = 0; i < limine_parsed_data.entry_count; i++)
+	for (uint64_t i = 0; i < limine_data.entry_count; i++)
 	{
-		struct limine_memmap_entry *memmap_entry = limine_parsed_data.memory_entries[i];
+		struct limine_memmap_entry *memmap_entry = limine_data.memory_entries[i];
 		
 		if (memmap_entry->type != LIMINE_MEMMAP_USABLE) continue;
 
@@ -100,7 +102,7 @@ int get_freelist_entry_count() {
 	freelist_node *fl_en = fl_head;
 	for (usable_entry_count = 0; fl_en != NULL; usable_entry_count++);
 	
-	debugf("entry count: %d\n", usable_entry_count);
+	debugf_debug("entry count: %d\n", usable_entry_count);
 
 	return usable_entry_count;
 }
@@ -129,12 +131,12 @@ int kfrees = 0;						// keeping track of how many times fl_free was called
 
 void *fl_alloc(size_t bytes) {
 	if (bytes < 1) {
-		// debugf("Bro are you ok with %lu bytes?\n", bytes);
+		// debugf_debug("Bro are you ok with %lu bytes?\n", bytes);
 		return NULL;
 	}
 
 	kmallocs++;
-	// debugf("--- Allocation n.%d ---\n", kmallocs);
+	// debugf_debug("--- Allocation n.%d ---\n", kmallocs);
 
 	void *ptr;
 
@@ -143,7 +145,7 @@ void *fl_alloc(size_t bytes) {
 
 	for (fl_entry = fl_head; fl_entry != NULL; fl_entry = fl_entry->next)
 	{
-		// debugf("Looking for memory to allocate at address %p\n", fl_entry);
+		// debugf_debug("Looking for memory to allocate at address %p\n", fl_entry);
 
 		// if the requested size fits in the freelist region...
 		if (bytes <= fl_entry->size) {
@@ -153,10 +155,10 @@ void *fl_alloc(size_t bytes) {
 			break;							// quit from the loop since we found a block
 		}
 		// if not, go to the next block
-		// debugf("Not enough memory found. Looking for next address...\n");
+		// debugf_debug("Not enough memory found. Looking for next address...\n");
 	}
 	
-	debugf("allocated %lu byte%sat address %p\n", bytes, bytes > 1? "s " : " ",  fl_entry);
+	debugf_debug("allocated %lu byte%sat address %p\n", bytes, bytes > 1? "s " : " ",  fl_entry);
 
 	// if memory gets allocated from the entry head, we should change it
 	if ((size_t)fl_entry == (size_t)fl_head) {
@@ -174,31 +176,31 @@ void *fl_alloc(size_t bytes) {
 
 	// freelist_node **fl_entries = fl_update_entries();
 
-	// debugf("old head %p is now %p\n", ptr, fl_head);
-	// debugf("\tprev: %p\n", fl_head->prev);
-	// debugf("\tnext: %p\n", fl_head->next);
-	// debugf("\tsize: %#llx\n", fl_head->size);
+	// debugf_debug("old head %p is now %p\n", ptr, fl_head);
+	// debugf_debug("\tprev: %p\n", fl_head->prev);
+	// debugf_debug("\tnext: %p\n", fl_head->next);
+	// debugf_debug("\tsize: %#llx\n", fl_head->size);
 	
 	// we need the physical address of the free entry
-	return (ptr - limine_parsed_data.hhdm_offset);
+	return (ptr - limine_data.hhdm_offset);
 }
 
 void fl_free(void *ptr) {
 	kfrees++;
-	// debugf("--- Deallocation n.%d ---\n", kfrees);
+	// debugf_debug("--- Deallocation n.%d ---\n", kfrees);
 
 	size_t s_fl_head, s_fl_ptr;
 
 	// the entry will point to the virtual address of the deallocated pointer
-	freelist_node *fl_ptr = (freelist_node*)(ptr + limine_parsed_data.hhdm_offset);
+	freelist_node *fl_ptr = (freelist_node*)(ptr + limine_data.hhdm_offset);
 
 	s_fl_head = (size_t)fl_head;
 	s_fl_ptr = (size_t)fl_ptr;
 
-	// debugf("pointer %p is now a freelist entry\n", fl_ptr);
-	// debugf("head is at location %p\n", fl_head);
+	// debugf_debug("pointer %p is now a freelist entry\n", fl_ptr);
+	// debugf_debug("head is at location %p\n", fl_head);
 
-	debugf("deallocating pointer %p\n", fl_ptr);
+	debugf_debug("deallocating pointer %p\n", fl_ptr);
 
 	// ---------------------- //
 	// --| POSSIBLE CASES |-- //
@@ -209,7 +211,7 @@ void fl_free(void *ptr) {
 		// the head becomes the pointer
 		fl_head = fl_ptr;
 
-		debugf("%p is the new head\n", fl_head);
+		debugf_debug("%p is the new head\n", fl_head);
 
 		return;		// deallocation is done
 	}
@@ -231,7 +233,7 @@ void fl_free(void *ptr) {
 			// entry->next becomes the pointer 
 			fl_entry->next = fl_ptr;
 
-			debugf("%p now points to %p\n", fl_entry, fl_entry->next);
+			debugf_debug("%p now points to %p\n", fl_entry, fl_entry->next);
 
 			return;		// deallocation is done
 		}
@@ -252,7 +254,7 @@ void fl_free(void *ptr) {
 		fl_en->prev->next = last_fl;
 		last_fl->prev = fl_en->prev;
 
-		debugf("%p is at the end of the free list\n", fl_ptr);
+		debugf_debug("%p is at the end of the free list\n", fl_ptr);
 
 		return;		// deallocation is done
 	}
