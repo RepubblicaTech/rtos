@@ -13,20 +13,30 @@
 #include <idt.h>
 #include <isr.h>
 #include <irq.h>
+#include <pit.h>
+#include <mmio/apic/apic.h>
+#include <mmio/apic/io_apic.h>
+
+#include <time.h>
 
 #include <cpu.h>
-#include <util/memory.h>
+#include <util/string.h>
 
 #include <memory/pmm.h>
 #include <memory/paging/paging.h>
 #include <memory/vmm.h>
+
+#include <acpi/acpi.h>
+#include <acpi/rsdp.h>
+
+#define PIT_TICKS   100
 
 /*
     Set the base revision to 2, this is recommended as this is the latest
     base revision described by the Limine boot protocol specification.
     See specification for further info.
 
-    (Note for Omar) 
+    (Note for Omar)
     --- DON'T EVEN DARE TO PUT THIS ANYWHERE ELSE OTHER THAN HERE. ---
 */
 __attribute__((used, section(".requests")))
@@ -57,21 +67,21 @@ static volatile struct limine_paging_mode_request paging_mode_request = {
 };
 
 // https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#hhdm-higher-half-direct-map-feature
-__attribute__((used, section(".requests"))) 
+__attribute__((used, section(".requests")))
 static volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST,
     .revision = 0
 };
 
 // https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#kernel-address-feature
-__attribute__((used, section(".requests"))) 
+__attribute__((used, section(".requests")))
 static volatile struct limine_kernel_address_request kernel_address_request = {
     .id = LIMINE_KERNEL_ADDRESS_REQUEST,
     .revision = 0
 };
 
 // https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#rsdp-feature
-__attribute__((used, section(".requests"))) 
+__attribute__((used, section(".requests")))
 static volatile struct limine_rsdp_request rsdp_request = {
     .id = LIMINE_RSDP_REQUEST,
     .revision = 0
@@ -87,18 +97,6 @@ static volatile LIMINE_REQUESTS_END_MARKER;
 
 extern void _crash_test();
 
-void timer(registers* regs) {
-    return;
-}
-
-// Halt and catch fire function.
-static void hcf(void) {
-    asm ("cli");
-    for (;;) {
-        asm ("hlt");
-    }
-}
-
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
 struct flanterm_fb_context *ft_fb_ctx;
@@ -111,6 +109,10 @@ struct limine_rsdp_response *rsdp_response;
 
 struct bootloader_data limine_parsed_data;
 
+struct bootloader_data get_bootloader_data() {
+    return limine_parsed_data;
+}
+
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
 // linker script accordingly.
@@ -118,12 +120,12 @@ void kstart(void) {
     asm ("cli");
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED == false) {
-        hcf();
+        _hcf();
     }
 
     // Ensure we got a framebuffer.
     if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
-        _panic();
+        _hcf();
     }
 
     // Fetch the first framebuffer.
@@ -145,59 +147,60 @@ void kstart(void) {
         0
     );
 
-    set_screen_bg_fg(0x000116, 0xeeeeee);           // dark blue, white-ish
+    set_screen_bg_fg(DEFAULT_BG, DEFAULT_FG);           // black-ish, white-ish
 
     for (size_t i = 0; i < ft_ctx->rows; i++)
     {
         for (size_t i = 0; i < ft_ctx->cols; i++)  kprintf(" ");
     }
     clearscreen();
-    
+
     kprintf("Hello!\n");
 
-    debugf("Kernel built on %s\n", __DATE__);
+    debugf_debug("Kernel built on %s\n", __DATE__);
 
-    debugf("Hello from the E9 port!\n");
-    debugf("Current video mode is: %dx%d address: %p\n\n", framebuffer->width, framebuffer->height, framebuffer->address);
-    
+    debugf_debug("Hello from the E9 port!\n");
+    debugf_debug("Current video mode is: %dx%d address: %p\n\n", framebuffer->width, framebuffer->height, framebuffer->address);
+
     if (kernel_address_request.response == NULL) {
         kprintf_panic("Couldn't get kernel address!\n");
-        _panic();
+        _hcf();
     }
     kernel_address_response = kernel_address_request.response;
     limine_parsed_data.kernel_base_physical = kernel_address_response->physical_base;
     limine_parsed_data.kernel_base_virtual = kernel_address_response->virtual_base;
-    debugf("Kernel address: (phys)%#llx (virt)%#llx\n\n", limine_parsed_data.kernel_base_physical, limine_parsed_data.kernel_base_virtual);
+    debugf_debug("Kernel address: (phys)%#llx (virt)%#llx\n\n", limine_parsed_data.kernel_base_physical, limine_parsed_data.kernel_base_virtual);
 
-    debugf("\tlimine_requests_start: %llp; limine_requests_end: %llp\n", &__limine_reqs_start, &__limine_reqs_end);
-    debugf("Kernel sections:\n");
-    debugf("\tkernel_start: %#llp\n", &__kernel_start);
-    debugf("\tkernel_text_start: %llp; kernel_text_end: %llp\n", &__kernel_text_start, &__kernel_text_end);
-    debugf("\tkernel_rodata_start: %llp; kernel_rodata_end: %llp\n", &__kernel_rodata_start, &__kernel_rodata_end);
-    debugf("\tkernel_data_start: %llp; kernel_data_end: %llp\n", &__kernel_data_start, &__kernel_data_end);
-    debugf("\tkernel_end: %llp\n", &__kernel_end);
+    debugf_debug("\tlimine_requests_start: %llp; limine_requests_end: %llp\n", &__limine_reqs_start, &__limine_reqs_end);
+    debugf_debug("Kernel sections:\n");
+    debugf_debug("\tkernel_start: %#llp\n", &__kernel_start);
+    debugf_debug("\tkernel_text_start: %llp; kernel_text_end: %llp\n", &__kernel_text_start, &__kernel_text_end);
+    debugf_debug("\tkernel_rodata_start: %llp; kernel_rodata_end: %llp\n", &__kernel_rodata_start, &__kernel_rodata_end);
+    debugf_debug("\tkernel_data_start: %llp; kernel_data_end: %llp\n", &__kernel_data_start, &__kernel_data_end);
+    debugf_debug("\tkernel_end: %llp\n", &__kernel_end);
 
     gdt_init();
-    kprintf_info("GDT init done\n");
+    kprintf_ok("GDT init done\n");
 
     idt_init();
-    kprintf_info("IDT init done\n");
+    kprintf_ok("IDT init done\n");
 
     isr_init();
-    kprintf_info("ISR init done\n");
+    kprintf_ok("ISR init done\n");
 
     irq_init();
-    kprintf_info("IRQ and PIC init done\n");
+    kprintf_ok("PIC init done\n");
+
+    pit_init(PIT_TICKS);
+    kprintf_ok("PIT init done\n");
 
     // _crash_test();
-
-    irq_registerHandler(0, timer);
     isr_registerHandler(14, pf_handler);
 
     if (memmap_request.response == NULL || memmap_request.response->entry_count < 1) {
         // ERROR
         kprintf_panic("No memory map received!\n");
-        _panic();
+        _hcf();
     }
 
     struct limine_memmap_response *memmap_response = memmap_request.response;
@@ -211,28 +214,27 @@ void kstart(void) {
         entry = limine_parsed_data.memory_entries[i];
 
         if (entry->type == LIMINE_MEMMAP_USABLE) limine_parsed_data.memory_usable_total += entry->length;
+        if (entry->type != LIMINE_MEMMAP_RESERVED) limine_parsed_data.memory_total += entry->length;
 
         kprintf("Entry n. %lld; Region start: %#llx; length: %#llx; type: %s\n", i, entry->base, entry->length, memory_block_type[entry->type]);
     }
-    entry = limine_parsed_data.memory_entries[limine_parsed_data.entry_count - 1];
-    limine_parsed_data.memory_total = entry->base + entry->length;
 
-    kprintf("Total Memory size: %#llx (%llu KBytes)\n", limine_parsed_data.memory_total, limine_parsed_data.memory_total / 0x1000000);
-    
-    kprintf("Total usable memory: %#llx (%llu KBytes)\n", limine_parsed_data.memory_usable_total, limine_parsed_data.memory_usable_total / 0x1000000);
+    kprintf("Total Memory size: %#lx (%lu MBytes)\n", limine_parsed_data.memory_total, limine_parsed_data.memory_total / 0x100000);
+
+    kprintf("Total usable memory: %#lx (%lu MBytes)\n", limine_parsed_data.memory_usable_total, limine_parsed_data.memory_usable_total / 0x100000);
 
     if (hhdm_request.response == NULL) {
         kprintf_panic("Couldn't get Higher Half Map!\n");
-        _panic();
+        _hcf();
     }
 
     hhdm_response = hhdm_request.response;
 
     limine_parsed_data.hhdm_offset = hhdm_response->offset;
-    debugf("Higher Half Direct Map offset: %#llx\n", limine_parsed_data.hhdm_offset);
+    debugf_debug("Higher Half Direct Map offset: %#llx\n", limine_parsed_data.hhdm_offset);
 
     pmm_init();
-    kprintf_info("PMM init done\n");
+    kprintf_ok("PMM init done\n");
 
     if (!check_pae()) {
         kprintf_info("PAE is disabled\n");
@@ -240,30 +242,62 @@ void kstart(void) {
         kprintf_info("PAE is enabled\n");
     }
 
-    if (check_apic()) {
-        kprintf_info("APIC device is supported\n");
-        // TODO: enable the APIC and map it's virtual address
+    if (rsdp_request.response == NULL) {
+        kprintf_panic("Couldn't get RSDP address!\n");
+        _hcf();
     }
+    rsdp_response = rsdp_request.response;
+    limine_parsed_data.rsdp_table_address = (uint64_t*)rsdp_response->address;
+    kprintf_info("Address of RSDP: %#llp\n", limine_parsed_data.rsdp_table_address);
+    acpi_init();
 
     if (paging_mode_request.response == NULL) {
         kprintf_panic("We've got no paging!\n");
-        _panic();
+        _hcf();
     }
     paging_mode_response = paging_mode_request.response;
 
     if (paging_mode_response->mode < paging_mode_request.min_mode || paging_mode_response->mode > paging_mode_request.max_mode) {
         kprintf_panic("%lluth paging mode is not supported!\n", paging_mode_response->mode);
-        _panic();
+        _hcf();
     }
     kprintf("%lluth level paging is enabled\n", 4 + paging_mode_response->mode);
 
+    uint64_t start = get_current_ticks();
     vmm_init();
-    kprintf_info("VMM init done\n");
-    
+    uint64_t time = get_current_ticks();
+    time -= start;
+    time /= PIT_TICKS;
+    kprintf_ok("VMM init done\n\t\tTime taken: ~%llu seconds\n", time);
+
+    if (check_apic()) {
+        kprintf_info("APIC device is supported\n");
+        apic_init();
+        ioapic_init();
+        kprintf_ok("APIC init done\n");
+    }
+
+    sdt_pointer* rsdp = get_rsdp();
+
+	kprintf("--- %s INFO ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
+
+	kprintf("Signature: %.8s\n", rsdp->signature);
+	kprintf("Checksum: %hhu\n\n", rsdp->checksum);
+
+	kprintf("OEM ID: %.6s\n", rsdp->oem_id);
+	kprintf("Revision: %s\n", rsdp->revision > 0 ? "2.0 - 6.1" : "1.0");
+
+	if (rsdp->revision > 0) {
+		kprintf("Length: %lu\n", rsdp->length);
+		kprintf("XSDT address: %#llp\n", rsdp->p_xsdt_address);
+		kprintf("Extended checksum: %hhu\n", rsdp->extended_checksum);
+	} else {
+		kprintf("RSDT address: %#lp\n", rsdp->p_rsdt_address);
+	}
+
+	kprintf("--- %s END ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
+
     // _crash_test();
 
     for (;;);
-
-    // We're done, just hang...
-    // hcf();
 }
