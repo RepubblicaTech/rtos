@@ -12,6 +12,11 @@ void pit_tick(registers* regs) {
 	set_ticks(get_current_ticks() + 1);
 }
 
+void pit_sleep(uint32_t millis) {
+	uint64_t last_tick = get_current_ticks() + millis;
+	while (get_current_ticks() < last_tick);
+}
+
 void pit_init(const uint32_t freq) {
 	set_ticks(0);
 
