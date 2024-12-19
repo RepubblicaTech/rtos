@@ -34,9 +34,9 @@ SECTIONS
 
     .rodata BLOCK(4K) : ALIGN(4K)
     {
-        __kernel_rodata_start = .; 
+        __kernel_rodata_start = .;
         *(.rodata .rodata.*)
-        __kernel_rodata_end = .; 
+        __kernel_rodata_end = .;
     } :rodata
 
     .data BLOCK(4K) : ALIGN(4K)

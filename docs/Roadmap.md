@@ -12,10 +12,12 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [X] GDT
 - [X] Interrupt handling (IDT, ISRs, IRQs)
 - [X] PIC support
+- [X] LAPIC/IOAPIC Initialization
 
-- [ ] ACPI/MMIO
+- [ ] ACPI
   - [X] Get RSDP/RSDT information
-  - [ ] MADT (LAPIC initialization)
+  - [X] MADT (LAPIC initialization)
+  - [ ] _we'll probably need more tables in the future_
 
 - [ ] Memory
   - [X] Get memory map
@@ -25,7 +27,8 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
     - [ ] VMM
       - [X] Paging
       - [ ] Mapping devices to memory
-        - [ ] LAPIC
+        - [X] LAPIC
+        - [X] I/O APIC
         - [ ] _leave this in case of other devices to map_
       - [ ] Actual VMM stuff (allocating, freeing pages etc.)
 
@@ -39,3 +42,9 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
   - [ ] (decent) Keyboard driver
   - [ ] some kind of PATH
   - [ ] basic commands
+- [ ] Video modes
+  - [ ] Set better screen resolutions other than limine's default
+  - [ ] (MAYBE) cool graphical stuff
+
+## 3rd Milestone
+- [ ] GUI

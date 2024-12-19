@@ -1,3 +1,5 @@
+#include "stdio.h"
+
 #include <flanterm/flanterm.h>
 #include <flanterm/backends/fb.h>
 
@@ -8,13 +10,14 @@
 #include <io/io.h>
 
 extern struct flanterm_context *ft_ctx;
+extern struct flanterm_fb_context *ft_fb_ctx;
 extern struct limine_framebuffer *framebuffer;
 
 #define NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS 1
 #define NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS 1
 #define NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS 0
 #define NANOPRINTF_USE_LARGE_FORMAT_SPECIFIERS 1
-#define NANOPRINTF_USE_BINARY_FORMAT_SPECIFIERS 0
+#define NANOPRINTF_USE_BINARY_FORMAT_SPECIFIERS 1
 #define NANOPRINTF_USE_WRITEBACK_FORMAT_SPECIFIERS 0
 #define NANOPRINTF_SNPRINTF_SAFE_TRIM_STRING_ON_OVERFLOW 1
 typedef long ssize_t;
@@ -22,9 +25,30 @@ typedef long ssize_t;
 #define NANOPRINTF_IMPLEMENTATION
 #include <nanoprintf.h>
 
-void set_screen_bg_fg(uint32_t bg_rgb, uint32_t fg_rgb) {
+uint32_t current_bg;
+uint32_t current_fg;
+
+uint32_t get_screen_bg() {
+    return current_bg;
+}
+
+uint32_t get_screen_fg() {
+    return current_fg;
+}
+
+void set_screen_bg(uint32_t bg_rgb) {
+    current_bg = bg_rgb;
     ft_ctx->set_text_bg_rgb(ft_ctx, bg_rgb);
+}
+
+void set_screen_fg(uint32_t fg_rgb) {
+    current_fg = fg_rgb;
     ft_ctx->set_text_fg_rgb(ft_ctx, fg_rgb);
+}
+
+void set_screen_bg_fg(uint32_t bg_rgb, uint32_t fg_rgb) {
+    set_screen_bg(bg_rgb);
+    set_screen_fg(fg_rgb);
 }
 
 void clearscreen() {
@@ -49,7 +73,7 @@ void rsod_init() {
 }
 
 void dputc(char c) {
-    outb(0xE9, c);
+    _outb(0xE9, c);
 }
 
 void mputc(char c) {

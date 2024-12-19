@@ -32,7 +32,7 @@
                 },
                 {
                     "description":  "Remote QEMU target",
-                    "text": "target remote | qemu-system-x86_64 -S -gdb stdio -cdrom ${workspaceFolder}/kernel-v0.iso",
+                    "text": "target remote | qemu-system-x86_64 -S -gdb stdio -cdrom ${workspaceFolder}/kernel-v0.iso -m 64M",
                     "ignoreFailures": false
                 }
             ],

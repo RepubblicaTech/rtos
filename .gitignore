@@ -66,3 +66,8 @@ src/kernel/include/limine.h
 
 # ISO files
 *.iso
+
+# Cache and stuff made by LSPs
+*.cache
+*.ccls-cache
+compile_commands.json

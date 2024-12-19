@@ -64,4 +64,13 @@ From now on, a simple `make` should compile the project's source code and create
 # Other useful stuff
 I included a `.vscode` folder which includes the `c_cpp_properties.json` settings file that provides an enviroment specific to this project when using VSCode.
 
-**Experimental**: for Zed users, I included a `settings.json` in the `.zed` folder (even tho it doesn't work for me, but if you have any fixes/tips about it, send an issue/PR :)
+## **Update! (18/12/2024)** 
+
+You can finally code in Zed without getting annoyed by all the errors a normal clang compiler would emit.
+Setting it up is pretty simple:
+
+1. Install the `bear` package (check your distro's package manager/install it from [Brew](https://formulae.brew.sh/formula/bear))
+2. In a terminal inside the project directory, run `bear -- make`. This will both compile and generate a `compile_commands.json` file that `clangd` (and Zed) will use.
+3. Open Zed, and if you encounter only warnings in the code, then you're done. Enjoy editing!
+
+P.S. if Zed sometimes won't respond to certain error fixes, try to restart the language server via the command palette, and then all errors should be gone.

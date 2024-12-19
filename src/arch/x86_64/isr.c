@@ -113,7 +113,7 @@ void isr_handler(registers* regs) {
     } else {
         rsod_init();
 
-        kprintf_panic("KERNEL PANIC! \"%s\" (Exception n. %d)\n", exceptions[regs->interrupt], regs->interrupt);
+        kprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n", exceptions[regs->interrupt], regs->interrupt);
 
         kprintf("\terrcode: %#llx\n",
                 regs->error);
@@ -123,7 +123,7 @@ void isr_handler(registers* regs) {
 
         kprintf("PANIC LOG END --- HALTING ---\n");
 
-        _panic();
+        _hcf();
     }
 
 }

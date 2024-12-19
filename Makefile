@@ -170,7 +170,7 @@ $(OBJS_DIR)/%.asm.o: src/%.asm Makefile always
 
 run: $(OS_CODENAME).iso
 	qemu-system-x86_64 \
-		-m 64 \
+		-m 64M \
 		-debugcon stdio \
 		-cdrom $<
 

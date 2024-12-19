@@ -27,7 +27,7 @@
 #define CPUID_VENDOR_ZHAOXIN       "  Shanghai  "
 #define CPUID_VENDOR_HYGON         "HygonGenuine"
 #define CPUID_VENDOR_ELBRUS        "E2K MACHINE "
- 
+
 // Vendor strings from hypervisors.
 #define CPUID_VENDOR_QEMU          "TCGTCGTCGTCG"
 #define CPUID_VENDOR_KVM           " KVMKVMKVM  "
@@ -113,17 +113,17 @@
     val;						    						\
 })
 
-/* Get CPU's model number */
-static int get_model(void);
-
 bool check_pae();
 bool check_msr();
 bool check_apic();
+bool check_x2apic();
 
-void cpu_get_msr(uint32_t msr, uint32_t *lo, uint32_t *hi);
-void cpu_set_msr(uint32_t msr, uint32_t lo, uint32_t hi);
+// returns the value from the requested MSR
+extern uint64_t _cpu_get_msr(uint32_t msr);
+// sets a MSR to the given value
+extern void _cpu_set_msr(uint32_t msr, uint64_t value);
 
-void write_reg(size_t addr, uint32_t val);
-uint32_t read_reg(size_t addr);
+void cpu_reg_write(uint32_t reg, uint32_t value);
+uint32_t cpu_reg_read(uint32_t reg);
 
 #endif

@@ -8,11 +8,13 @@
 #define KERNEL_H 1
 
 #include <limine.h>
+
+#include <stddef.h>
 typedef struct bootloader_data {
 
 	// Memory Map
-	uint64_t memory_total;
-	uint64_t memory_usable_total;
+	size_t memory_total;
+	size_t memory_usable_total;
 	uint64_t entry_count;
 
 	LIMINE_PTR(struct limine_memmap_entry **) memory_entries;
@@ -23,9 +25,10 @@ typedef struct bootloader_data {
 	uint64_t kernel_base_virtual;
 
 	// ACPI/MMIO related stuff
-	uint64_t *rsdp_table_address;
+	uint64_t* rsdp_table_address;
 	
 	uint64_t p_lapic_base;
+	uint32_t p_ioapic_base;
 } bootloader_data;
 
 // these come from the linker
@@ -36,5 +39,7 @@ extern uint64_t __kernel_data_start, __kernel_data_end;
 extern uint64_t __kernel_start, __kernel_end;
 
 extern uint64_t __limine_reqs_start, __limine_reqs_end;
+
+struct bootloader_data get_bootloader_data();
 
 #endif

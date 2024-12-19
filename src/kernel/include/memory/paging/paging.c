@@ -1,7 +1,7 @@
 /*
 	Page fault "handler"
 
-	When a page fault exception is fired, the _panic screen will print information about the given error code.
+	When a page fault exception is fired, the _hcf screen will print information about the given error code.
 
 	(C) RepubblicaTech 2024
 */
@@ -12,13 +12,12 @@
 #include <stdint.h>
 
 #include <memory/pmm.h>
-#include <util/memory.h>
+#include <util/string.h>
 
 #include <kernel.h>
 #include <limine.h>
 
 #include <cpu.h>
-#include <assert.h>
 
 #include <isr.h>
 
@@ -33,7 +32,7 @@ Bit			Name					Description
 P	 	Present 					1 -> page-protection fault;
 									0 -> non-present page
 
-W	 	Write 						1 -> write access; 
+W	 	Write 						1 -> write access;
 									0 -> read access
 
 U	 	User 						1 -> CPL = 3. This does not necessarily mean that the page fault was a privilege violation.
@@ -46,7 +45,7 @@ PK  	Protection key 				1 -> protection-key violation. The PKRU register (for us
 
 SS  	Shadow stack 				1 -> shadow stack access.
 
-SGX 	Software Guard Extensions 	1 -> SGX violation. The fault is unrelated to ordinary paging. 
+SGX 	Software Guard Extensions 	1 -> SGX violation. The fault is unrelated to ordinary paging.
 
 */
 
@@ -74,7 +73,7 @@ void pf_handler(registers* regs) {
 	uint64_t pf_error_code = (uint64_t)regs->error;
 
 	kprintf("--- PANIC! ---\n");
-	kprintf("Page fault code %#06lx\n\n-------------------------------\n", pf_error_code);
+	kprintf("Page fault code %#016b\n\n-------------------------------\n", pf_error_code);
 
 	kprintf(PG_RING(pf_error_code) == 0 	? "Kernel " 					: "User ");
 	kprintf(PG_WR_RD(pf_error_code) == 0 	? "read attempt of a " 			: "write attempt to a ");
@@ -83,7 +82,6 @@ void pf_handler(registers* regs) {
 	// CR2 contains the address that caused the fault
 	uint64_t cr2;
 	asm volatile("mov %%cr2, %0" : "=r"(cr2));
-
 
 	kprintf("RESERVED WRITE:				%d\n", PG_RESERVED(pf_error_code));
 	kprintf("INSTRUCTION_FETCH:			%d\n", PG_IF(pf_error_code));
@@ -97,26 +95,17 @@ void pf_handler(registers* regs) {
 
 	kprintf("--- PANIC LOG END --- HALTING\n");
 
-	_panic();
+	_hcf();
 }
 
 /********************
  *   PAGING STUFF   *
  ********************/
 
-// returns the PHYSICAL address of the PML4 table
-uint64_t *get_pml4() {
-	uint64_t *cr3 = NULL;
-
-	asm volatile("movq %%cr3, %0" : "=r"(cr3));
-
-	return cr3;
-}
-
 uint64_t *get_create_pmlt(uint64_t *pml_table, uint64_t pmlt_index, uint64_t flags) {
 	// is there something at pml_table[pmlt_index]?
 	if (!(pml_table[pmlt_index] & PMLE_PRESENT)) {
-		// debugf("Table %llp entry %#llx is not present, creating it...\n", pml_table, pmlt_index);
+		// debugf_debug("Table %llp entry %#llx is not present, creating it...\n", pml_table, pmlt_index);
 
 		pml_table[pmlt_index] = (uint64_t)fl_alloc(PMLT_SIZE) | flags;
 	}
@@ -128,11 +117,11 @@ uint64_t *get_create_pmlt(uint64_t *pml_table, uint64_t pmlt_index, uint64_t fla
 
 // map a page frame to a physical address that gets mapped to a virtual one
 void map_phys_to_page(uint64_t* pml4_table, uint64_t physical, uint64_t virtual, uint64_t flags) {
-	if (virtual % PMLT_SIZE) {
-		kprintf_panic("Attempted to map non-aligned addresses (phys)%#llx (virt)%#llx!\n", physical, virtual);
-		_panic();
-	}
-
+	// if (virtual % PMLT_SIZE) {
+	// 	kprintf_panic("Attempted to map non-aligned addresses (phys)%#llx (virt)%#llx! Halting...\n", physical, virtual);
+	// 	_hcf();
+	// }
+	
 	uint64_t pml4_index = PML4_INDEX(virtual);
 	uint64_t pdp_index	= PDP_INDEX(virtual);
 	uint64_t pdir_index = PDIR_INDEX(virtual);
@@ -143,8 +132,8 @@ void map_phys_to_page(uint64_t* pml4_table, uint64_t physical, uint64_t virtual,
 	uint64_t *page_table = get_create_pmlt(pdir_table, pdir_index, flags);
 
 	page_table[ptab_index] = PG_PHYS_ADDR(physical) | flags;
-	// debugf("Page table %llp entry %llu mapped to (phys)%#llx (virt)%#llx\n", page_table, ptab_index, virtual - VIRT_BASE + PHYS_BASE, virtual);
-	// debugf("\tcontents of table[entry]: %#llx\n", page_table[ptab_index]);
+	// debugf_debug("Page table %llp entry %llu mapped to (virt)%#llx (phys)%#llx \n", page_table, ptab_index, virtual, physical);
+	// debugf_debug("\tcontents of table[entry]: %#llx\n", page_table[ptab_index]);
 
 	_invalidate(virtual);
 }
@@ -162,5 +151,5 @@ void map_region_to_page(uint64_t* pml4_table, uint64_t physical_start, uint64_t 
 		uint64_t virt = virtual_start + (i * PMLT_SIZE);
 		map_phys_to_page(pml4_table, phys, virt, flags);
 	}
-	
+
 }
