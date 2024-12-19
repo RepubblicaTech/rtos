@@ -84,7 +84,8 @@
         "util.h": "c",
         "mmio.h": "c",
         "io_apic.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "font.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
