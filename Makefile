@@ -59,7 +59,7 @@ override KCFLAGS += \
     -std=gnu11 \
     -ffreestanding \
     -I src/kernel/include \
-	-I src/arch/$(TARGET_BASE) \
+	-I src/arch/$(TARGET_BASE)/include \
     -fno-stack-protector \
     -fno-stack-check \
     -fno-lto \

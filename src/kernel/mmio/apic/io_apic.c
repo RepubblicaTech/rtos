@@ -1,5 +1,5 @@
-#include "io_apic.h"
-#include "apic.h"
+#include <mmio/apic/io_apic.h>
+#include <mmio/apic/apic.h>
 
 #include <kernel.h>
 

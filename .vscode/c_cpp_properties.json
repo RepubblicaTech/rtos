@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src/kernel/include",
-                "${workspaceFolder}/src/arch/x86_64"
+                "${workspaceFolder}/src/arch/x86_64/include"
             ],
             "defines": [],
             "cStandard": "gnu11",

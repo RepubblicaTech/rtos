@@ -1,4 +1,4 @@
-#include "apic.h"
+#include <mmio/apic/apic.h>
 
 #include <acpi/tables/madt.h>
 
@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 #include <util/string.h>
-#include <io/io.h>
+#include <io.h>
 
 #include <mmio/mmio.h>
 

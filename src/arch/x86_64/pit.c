@@ -1,7 +1,7 @@
 #include "pit.h"
 
 #include <stdio.h>
-#include <io/io.h>
+#include <io.h>
 
 #include <util/util.h>
 

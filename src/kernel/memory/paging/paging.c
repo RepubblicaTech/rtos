@@ -6,7 +6,7 @@
 	(C) RepubblicaTech 2024
 */
 
-#include "paging.h"
+#include <memory/paging/paging.h>
 
 #include <stdio.h>
 #include <stdint.h>

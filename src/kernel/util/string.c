@@ -1,5 +1,5 @@
-#include "string.h"
-#include <io/io.h>
+#include <util/string.h>
+#include <io.h>
 
 // GCC and Clang reserve the right to generate calls to the following
 // 4 functions even if they are not directly called.

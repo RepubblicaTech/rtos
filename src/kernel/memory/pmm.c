@@ -4,7 +4,7 @@
 	(C) RepubblicaTech 2024
 */
 
-#include "pmm.h"
+#include <memory/pmm.h>
 
 #include <limine.h>
 #include <kernel.h>
@@ -182,7 +182,7 @@ void *fl_alloc(size_t bytes) {
 	// debugf_debug("\tsize: %#llx\n", fl_head->size);
 	
 	// we need the physical address of the free entry
-	return (ptr - limine_data.hhdm_offset);
+	return (void*)VIRT_TO_PHYSICAL(ptr);
 }
 
 void fl_free(void *ptr) {

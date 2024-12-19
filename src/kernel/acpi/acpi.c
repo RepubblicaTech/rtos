@@ -1,7 +1,7 @@
-#include "acpi.h"
+#include <acpi/acpi.h>
 
-#include "rsdp.h"
-#include "tables/madt.h"
+#include <acpi/rsdp.h>
+#include <acpi/tables/madt.h>
 #include <util/string.h>
 
 #include <stdio.h>

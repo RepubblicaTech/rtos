@@ -3,7 +3,7 @@
 
 #include "isr.h"
 
-#include <io/io.h>
+#include <io.h>
 #include <stdio.h>
 
 #include <stddef.h>

@@ -1,4 +1,4 @@
-#include "madt.h"
+#include <acpi/tables/madt.h>
 
 #include <acpi/acpi.h>
 

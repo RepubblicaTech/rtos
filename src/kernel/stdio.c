@@ -7,7 +7,7 @@
 
 #include <util/va_list.h>
 
-#include <io/io.h>
+#include <io.h>
 
 extern struct flanterm_context *ft_ctx;
 extern struct flanterm_fb_context *ft_fb_ctx;

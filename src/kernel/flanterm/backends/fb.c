@@ -27,8 +27,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include "../flanterm.h"
-#include "fb.h"
+#include <flanterm/flanterm.h>
+#include <flanterm/backends/fb.h>
 
 void *memset(void *, int, size_t);
 void *memcpy(void *, const void *, size_t);
@@ -42,7 +42,7 @@ void *memcpy(void *, const void *, size_t);
 #define FLANTERM_FB_HEIGHT_LIMIT 1200
 #endif
 
-#include "font.h"
+#include <flanterm/backends/font.h>
 
 static uint8_t bump_alloc_pool[FLANTERM_FB_BUMP_ALLOC_POOL_SIZE];
 static size_t bump_alloc_ptr = 0;
