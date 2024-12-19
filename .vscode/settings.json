@@ -83,7 +83,8 @@
         "pit.h": "c",
         "util.h": "c",
         "mmio.h": "c",
-        "io_apic.h": "c"
+        "io_apic.h": "c",
+        "time.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
