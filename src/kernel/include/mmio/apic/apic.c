@@ -65,6 +65,8 @@ void apic_init() {
 	pic_disable();
 	// check apic.asm for more
 	_apic_global_enable();
+	lapic_write_reg(LAPIC_TASKPR_REG, 0);
+	lapic_write_reg(LAPIC_DEST_FMT_REG, 0xFFFFFFFF);
 	kprintf_info("LAPIC is globally enabled and MSR is now %#llx\n", _cpu_get_msr(0x1b));
 	lapic_write_reg(LAPIC_SPURIOUS_REG, 0x1ff);
 	kprintf_info("LAPIC_SPURIOUS_REG: %#lx\n", lapic_read_reg(LAPIC_SPURIOUS_REG));

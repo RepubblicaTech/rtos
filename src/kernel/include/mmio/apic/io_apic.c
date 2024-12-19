@@ -48,7 +48,7 @@ void apic_irq_handler(registers* regs) {
 	if (apic_irq_handlers[apic_irq] != NULL) {
 		apic_irq_handlers[apic_irq](regs);
 	} else {
-		debugf("Unhandled IRQ %d  ISR=%#llx  IRR=%#llx\n", apic_irq, apic_isr, apic_irr);
+		kprintf("Unhandled IRQ %d  ISR=%#llx  IRR=%#llx\n", apic_irq, apic_isr, apic_irr);
 	}
 
 	lapic_send_eoi();
@@ -63,13 +63,14 @@ void apic_register_handler(int irq, irq_handler handler) {
 // @param interrupt		- This needs to be an interrupt vector that will be written to the I/O APIC
 // @param handler		- The ISR that will be called when the interrupt gets fired
 void ioapic_map_irq(int irq, int interrupt, irq_handler handler) {
-	uint64_t redtble_data = (lapic_get_id() << 56) |
-							(0 << 16)			   |	// Unmask the entry
+	uint32_t redtble_lo = 	(0 << 16)			   |	// Unmask the entry
 							(0 << 11)			   |	// Destination mode
 							(0b000 << 8)		   |	// Delivery mode
 							interrupt;					// interrupt vector
-	ioapic_reg_write(0x10 + (2 * irq), (uint32_t)(redtble_data & 0xFFFF));
-	ioapic_reg_write(0x10 + (2 * irq) + 1, (uint32_t)((redtble_data >> 32) & 0xFFFF));
+	ioapic_reg_write(0x10 + (2 * irq), redtble_lo);
+
+	uint32_t redtble_hi =	(lapic_get_id() << 24);
+	ioapic_reg_write(0x10 + (2 * irq) + 1, redtble_hi);
 
 	isr_registerHandler(interrupt, handler);
 }
@@ -89,7 +90,6 @@ void ioapic_init() {
 	for (int i = 0x10; i < 0x3f; i+=2)
 	{
 		ioredtbl[redir] = ioapic_reg_read(i) | (ioapic_reg_read(i + 1) << 32);
-		debugf("I/O APIC redirection entry %d: %#08llx\n", redir, ioredtbl[redir]);
 		redir++;
 	}
 
@@ -108,12 +108,6 @@ void ioapic_init() {
 		offset += record->entry_length;
 	}
 	ioapic_redtbl = ioredtbl;
-	int overrideable_ints[iso_entry];
-	for (int i = 0; i < iso_entry; i++)
-	{
-		overrideable_ints[i] = ioapic_int_override[i]->legacy_irq_source;
-	}
-	
 	for (int i = 0; i < iso_entry; i++)
 	{
 		debugf("Interrupt override n.%d\n", i);
@@ -124,7 +118,7 @@ void ioapic_init() {
 					   IOAPIC_IRQ_OFFSET + ioapic_int_override[i]->legacy_irq_source, 
 					   apic_irq_handler);
 	}
-	for (int i = 0; i < ioapic_redir_entries; i++)
+	for (int i = 1; i < ioapic_redir_entries; i++)
 	{
 		// to map the other normal interrupts, we'll just check if it's masked or not
 		if (ioapic_reg_read(0x10 + (2 * i)) & (1 << 16)) {
@@ -132,5 +126,4 @@ void ioapic_init() {
 		}
 	}
 	apic_register_handler(0, pit_tick);
-	
 }
