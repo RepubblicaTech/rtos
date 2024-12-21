@@ -59,7 +59,6 @@ iso
 toolchain/binutils*
 toolchain/gcc*
 toolchain/x86_64-elf
-limine
 
 # Limine header file will be copied from the cloned repo
 src/kernel/include/limine.h
