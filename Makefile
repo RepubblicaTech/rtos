@@ -137,9 +137,8 @@ limine_build: update_limine
 	@# Always update limine.h in case of updates
 	cp -vf limine/limine.h src/kernel/include/limine.h
 
-limine:
-	@# Download the latest Limine binary release for the 8.x branch
-	git clone https://github.com/limine-bootloader/limine.git --branch=v8.x-binary --depth=1
+update_limine: limine
+	cd $< && git pull
 
 # Link rules for the final kernel executable.
 $(BUILD_DIR)/$(KERNEL): Makefile src/linker.ld $(OBJ) always
@@ -191,6 +190,3 @@ always: update_limine
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(OBJS_DIR)
 	mkdir -p $(ISO_DIR)
-
-update_limine: limine
-	cd $< && git pull
