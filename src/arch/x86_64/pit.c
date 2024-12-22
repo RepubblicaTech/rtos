@@ -20,7 +20,6 @@ void pit_sleep(uint32_t millis) {
 void pit_init(const uint32_t freq) {
 	set_ticks(0);
 
-	kprintf_info("Registering %s() for IRQ0\n", stringify(pit_tick));
 	irq_registerHandler(0, pit_tick);
 
 	uint32_t divisor = CONST_PIT_CLOCK / freq;
