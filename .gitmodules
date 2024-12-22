@@ -2,3 +2,11 @@
 	path = limine
 	url = https://github.com/limine-bootloader/limine.git
 	branch = v8.x-binary
+
+[submodule "flanterm"]
+	path = flanterm
+	url = https://github.com/mintsuki/flanterm.git
+	
+[submodule "nanoprintf"]
+	path = nanoprintf
+	url = https://github.com/charlesnicholson/nanoprintf.git
