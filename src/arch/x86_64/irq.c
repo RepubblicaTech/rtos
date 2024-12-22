@@ -40,5 +40,6 @@ void irq_init() {
 }
 
 void irq_registerHandler(int irq, irq_handler handler) {
+    debugf_debug("Registering handler for IRQ %d\n", irq);
     irq_handlers[irq] = handler;
 }
