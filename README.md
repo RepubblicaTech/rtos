@@ -15,11 +15,24 @@ Go check [The roadmap](docs/Roadmap.md).
 The core of this project is an adaptation of the code found in the [Limine Bare Bones](https://wiki.osdev.org/Limine_Bare_Bones) page of the OSDev wiki, which is a fundamental source when doing OS development.
 
 ## How to compile and run the OS
+
+Contents:
+
+1. [Prerequisistes](#prequisites)
+2. [Setting up a cross-compiler](#setting-up-a-cross-compiler)
+	- [Prebuilt option](#prebuilt-option)
+	- ["Do It Yourself" Version](#do-it-yourself-version)
+3. [Actually compiling the project](#actually-compiling-the-project)
+
+Extras:
+- [Some useful make args](#some-useful-make-args)
+- [Other useful stuff](#other-useful-stuff)
+
 ### REMINDER: Building of this project has been only tested on Linux, but if you can report anything about other platforms (Windows, MacOS, Ubuntu, ...) feel free to open an issue/PR! Here is a list of currently tested (and supported) platorms:
 
-- Fedora Workstation 41 (Main machine)
+- Fedora Workstation 41 (Main machine, at least one build/week)
 - Debian 12 on WSL2 (Windows 10 21H2 build 19044, last tested on September 2024)
-- Arch Linux (tested on October 2024)
+- Arch Linux (last tested on December 2024)
 
 ### Prequisites
 There are some packages that are needed for building and running the OS, make sure to check your distro's repos for how to install them:
@@ -30,10 +43,48 @@ There are some packages that are needed for building and running the OS, make su
 
 `qemu` - the emulator (you can use whatever software you like, but i have only tested with QEMU as of October 2024)
 
-First, clone the repository:
+`diff` and `patch` - they are required to edit Flanterm's source files to point to the "correct" header files (due to the current project structure)
+
+Clone the repository:
+
 `git clone https://github.com/RepubblicaTech/rtos.git`
 
+Then, you've got to download all the required submodules (nanoprintf, Flanterm and Limine):
+
+`git submodule update --init --recursive`
+
+Running `make deps` will copy all the required modules to the project directory, and patch those files if needed.
+(make sure to run this every once in a while to make sure all dependencies will be updated in the kernel too)
+
+### Setting up a cross-compiler
+
 To compile the OS, you'll not be able to use the system default C compiler (gcc), but you'll need a cross-compiler which will target a generic x86_64 platform rather than your specific one.
+
+#### Prebuilt option
+
+If you either are lazy or don't have time for compiling the toolchain, you can grab a pre-made one from [here](https://newos.org/toolchains/) (you should grab the one that says `x86_64-elf-[the highest version number you can find]-[Linux/FreeBSD/Darwin]-x86_64.tar.xz`, and extract the contents of the folder inside the xz to a `x86_64-elf` directory inside the `toolchain` folder).
+You can now proceed to [actually compiling the project](#actually-compiling-the-project).
+
+You should end up with a structure like this:
+```
+rtos
+│...
+├── src
+│   └── ...
+└── toolchain
+    ├── Makefile
+    └── x86_64-elf	<-- You should create this directory
+	--- All of these files should come from the downloaded tar archive ---
+        ├── bin
+        ├── include
+        ├── lib
+        ├── libexec
+        ├── share
+        └── x86_64-elf
+
+```
+
+#### "Do It Yourself" version
 
 First, make sure to install the required dependencies for building gcc and binutils from source, and since they may vary for each distribution make sure to check out [this article](https://wiki.osdev.org/GCC_Cross-Compiler#Installing_Dependencies) on the OSDev wiki.
 
@@ -43,11 +94,15 @@ Thankfully, the [toolchain script made by nanobyte](https://github.com/nanobyte-
 
 `make -C toolchain [CPU_CORES=<number of desired cores, defaults to $(nproc)>]`
 
+(**NOTE**: if you actually manage to port this kernel to another architecture supported by Limine, you can add a `TARGET_BASE` or `TARGET` argument to compile a different toolchain. Same applies to the [project Makefile](Makefile).)
+
 Since it needs to compile both binutils and gcc from source, it will take a long time (depending on your CPU cores and speed), so "you can go make yourself some coffee, and maybe watch the latest video from your favourite YouTube channel..."
 
 \- [Nanobyte, 2021](https://youtu.be/TgIdFVOV_0U?t=709)
 
 After this, you now have built your own toolchain for building this project but also any other one that relies on the base mentioned earlier (i'd suggest to update both `BINUTILS_VERSION` `GCC_VERSION` in the Makefile when an update of such package is available on your system and maybe re-run the `make -C toolchain` command, *if you always have time and will to do so*).
+
+### Actually compiling the project
 
 As of November 2024, project gets compiled with binutils version 2.43 and gcc 14.2.0, which are the versions mentioned in the Makefile.
 
