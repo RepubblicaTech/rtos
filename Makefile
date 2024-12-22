@@ -5,6 +5,7 @@ export PATH:=$(TOOLCHAIN_PREFIX)/bin:$(PATH)
 
 OS_CODENAME=kernel-v0
 
+PATCHES_DIR=patches
 BUILD_DIR=build
 ISO_DIR=iso
 OBJS_DIR=$(BUILD_DIR)/objs
@@ -117,7 +118,7 @@ $(OS_CODENAME).iso: bootloader
 	@# Install Limine stage 1 and 2 for legacy BIOS boot.
 	./limine/limine bios-install $(OS_CODENAME).iso
 
-bootloader: limine_build $(BUILD_DIR)/$(KERNEL)
+bootloader: deps $(BUILD_DIR)/$(KERNEL)
 	mkdir -p $(ISO_DIR)
 	@# Copy the relevant files over.
 	mkdir -p $(ISO_DIR)/boot
@@ -131,14 +132,31 @@ bootloader: limine_build $(BUILD_DIR)/$(KERNEL)
 	cp -v limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
 	cp -v limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
 
-limine_build: update_limine
-	@# Build "limine" utility
-	make -C limine
-	@# Always update limine.h in case of updates
+deps: limine_build flanterm nanoprintf
 	cp -vf limine/limine.h src/kernel/include/limine.h
 
-update_limine: limine
-	cd $< && git pull
+	@# copy flanterm headers
+	cp -vf --parents flanterm/*.h src/kernel/include
+	cp -vf --parents flanterm/*.c src/kernel
+
+	cp -vf --parents flanterm/backends/*.h src/kernel/include
+	cp -vf --parents flanterm/backends/*.c src/kernel
+
+	@# custom font header
+	cp -vf $(PATCHES_DIR)/font.h src/kernel/include/flanterm/backends
+
+	@# due to the project structure, the include paths have to be modified
+	patch -u src/kernel/flanterm/flanterm.c -i $(PATCHES_DIR)/flanterm.c.patch
+	patch -u src/kernel/flanterm/backends/fb.c -i $(PATCHES_DIR)/fb.c.patch
+
+	cp -vf nanoprintf/nanoprintf.h src/kernel/include
+
+limine_build: update_submodules
+	@# Build "limine" utility
+	make -C limine
+
+update_submodules: limine flanterm nanoprintf
+	git submodule update --recursive --remote
 
 # Link rules for the final kernel executable.
 $(BUILD_DIR)/$(KERNEL): Makefile src/linker.ld $(OBJ) always
@@ -185,8 +203,10 @@ clean:
 
 clean-all: clean
 	rm -rf limine
+	rm -rf flanterm
+	rm -rf nanoprintf
 
-always: update_limine
+always: update_submodules
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(OBJS_DIR)
 	mkdir -p $(ISO_DIR)
