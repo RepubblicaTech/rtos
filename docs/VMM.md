@@ -138,7 +138,7 @@ vmm_init(*context) {
 
 - It asks for some memory (`malloc()`)
 
-- `vmm_alloc(*ctx, size, flags)`
+- `vmm_alloc(*ctx, size)`
   What's VMM/VMA going to do?
   
   ```c
