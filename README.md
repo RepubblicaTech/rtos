@@ -45,16 +45,15 @@ There are some packages that are needed for building and running the OS, make su
 
 `diff` and `patch` - they are required to edit Flanterm's source files to point to the "correct" header files (due to the current project structure)
 
-Clone the repository:
+1. Clone the repository:
 
 `git clone https://github.com/RepubblicaTech/rtos.git`
 
-Then, you've got to download all the required submodules (nanoprintf, Flanterm and Limine):
+2. Fetch and get the required libraries
 
 `git submodule update --init --recursive`
 
 Running `make deps` will copy all the required modules to the project directory, and patch those files if needed.
-(make sure to run this every once in a while to make sure all dependencies will be updated in the kernel too)
 
 ### Setting up a cross-compiler
 
@@ -63,7 +62,6 @@ To compile the OS, you'll not be able to use the system default C compiler (gcc)
 #### Prebuilt option
 
 If you either are lazy or don't have time for compiling the toolchain, you can grab a pre-made one from [here](https://newos.org/toolchains/) (you should grab the one that says `x86_64-elf-[the highest version number you can find]-[Linux/FreeBSD/Darwin]-x86_64.tar.xz`, and extract the contents of the folder inside the xz to a `x86_64-elf` directory inside the `toolchain` folder).
-You can now proceed to [actually compiling the project](#actually-compiling-the-project).
 
 You should end up with a structure like this:
 ```
@@ -84,10 +82,13 @@ rtos
 
 ```
 
+You can now proceed to [actually compiling the project](#actually-compiling-the-project).
+
 #### "Do It Yourself" version
 
 First, make sure to install the required dependencies for building gcc and binutils from source, and since they may vary for each distribution make sure to check out [this article](https://wiki.osdev.org/GCC_Cross-Compiler#Installing_Dependencies) on the OSDev wiki.
 
+Now it's time to compile the toolchain.
 Thankfully, the [toolchain script made by nanobyte](https://github.com/nanobyte-dev/nanobyte_os/blob/videos/part7/build_scripts/toolchain.mk) comes in handy regarding the whole downloading and compiling binutils and gcc from source, and I integrated it here to be simply run by a single command in the project directory:
 
 *(arguments in square brackets are optional)*
@@ -106,7 +107,7 @@ After this, you now have built your own toolchain for building this project but 
 
 As of November 2024, project gets compiled with binutils version 2.43 and gcc 14.2.0, which are the versions mentioned in the Makefile.
 
-From now on, a simple `make` should compile the project's source code and create a bootable ISO image compatible with most computers with a 64-bit CPU.
+From now on, a simple `make` should compile the project's source code and create a bootable ISO image compatible with most computers with an x86_64 CPU (for now).
 
 (the first build might take a bit longer since it needs to download Limine and compile it, but it won't take as much as the toolchain one)
 
