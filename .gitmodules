@@ -1,12 +1,12 @@
-[submodule "limine"]
-	path = limine
+[submodule "thirdparty/limine"]
+	path = thirdparty/limine
 	url = https://github.com/limine-bootloader/limine.git
 	branch = v8.x-binary
-
-[submodule "flanterm"]
-	path = flanterm
-	url = https://github.com/mintsuki/flanterm.git
 	
-[submodule "nanoprintf"]
-	path = nanoprintf
+[submodule "thirdparty/flanterm"]
+	path = thirdparty/flanterm
+	url = https://github.com/mintsuki/flanterm.git
+
+[submodule "thirdparty/nanoprintf"]
+	path = thirdparty/nanoprintf
 	url = https://github.com/charlesnicholson/nanoprintf.git

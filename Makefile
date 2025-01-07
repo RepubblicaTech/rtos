@@ -6,6 +6,7 @@ export PATH:=$(TOOLCHAIN_PREFIX)/bin:$(PATH)
 OS_CODENAME=kernel-v0
 
 PATCHES_DIR=patches
+EXTERN_LIBS_DIR=thirdparty
 BUILD_DIR=build
 ISO_DIR=iso
 OBJS_DIR=$(BUILD_DIR)/objs
@@ -116,7 +117,7 @@ $(OS_CODENAME).iso: bootloader
 	        $(ISO_DIR) -o $(OS_CODENAME).iso
 
 	@# Install Limine stage 1 and 2 for legacy BIOS boot.
-	./limine/limine bios-install $(OS_CODENAME).iso
+	./$(EXTERN_LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso
 
 bootloader: deps $(BUILD_DIR)/$(KERNEL)
 	mkdir -p $(ISO_DIR)
@@ -124,23 +125,25 @@ bootloader: deps $(BUILD_DIR)/$(KERNEL)
 	mkdir -p $(ISO_DIR)/boot
 	cp -v $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/boot/
 	mkdir -p $(ISO_DIR)/boot/limine
-	cp -v src/limine.conf limine/limine-bios.sys limine/limine-bios-cd.bin \
-	      limine/limine-uefi-cd.bin $(ISO_DIR)/boot/limine/
+	cp -v src/limine.conf $(EXTERN_LIBS_DIR)/limine/limine-bios.sys $(EXTERN_LIBS_DIR)/limine/limine-bios-cd.bin \
+	      $(EXTERN_LIBS_DIR)/limine/limine-uefi-cd.bin $(ISO_DIR)/boot/limine/
 
 	@# Create the EFI boot tree and copy Limine's EFI executables over.
 	mkdir -p $(ISO_DIR)/EFI/BOOT
-	cp -v limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
-	cp -v limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
+	cp -v $(EXTERN_LIBS_DIR)/limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
+	cp -v $(EXTERN_LIBS_DIR)/limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
 
-deps: limine_build flanterm nanoprintf
-	cp -vf limine/limine.h src/kernel/include/limine.h
+deps: limine_build $(EXTERN_LIBS_DIR)/flanterm $(EXTERN_LIBS_DIR)/nanoprintf
+	cp -vf $(EXTERN_LIBS_DIR)/limine/limine.h src/kernel/include/limine.h
 
 	@# copy flanterm headers
-	cp -vf --parents flanterm/*.h src/kernel/include
-	cp -vf --parents flanterm/*.c src/kernel
+	mkdir -p src/kernel/include/flanterm/backends
+	mkdir -p src/kernel/flanterm/backends
+	cp -vf $(EXTERN_LIBS_DIR)/flanterm/*.h src/kernel/include/flanterm
+	cp -vf $(EXTERN_LIBS_DIR)/flanterm/*.c src/kernel/flanterm
 
-	cp -vf --parents flanterm/backends/*.h src/kernel/include
-	cp -vf --parents flanterm/backends/*.c src/kernel
+	cp -vf $(EXTERN_LIBS_DIR)/flanterm/backends/*.h src/kernel/include/flanterm/backends
+	cp -vf $(EXTERN_LIBS_DIR)/flanterm/backends/*.c src/kernel/flanterm/backends
 
 	@# custom font header
 	cp -vf $(PATCHES_DIR)/font.h src/kernel/include/flanterm/backends
@@ -149,13 +152,13 @@ deps: limine_build flanterm nanoprintf
 	patch -u src/kernel/flanterm/flanterm.c -i $(PATCHES_DIR)/flanterm.c.patch
 	patch -u src/kernel/flanterm/backends/fb.c -i $(PATCHES_DIR)/fb.c.patch
 
-	cp -vf nanoprintf/nanoprintf.h src/kernel/include
+	cp -vf $(EXTERN_LIBS_DIR)/nanoprintf/nanoprintf.h src/kernel/include
 
 limine_build: update_submodules
 	@# Build "limine" utility
-	make -C limine
+	make -C $(EXTERN_LIBS_DIR)/limine
 
-update_submodules: limine flanterm nanoprintf
+update_submodules: $(EXTERN_LIBS_DIR)/limine $(EXTERN_LIBS_DIR)/flanterm $(EXTERN_LIBS_DIR)/nanoprintf
 	git submodule update --recursive --remote
 
 # Link rules for the final kernel executable.
