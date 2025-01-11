@@ -171,7 +171,7 @@ vmm_init(*context) {
    3. Is there a ->next? YES
   
    4. no?
-       PMM, gimme <requested bytes aligned to 4KiBs> bytes!
+       PMM, gimme <requested bytes rounded up to 4KiBs> bytes!
        here you go :D
   
    anyways, go to step 1
@@ -208,6 +208,8 @@ vmm_init(*context) {
   --- Merging it with ->next ---
   [XXX] [    ]  [XXXXXXX] [                                   ] [XXXX]  [XXXXXXXXXX]
   0  FF 100:1FF 200   3BF 3C0                               CBF CC0:DBF DCO      FFF
+
+  NOTE: i'm not going to merge the VMOs for now (as of January 11th 2025)
 
     - DONE
 
