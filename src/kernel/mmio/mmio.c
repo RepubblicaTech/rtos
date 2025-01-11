@@ -24,14 +24,14 @@ mmio_device find_mmio(const char* sig) {
 		}
 	}
 
-	kprintf_warn("MMIO \"%s\" not found!\n", sig);
+	kprintf_panic("MMIO \"%s\" not found!", sig);
 	_hcf();
 }
 
 void append_mmio(mmio_device device) {
 	if (mmio_dev_index >= MMIO_MAX_DEVICES) {
-		kprintf_warn("Attempt to append more devices than the maximum amount. Quitting task...\n");
-		kprintf_info("\tdevice index: %d; maximum supported devices: %d", mmio_dev_index, MMIO_MAX_DEVICES);
+		debugf_debug("Attempt to append more devices than the maximum amount. Quitting task...\n");
+		debugf_debug("\tdevice index: %d; maximum supported devices: %d", mmio_dev_index, MMIO_MAX_DEVICES);
 		return;
 	}
 

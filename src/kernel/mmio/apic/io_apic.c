@@ -12,6 +12,8 @@
 
 #include <pit.h>
 
+#include <io.h>
+
 mmio_device* mmios;
 mmio_device mm_io_apic;
 madt_ioapic* io_apic;
@@ -80,10 +82,10 @@ void ioapic_init() {
 
 	mm_io_apic = find_mmio(MMIO_APIC_SIG);
 	limine_data.p_ioapic_base = mm_io_apic.base;
-	kprintf_info("APIC Base address: %#lx\n", limine_data.p_ioapic_base);
+	debugf_debug("I/O APIC Base address: %#lx\n", limine_data.p_ioapic_base);
 	
 	uint8_t ioapic_redir_entries = (ioapic_reg_read(0x01) >> 16) & 0xFF;
-	kprintf_info("Redirection entries: %#hhu\n", ioapic_redir_entries);
+	debugf_debug("Redirection entries: %#hhu\n", ioapic_redir_entries);
 
 	uint64_t ioredtbl[ioapic_redir_entries];
 	int redir = 0;
