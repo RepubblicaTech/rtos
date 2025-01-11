@@ -13,6 +13,7 @@
 #include <idt.h>
 #include <isr.h>
 #include <irq.h>
+#include <pic.h>
 #include <pit.h>
 #include <mmio/apic/apic.h>
 #include <mmio/apic/io_apic.h>
@@ -25,6 +26,8 @@
 #include <memory/pmm.h>
 #include <memory/paging/paging.h>
 #include <memory/vmm.h>
+
+#include <memory/vma.h>
 
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
@@ -205,19 +208,24 @@ void kstart(void) {
 
     struct limine_memmap_response *memmap_response = memmap_request.response;
 
-    limine_parsed_data.memory_entries = memmap_response->entries;
-    limine_parsed_data.entry_count = memmap_response->entry_count;
+    limine_parsed_data.limine_memory_map = memmap_response->entries;
+    limine_parsed_data.memmap_entry_count = memmap_response->entry_count;
 
     // Load limine's memory map into OUR struct
-    for (uint64_t i = 0; i < limine_parsed_data.entry_count; i++)
+    limine_parsed_data.usable_entry_count = 0;
+    for (uint64_t i = 0; i < limine_parsed_data.memmap_entry_count; i++)
     {
-        entry = limine_parsed_data.memory_entries[i];
+        entry = limine_parsed_data.limine_memory_map[i];
 
-        if (entry->type == LIMINE_MEMMAP_USABLE) limine_parsed_data.memory_usable_total += entry->length;
-        if (entry->type != LIMINE_MEMMAP_RESERVED) limine_parsed_data.memory_total += entry->length;
+        if (entry->type == LIMINE_MEMMAP_USABLE) {
+            limine_parsed_data.memory_usable_total += entry->length;
+            limine_parsed_data.usable_entry_count++;
+        }
 
-        kprintf("Entry n. %lld; Region start: %#llx; length: %#llx; type: %s\n", i, entry->base, entry->length, memory_block_type[entry->type]);
+        debugf_debug("Entry n. %lld; Region start: %#llx; length: %#llx; type: %s\n", i, entry->base, entry->length, memory_block_type[entry->type]);
     }
+    limine_parsed_data.memory_total = limine_parsed_data.limine_memory_map[limine_parsed_data.memmap_entry_count - 1]->base + 
+                                      limine_parsed_data.limine_memory_map[limine_parsed_data.memmap_entry_count - 1]->length;
 
     kprintf("Total Memory size: %#lx (%lu MBytes)\n", limine_parsed_data.memory_total, limine_parsed_data.memory_total / 0x100000);
 
@@ -248,8 +256,9 @@ void kstart(void) {
     }
     rsdp_response = rsdp_request.response;
     limine_parsed_data.rsdp_table_address = (uint64_t*)rsdp_response->address;
-    kprintf_info("Address of RSDP: %#llp\n", limine_parsed_data.rsdp_table_address);
+    debugf_debug("Address of RSDP: %#llp\n", limine_parsed_data.rsdp_table_address);
     acpi_init();
+    kprintf_ok("ACPI tables parsing done\n");
 
     if (paging_mode_request.response == NULL) {
         kprintf_panic("We've got no paging!\n");
@@ -263,12 +272,28 @@ void kstart(void) {
     }
     kprintf("%lluth level paging is enabled\n", 4 + paging_mode_response->mode);
 
+    kprintf_info("Initializing paging\n");
+    // just checking if the PIT works :)
     uint64_t start = get_current_ticks();
-    vmm_init();
+    // kernel PML4 table
+    uint64_t* kernel_pml4 = (uint64_t*)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
+    paging_init(kernel_pml4);
     uint64_t time = get_current_ticks();
     time -= start;
     time /= PIT_TICKS;
-    kprintf_ok("VMM init done\n\t\tTime taken: ~%llu seconds\n", time);
+    kprintf_ok("Kernel page table has been initialized\n\t\tTime taken: ~%llu seconds\n", time);
+
+    vmm_context_t* kernel_vmm_ctx = vmm_ctx_init(kernel_pml4, VMO_KERNEL_RW);
+    
+    void *ptr = (void*)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
+    kernel_vmm_ctx->root_vmo = vmo_init((uint64_t)ptr, PMLT_SIZE, VMO_KERNEL_RW);
+
+    uint64_t* vmm_alloc1 = (uint64_t*)vma_alloc(kernel_vmm_ctx, 0x200, false);
+    uint64_t* vmm_alloc2 = (uint64_t*)vma_alloc(kernel_vmm_ctx, 0x200, false);
+
+    vma_free(kernel_vmm_ctx, vmm_alloc1, false);
+    vma_free(kernel_vmm_ctx, vmm_alloc2, false);
+    kprintf_ok("Kernel VMM init done\n");
 
     if (check_apic()) {
         kprintf_info("APIC device is supported\n");
