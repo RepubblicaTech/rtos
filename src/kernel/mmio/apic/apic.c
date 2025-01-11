@@ -52,14 +52,8 @@ void apic_init() {
 
 	mmio_device mm_lapic = find_mmio(MMIO_LAPIC_SIG);
 	debugf_debug("MMIO device \"%s\" base:%#llx size:%#llx\n", mm_lapic.name, mm_lapic.base, mm_lapic.size);
-	limine_data.p_lapic_base = PHYS_TO_VIRTUAL(mm_lapic.base);
+	limine_data.p_lapic_base = mm_lapic.base;
 	kprintf_info("LAPIC base address: %#llx\n", limine_data.p_lapic_base);
-
-	// set the actual APIC base
-	kprintf_info("APIC_BASE_MSR: %#llx; LAPIC actual base: %#llx\n", _cpu_get_msr(0x1b), apic_get_base());
-	uint64_t apic_msr_new = (apic_get_base() & 0x0ffffff0000) | 0x100;
-	kprintf_info("Setting APIC MSR to %#llx\n", apic_msr_new);
-	_cpu_set_msr(0x1b, apic_msr_new);
 
 	// disable the PIC
 	pic_disable();
@@ -67,9 +61,9 @@ void apic_init() {
 	_apic_global_enable();
 	lapic_write_reg(LAPIC_TASKPR_REG, 0);
 	lapic_write_reg(LAPIC_DEST_FMT_REG, 0xFFFFFFFF);
-	kprintf_info("LAPIC is globally enabled and MSR is now %#llx\n", _cpu_get_msr(0x1b));
+	debugf_debug("LAPIC is globally enabled and MSR is now %#llx\n", _cpu_get_msr(0x1b));
 	lapic_write_reg(LAPIC_SPURIOUS_REG, 0x1ff);
-	kprintf_info("LAPIC_SPURIOUS_REG: %#lx\n", lapic_read_reg(LAPIC_SPURIOUS_REG));
+	debugf_debug("LAPIC_SPURIOUS_REG: %#lx\n", lapic_read_reg(LAPIC_SPURIOUS_REG));
 
 	lapic_write_reg(LAPIC_LINT0_REG, 0xfe);
 	lapic_write_reg(LAPIC_LINT1_REG, 0xfe);
@@ -79,5 +73,5 @@ void apic_init() {
 	lapic_write_reg(LAPIC_THERM_REG, 0xfe);
 	lapic_write_reg(LAPIC_TIMER_REG, 0xfe);
 
-	kprintf_info("LAPIC ID: %#hhx\n", lapic_get_id());
+	debugf_debug("LAPIC ID: %#hhx\n", lapic_get_id());
 }
