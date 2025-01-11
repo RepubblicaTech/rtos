@@ -1,11 +1,12 @@
+#include "acpi/acpi.h"
 #include <memory/vmm.h>
-
-#include <memory/paging/paging.h>
 #include <memory/pmm.h>
-#include <stdint.h>
-#include <util/string.h>
+#include <memory/paging/paging.h>
 
-#include <mmio/mmio.h>
+#include <stdint.h>
+
+#include <util/string.h>
+#include <util/util.h>
 
 #include <kernel.h>
 
@@ -13,70 +14,109 @@
 
 #include <cpu.h>
 
-uint64_t limine_pml4;		// Limine's PML4 table
-uint64_t *v_global_pml4;	// our pml4 table - virtual address
-uint64_t *global_pml4;		// OUR ☭ pml4 table (will be loaded into CR4) - physical address
+// imagine making a function to print stuff that you're going to barely use LMAO
+void vmo_dump(virtmem_object_t* vmo) {
+	debugf_debug("VMO %p\n", vmo);
+	debugf_debug("\tprev: %p\n", vmo->prev);
+	debugf_debug("\tbase: %#llx\n", vmo->base);
+	debugf_debug("\tlen %zu\n", vmo->len);
+	debugf_debug("\tflags: %#llb\n", vmo->flags);
+	debugf_debug("\tnext: %p\n", vmo->next);
+}
 
-static struct bootloader_data limine_data;
+virtmem_object_t* vmo_init(uint64_t base, size_t length, uint64_t flags) {
+	virtmem_object_t* vmo = (virtmem_object_t*)PHYS_TO_VIRTUAL(fl_alloc(sizeof(virtmem_object_t)));
 
-void vmm_init() {
-	limine_data = get_bootloader_data();
+	vmo->base = base;
+	vmo->len = length;
+	vmo->flags = flags;
 
-	limine_pml4 = _get_pml4();
-	kprintf_info("Limine's PML4 sits at %llp\n", limine_pml4);
+	vmo->next = NULL;
+	vmo->prev = NULL;
 
-	// set up a custom PAT
-	kprintf_info("PAT MSR: %#.16llx\n", _cpu_get_msr(0x277));
+	return vmo;
+}
 
-	uint64_t custom_pat = PAT_WRITEBACK | (PAT_WRITE_THROUGH << 8) | (PAT_WRITE_COMBINING << 16) | (PAT_UNCACHEABLE << 24);
-	_cpu_set_msr(0x277, custom_pat);
-	kprintf_info("Custom PAT has been set up: %#.16llx\n", _cpu_get_msr(0x277));
+void vmo_destroy(virtmem_object_t* vmo) {
+	fl_free((void*)vmo);
 
-	v_global_pml4 = (uint64_t*)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
+	vmo = NULL;
+}
 
-	// kernel addresses
-	uint64_t a_kernel_start = (uint64_t)&__kernel_start;
-	uint64_t a_kernel_end = (uint64_t)&__kernel_end;
-	uint64_t kernel_len = a_kernel_end - a_kernel_start;
+vmm_context_t* vmm_ctx_init(uint64_t* pml4, uint64_t flags) {
+	vmm_context_t* ctx = (vmm_context_t*)PHYS_TO_VIRTUAL(fl_alloc(sizeof(vmm_context_t)));
 
-	// map the kernel file
-	kprintf_info("Mapping whole kernel\n");
-	map_region_to_page(v_global_pml4, a_kernel_start - VIRT_BASE + PHYS_BASE, a_kernel_start, kernel_len, PMLE_KERNEL_READ_WRITE);
+	ctx->pml4_table = pml4;
+	ctx->root_vmo = vmo_init(0, 0x1000, flags);
 
-	// map the whole memory
-	kprintf_info("Mapping all the memory\n");
-	// we will map range 0 - first entry's base
-	struct limine_memmap_entry *memmap_entry = limine_parsed_data.memory_entries[0];
-	map_region_to_page(v_global_pml4, 0, 0, memmap_entry->base, PMLE_KERNEL_READ_WRITE);
-	map_region_to_page(v_global_pml4, 0, PHYS_TO_VIRTUAL(0), memmap_entry->base, PMLE_KERNEL_READ_WRITE);
-	// maps the rest of the memory
-	for (uint64_t i = 0; i < limine_parsed_data.entry_count; i++)
+	return ctx;
+}
+
+uint64_t vmo_to_page_flags(uint64_t vmo_flags) {
+	uint64_t pg_flags = 0x0;
+
+	if (vmo_flags & VMO_PRESENT) pg_flags |= PMLE_PRESENT;
+	if (vmo_flags & VMO_RW)		 pg_flags |= PMLE_WRITE;
+	if (vmo_flags & VMO_USER)	 pg_flags |= PMLE_USER;
+
+	return pg_flags;
+}
+
+uint64_t page_to_vmo_flags(uint64_t pg_flags) {
+	uint64_t vmo_flags = 0x0;
+
+	if (pg_flags & PMLE_PRESENT) 	vmo_flags |= VMO_PRESENT;
+	if (pg_flags & PMLE_WRITE)		vmo_flags |= VMO_RW;
+	if (pg_flags & PMLE_USER)	 	vmo_flags |= VMO_USER;
+
+	return vmo_flags;
+}
+
+virtmem_object_t* split_vmo_at(virtmem_object_t* src_vmo, size_t len) {
+	virtmem_object_t* new_vmo;
+
+	new_vmo = vmo_init(src_vmo->base + (uint64_t)len, src_vmo->len - len, src_vmo->flags);
+	/*
+	src_vmo		  new_vmo
+	[     [                        ]
+	0	  0+len					   X
+	*/
+	debugf_debug("VMO %p has been split at (virt)%#llx\n", src_vmo, src_vmo->base + (uint64_t)len);
+
+	src_vmo->len = len;
+
+	if (src_vmo->next != NULL) new_vmo->next = src_vmo->next;
+	src_vmo->next = new_vmo;
+	new_vmo->prev = src_vmo;
+	/*
+	src_vmo		  new_vmo
+	[     ]<-->[                        ]-->...
+	0	       0+len					X
+	*/
+
+	return src_vmo;
+}
+
+// Initializes a simple 4KiB VMO and loads the contexts' PML4 into CR3
+// Assumes the CTX has been initialized with vmm_ctx_init()
+// --- DON'T USE THIS WITH THE KERNEL CTX!!! ---
+void vmm_init(vmm_context_t* ctx) {
+	for (virtmem_object_t* i = ctx->root_vmo; i != NULL; i = i->next)
 	{
-		memmap_entry = limine_parsed_data.memory_entries[i];
-		map_region_to_page(v_global_pml4, memmap_entry->base, memmap_entry->base, memmap_entry->length, PMLE_KERNEL_READ_WRITE);
-		map_region_to_page(v_global_pml4, memmap_entry->base, PHYS_TO_VIRTUAL(memmap_entry->base), memmap_entry->length, PMLE_KERNEL_READ_WRITE);
+		// every VMO will have the same flags as the root one
+		i->flags = ctx->root_vmo->flags;
+
+		void *ptr = (void*)PHYS_TO_VIRTUAL(fl_alloc(0x1000));
+		map_region_to_page(ctx->pml4_table, (uint64_t)ptr, i->base, i->len, vmo_to_page_flags(ctx->root_vmo->flags));
 	}
 
-	//
-	//	--- Mapping devices ---
-	//
-	mmio_device* mmio_devs = get_mmio_devices();
-	for (int i = 0; i < MMIO_MAX_DEVICES; i++)
+	// map the higher half
+	// (0xffff80000... - virtual kernel end (0xffffffff))
+	uint64_t* k_pml4 = (uint64_t*)PHYS_TO_VIRTUAL(get_kernel_pml4());
+	for (int i = 256; i < 512; i++)
 	{
-		if (mmio_devs[i].base != 0x0) {
-			kprintf_info("Mapping device \"%s\"\n", mmio_devs[i].name);
-			map_region_to_page(v_global_pml4, mmio_devs[i].base, mmio_devs[i].base, mmio_devs[i].size, PMLE_KERNEL_READ_WRITE | PMLE_NOT_EXECUTABLE);
-			map_region_to_page(v_global_pml4, mmio_devs[i].base, PHYS_TO_VIRTUAL(mmio_devs[i].base), mmio_devs[i].size, PMLE_KERNEL_READ_WRITE | PMLE_NOT_EXECUTABLE);
-		}
+		ctx->pml4_table[i] = k_pml4[i];
 	}
 
-	kprintf_info("All mappings done.\n");
-
-	kprintf_info("Our PML4 sits at %llp\n", v_global_pml4);
-	global_pml4 = (uint64_t*)VIRT_TO_PHYSICAL(v_global_pml4);
-
-	// load our page table
-	kprintf_info("Loading pml4 %#llp into CR3\n", global_pml4);
-	_load_pml4(global_pml4);
-	kprintf_info("Guys, we're in.\n");
+	_load_pml4(ctx->pml4_table);
 }
