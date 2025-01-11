@@ -6,6 +6,8 @@
 
 #include <stdio.h>
 
+#include <memory/pmm.h>
+
 RSDT* rsdt;
 XSDT* xsdt;
 
