@@ -1,7 +1,7 @@
 /*
 	A simple structure to save some bootloader requests that might be useful later
 
-	"Inspired" by https://github.com/malwarepad/cavOS/blob/master/src/kernel/include/bootloader.h
+	Original idea by https://github.com/malwarepad/cavOS/blob/master/src/kernel/include/bootloader.h
 */
 
 #ifndef KERNEL_H
@@ -15,9 +15,10 @@ typedef struct bootloader_data {
 	// Memory Map
 	size_t memory_total;
 	size_t memory_usable_total;
-	uint64_t entry_count;
+	uint64_t memmap_entry_count;
+	uint64_t usable_entry_count;
 
-	LIMINE_PTR(struct limine_memmap_entry **) memory_entries;
+	LIMINE_PTR(struct limine_memmap_entry **) limine_memory_map;
 
 	uint64_t hhdm_offset;
 
