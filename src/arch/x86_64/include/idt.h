@@ -7,9 +7,6 @@
 
 extern void* isr_stub_table[];
 
-#define FLAG_SET(x, flag) x |= (flag)
-#define FLAG_UNSET(x, flag) x &= ~(flag)
-
 typedef enum
 {
     IDT_FLAG_GATE_TASK              = 0x5,

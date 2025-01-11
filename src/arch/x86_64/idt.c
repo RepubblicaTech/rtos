@@ -4,6 +4,7 @@
 #include "gdt.h"
 
 #include <util/binary.h>
+#include <util/util.h>
 
 #include <stdio.h>
 
