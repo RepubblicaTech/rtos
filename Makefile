@@ -205,9 +205,9 @@ clean:
 	rm -rf $(ISO_DIR)
 
 clean-all: clean
-	rm -rf limine
-	rm -rf flanterm
-	rm -rf nanoprintf
+	rm -rf $(EXTERN_LIBS_DIR)/limine
+	rm -rf $(EXTERN_LIBS_DIR)/flanterm
+	rm -rf $(EXTERN_LIBS_DIR)/nanoprintf
 
 always: update_submodules
 	mkdir -p $(BUILD_DIR)
