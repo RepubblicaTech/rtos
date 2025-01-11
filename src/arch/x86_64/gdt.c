@@ -10,25 +10,7 @@ struct __attribute__((packed)) {
 } gdt;
 
 extern void _load_gdt(gdt_pointer_t* descriptor);
-
-void reload_segments() {
-    asm volatile (
-	    "push $0x08\n"
-	    "lea 1f(%%rip), %%rax\n"
-	    "push %%rax\n"
-	    "lretq\n"
-	    "1:\n\t"
-	    "mov $0x10, %%ax\n\t"
-	    "mov %%ax, %%ds\n\t"
-	    "mov %%ax, %%es\n\t"
-        "mov %%ax, %%fs\n\t"
-        "mov %%ax, %%gs\n\t"
-	    "mov %%ax, %%ss\n"
-	    :
-        :
-	    : "memory"
-	);
-}
+extern void _reload_segments(uint64_t cs, uint64_t ds);
 
 // https://wiki.osdev.org/GDT_Tutorial#Flat_/_Long_Mode_Setup
 void gdt_init() {
@@ -48,5 +30,5 @@ void gdt_init() {
 	debugf_debug("Loading GDTR %#llx\n", *(uint64_t*)&gdtr);
     _load_gdt(&gdtr);
 
-    reload_segments();
+	_reload_segments(GDT_CODE_SEGMENT, GDT_DATA_SEGMENT);
 }
