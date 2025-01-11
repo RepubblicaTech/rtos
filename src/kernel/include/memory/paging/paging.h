@@ -6,7 +6,7 @@
 
 #include <isr.h>
 
-void PMLE_handler(registers* regs);
+void pf_handler(registers* regs);
 
 void paging_init();
 
@@ -49,28 +49,30 @@ void paging_init();
 // by https://github.com/malwarepad/cavOS/blob/646237dfd6c4173a4c059cccd74c63dd31cfd052/src/kernel/include/paging.h
 
 // physical address offset mask
-#define PG_PHYSICAL_MASK	0x0000fffffffff000
-						  // e.g.
-						  //0xFFFF80000005208a
-						  //0x0000800000052000	(masked)
+#define PG_FLAGS_MASK	0xFFF
+#define PG_ADDR_MASK	0x0000fffffffff000
+					 // 0xffff8000000520ab
 
-#define PG_GET_ADDR(a) 		((a) & PG_PHYSICAL_MASK)
-#define PG_FLAGS(a) 		((a) & ~(PG_PHYSICAL_MASK))
-#define PG_PHYS_ADDR(x) 	((x) & ~0xFFF)
+#define PG_FLAGS(a) 		((a) & PG_FLAGS_MASK)
+#define PG_GET_ADDR(x) 		((x) & PG_ADDR_MASK)
 
 #define PMLT_MASK			0x1ff
-#define PG_OFFSET_MAK		0x3ff
 
 // virtual address macros to get the PMLEs
 #define PML4_INDEX(a)		((a >> 39) & PMLT_MASK)
 #define PDP_INDEX(a)		((a >> 30) & PMLT_MASK)
 #define PDIR_INDEX(a)		((a >> 21) & PMLT_MASK)
 #define PTAB_INDEX(a)		((a >> 12) & PMLT_MASK)
+#define PG_OFFSET(a)		((a) & PG_FLAGS_MASK)
 
-// Paging alignment macros
-// from https://github.com/Tix3Dev/apoptOS/blob/370fd34a6d3c87a9d1a16d1a2ec072bd1836ba6c/src/kernel/memory/mem.h#L36
-#define ALIGN_DOWN(address, align)  ((address) & ~((align)-1))
-#define ALIGN_UP(address, align)    (((address) + (align)-1) & ~((align)-1))
+// PAT
+#define PAT_UNCACHEABLE			0
+#define PAT_WRITE_COMBINING		1
+#define PAT_WRITE_THROUGH		4
+#define PAT_WRITE_PROTECTED		5
+#define PAT_WRITEBACK			6
+#define PAT_UNCACHED			7
+
 
 void pf_handler(registers* regs);
 
@@ -78,7 +80,10 @@ void pf_handler(registers* regs);
  *   PAGING STUFF   *
  ********************/
 
-extern uint64_t _get_pml4();
+extern uint64_t* _get_pml4();
+
+uint64_t* get_limine_pml4();
+uint64_t* get_kernel_pml4();
 
 // sets the PML4 table to use
 // note: given address MUST be physical, NOT a virtual one
@@ -87,7 +92,16 @@ extern void _load_pml4(uint64_t *pml4_base);
 // flushes a virtual address in the TLB
 extern void _invalidate(uint64_t virtual);
 
+uint64_t* get_pmlt(uint64_t* pml_table, uint64_t pml_index);
+uint64_t get_page_entry(uint64_t* pml4_table, uint64_t virtual);
+uint64_t pg_virtual_to_phys(uint64_t* pml4_table, uint64_t virtual);
+
 uint64_t *get_create_pmlt(uint64_t *pml_table, uint64_t pmlt_index, uint64_t flags);
+
+void unmap_page(uint64_t* pml4_table, uint64_t virtual);
+void unmap_region(uint64_t* pml4_table, uint64_t virtual_start, uint64_t len);
 
 void map_phys_to_page(uint64_t* pml4_table, uint64_t physical, uint64_t virtual, uint64_t flags);
 void map_region_to_page(uint64_t* pml4_table, uint64_t physical_start, uint64_t virtual_start, uint64_t len, uint64_t flags);
+
+void paging_init(uint64_t* kernel_pml4);
