@@ -63,7 +63,7 @@ int printf(void (*putc_function)(char), const char* fmt, ...);
 #define kprintf_panic(fmt, ...)                                                       ({\
     uint32_t prev_fg = get_screen_fg();                                                 \
     set_screen_fg(PANIC_FG);                                                            \
-    kprintf("--- [ PANIC @ %s():%d ] --- " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__); \
+    kprintf("--- [ PANIC @ %s():%d ] --- " fmt " Halting...", __FUNCTION__, __LINE__, ##__VA_ARGS__); \
     set_screen_fg(prev_fg);                                                             \
 })
 
