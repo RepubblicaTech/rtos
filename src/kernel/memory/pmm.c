@@ -31,7 +31,7 @@ void pmm_init() {
 	limine_data = get_bootloader_data();
 
 	// array of freelist entries
-	freelist_node *fl_entries[limine_data.memmap_entry_count];
+	freelist_node *fl_entries[limine_data.usable_entry_count];
 
 	// create a freelist entry that points to the start of each usable address
 	for (uint64_t i = 0; i < limine_data.memmap_entry_count; i++)
@@ -40,10 +40,10 @@ void pmm_init() {
 
 		if (memmap_entry->type != LIMINE_MEMMAP_USABLE) continue;
 
-		// get virtually mapped address
+		// get virtual address
 		void *virtual_addr = (void*)(PHYS_TO_VIRTUAL(memmap_entry->base));
 		freelist_node *fl_entry = (freelist_node*)virtual_addr;		// point the entry to that address
-		fl_entry->length = ((size_t)memmap_entry->length + 0x1000);
+		fl_entry->length = ((size_t)memmap_entry->length);
 
 		fl_entries[usable_entry_count] = fl_entry;
 
@@ -115,13 +115,9 @@ int get_freelist_entry_count() {
 */
 freelist_node **fl_update_entries() {
 
-	freelist_node *fl_en = fl_head;
-
-	for (usable_entry_count = 0; fl_en != NULL; usable_entry_count++)
+	for (freelist_node *fl_en = fl_head; fl_en != NULL; fl_en = fl_en->next)
 	{
 		fl_entries_ptr[usable_entry_count] = fl_en;
-
-		fl_en = fl_en->next;
 	}
 
 	return fl_entries_ptr;
