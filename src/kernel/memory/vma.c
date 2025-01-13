@@ -61,7 +61,7 @@ void* vma_alloc(vmm_context_t* ctx, size_t size, bool map_allocation) {
 void vma_free(vmm_context_t* ctx, void* ptr, bool unmap_allocation) {
 	debugf_debug("Deallocating pointer %p\n", ptr);
 
-	virtmem_object_t* cur_vmo = (virtmem_object_t*)0xfe0; // ctx->root_vmo;
+	virtmem_object_t* cur_vmo = ctx->root_vmo;
 	for (; cur_vmo != NULL; cur_vmo = cur_vmo->next) {
 		vmo_dump(cur_vmo);
 		if ((uint64_t)ptr == cur_vmo->base) {
