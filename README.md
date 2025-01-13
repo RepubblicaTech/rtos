@@ -28,14 +28,17 @@ Extras:
 - [Some useful make args](#some-useful-make-args)
 - [Other useful stuff](#other-useful-stuff)
 
-### REMINDER: Building of this project has been only tested on Linux, but if you can report anything about other platforms (Windows, MacOS, Ubuntu, ...) feel free to open an issue/PR! Here is a list of currently tested (and supported) platorms:
+### REMINDER: Building of this project has been only properly tested on Linux, but if you can report anything about other platforms (Windows, MacOS, Ubuntu, ...) feel free to open an issue/PR! Here is a list of currently tested (and supported) platorms:
 
 - Fedora Workstation 41 (Main machine, at least one build/week)
-- Debian 12 on WSL2 (Windows 10 21H2 build 19044, last tested on September 2024)
+- OS X Mavericks (don't ask why, last tested on January 2024)
+   
+   ***NOTE***: if you installed the cross compiler from HomeBrew/MacPorts you should compile the project with `make KCC=x86_64-elf-gcc KLD=x86_64-elf-ld`
 - Arch Linux (last tested on December 2024)
+- Debian 12 on WSL2 (Windows 10 21H2 build 19044, last tested on September 2024)
 
 ### Prequisites
-There are some packages that are needed for building and running the OS, make sure to check your distro's repos for how to install them:
+There are some packages that are needed for building and running the OS, make sure to check your distro's package manager for how to install them:
 
 `nasm` - for compiling assembly files
 
@@ -117,9 +120,13 @@ From now on, a simple `make` should compile the project's source code and create
 `make run` Compiles the code, creates a bootable ISO image and launches qemu with such image
 
 `make debug` Same as above, but launches GDB according to the settings given by the `debug.gdb` file. Useful for kernel debugging with QEMU.
+(NOTE: all the output that goes through E9 port is redirected to the `qemu_gdb.log` file in the root of the project) 
 
 # Other useful stuff
-I included a `.vscode` folder which includes the `c_cpp_properties.json` settings file that provides an enviroment specific to this project when using VSCode.
+I included a `.vscode` folder which includes the `c_cpp_properties.json` settings file that provides an enviroment with all compiler paths, flags and include paths properly set up when using VSCode.
+
+There are also a `launch.json` file used for debugging. Just set your breakpoint(s), press `Ctrl+F5` and you should be good to go!
+(NOTE: all the output that goes through E9 port is redirected to the `qemu_vscode.log` file in the root of the project) 
 
 ## **Update! (18/12/2024)** 
 
