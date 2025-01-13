@@ -350,8 +350,8 @@ _hcf:
 global _crash_test
 _crash_test:
     ; division by 0 exception
-    mov ecx, 0x4E
-    mov eax, 0
-    div eax
+    mov rax, 0x4E
+    mov rcx, 0
+    div rcx
 
     ret
