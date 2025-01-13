@@ -5,8 +5,11 @@ export PATH:=$(TOOLCHAIN_PREFIX)/bin:$(PATH)
 
 OS_CODENAME=kernel-v0
 
-PATCHES_DIR=patches
-EXTERN_LIBS_DIR=thirdparty
+LIBS_DIR=libs
+PATCHES_DIR=$(LIBS_DIR)/patches
+SRC_DIR=src
+ARCH_DIR=$(SRC_DIR)/arch/$(TARGET_BASE)
+KERNEL_SRC_DIR=$(SRC_DIR)/kernel
 BUILD_DIR=build
 ISO_DIR=iso
 OBJS_DIR=$(BUILD_DIR)/objs
@@ -60,8 +63,9 @@ override KCFLAGS += \
     -Wextra \
     -std=gnu11 \
     -ffreestanding \
-    -I src/kernel/include \
-	-I src/arch/$(TARGET_BASE)/include \
+	-I $(KERNEL_SRC_DIR) \
+    -I $(KERNEL_SRC_DIR)/system \
+	-I $(ARCH_DIR) \
     -fno-stack-protector \
     -fno-stack-check \
     -fno-lto \
@@ -87,7 +91,7 @@ override KLDFLAGS += \
     -nostdlib \
     -static \
     -z max-page-size=0x1000 \
-    -T src/linker.ld \
+    -T $(SRC_DIR)/linker.ld \
 	-Map=$(BUILD_DIR)/kernel.map
 
 # Internal nasm flags that should not be changed by the user.
@@ -97,16 +101,17 @@ override KNASMFLAGS += \
 
 # Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
 # object and header dependency file names.
-override CFILES := $(shell cd src && find -L * -type f -name '*.c')
-override ASFILES := $(shell cd src && find -L * -type f -name '*.S')
-override NASMFILES := $(shell cd src && find -L * -type f -name '*.asm')
+override CFILES := $(shell cd $(SRC_DIR) && find -L * -type f -name '*.c')
+override ASFILES := $(shell cd $(SRC_DIR) && find -L * -type f -name '*.S')
+override NASMFILES := $(shell cd $(SRC_DIR) && find -L * -type f -name '*.asm')
 override OBJ := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o) $(NASMFILES:.asm=.asm.o))
 override HEADER_DEPS := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
 
 # Default target.
-.PHONY: all limine_build toolchain
+.PHONY: all limine_build toolchain libs
 
-all: clean $(OS_CODENAME).iso
+all: $(OS_CODENAME).iso
+	@set -e
 
 $(OS_CODENAME).iso: bootloader
 	@# Create the bootable ISO.
@@ -117,52 +122,32 @@ $(OS_CODENAME).iso: bootloader
 	        $(ISO_DIR) -o $(OS_CODENAME).iso
 
 	@# Install Limine stage 1 and 2 for legacy BIOS boot.
-	./$(EXTERN_LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso
+	./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso
 
-bootloader: deps $(BUILD_DIR)/$(KERNEL)
+bootloader: libs limine_build $(BUILD_DIR)/$(KERNEL)
 	mkdir -p $(ISO_DIR)
 	@# Copy the relevant files over.
 	mkdir -p $(ISO_DIR)/boot
 	cp -v $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/boot/
 	mkdir -p $(ISO_DIR)/boot/limine
-	cp -v src/limine.conf $(EXTERN_LIBS_DIR)/limine/limine-bios.sys $(EXTERN_LIBS_DIR)/limine/limine-bios-cd.bin \
-	      $(EXTERN_LIBS_DIR)/limine/limine-uefi-cd.bin $(ISO_DIR)/boot/limine/
+	cp -v $(SRC_DIR)/limine.conf $(LIBS_DIR)/limine/limine-bios.sys $(LIBS_DIR)/limine/limine-bios-cd.bin \
+	      $(LIBS_DIR)/limine/limine-uefi-cd.bin $(ISO_DIR)/boot/limine/
 
 	@# Create the EFI boot tree and copy Limine's EFI executables over.
 	mkdir -p $(ISO_DIR)/EFI/BOOT
-	cp -v $(EXTERN_LIBS_DIR)/limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
-	cp -v $(EXTERN_LIBS_DIR)/limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
+	cp -v $(LIBS_DIR)/limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
+	cp -v $(LIBS_DIR)/limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
 
-deps: limine_build $(EXTERN_LIBS_DIR)/flanterm $(EXTERN_LIBS_DIR)/nanoprintf
-	cp -vf $(EXTERN_LIBS_DIR)/limine/limine.h src/kernel/include/limine.h
-
-	@# copy flanterm headers
-	mkdir -p src/kernel/include/flanterm/backends
-	mkdir -p src/kernel/flanterm/backends
-	cp -vf $(EXTERN_LIBS_DIR)/flanterm/*.h src/kernel/include/flanterm
-	cp -vf $(EXTERN_LIBS_DIR)/flanterm/*.c src/kernel/flanterm
-
-	cp -vf $(EXTERN_LIBS_DIR)/flanterm/backends/*.h src/kernel/include/flanterm/backends
-	cp -vf $(EXTERN_LIBS_DIR)/flanterm/backends/*.c src/kernel/flanterm/backends
-
-	@# custom font header
-	cp -vf $(PATCHES_DIR)/font.h src/kernel/include/flanterm/backends
-
-	@# due to the project structure, the include paths have to be modified
-	patch -u src/kernel/flanterm/flanterm.c -i $(PATCHES_DIR)/flanterm.c.patch
-	patch -u src/kernel/flanterm/backends/fb.c -i $(PATCHES_DIR)/fb.c.patch
-
-	cp -vf $(EXTERN_LIBS_DIR)/nanoprintf/nanoprintf.h src/kernel/include
-
-limine_build: update_submodules
+limine_build: libs
 	@# Build "limine" utility
-	make -C $(EXTERN_LIBS_DIR)/limine
+	make -C $(LIBS_DIR)/limine
 
-update_submodules: $(EXTERN_LIBS_DIR)/limine $(EXTERN_LIBS_DIR)/flanterm $(EXTERN_LIBS_DIR)/nanoprintf
-	git submodule update --recursive --remote
+libs:
+	chmod +x $(LIBS_DIR)/get_deps.sh
+	./libs/get_deps.sh $(SRC_DIR)/kernel $(LIBS_DIR)
 
 # Link rules for the final kernel executable.
-$(BUILD_DIR)/$(KERNEL): Makefile src/linker.ld $(OBJ) always
+$(BUILD_DIR)/$(KERNEL): Makefile $(SRC_DIR)/linker.ld $(OBJ) always
 	mkdir -p "$$(dirname $@)"
 	$(KLD) $(OBJ) $(KLDFLAGS) -o $@
 	@echo "--> Built:	" $@
@@ -171,19 +156,19 @@ $(BUILD_DIR)/$(KERNEL): Makefile src/linker.ld $(OBJ) always
 -include $(HEADER_DEPS)
 
 # Compilation rules for *.c files.
-$(OBJS_DIR)/%.c.o: src/%.c Makefile always
+$(OBJS_DIR)/%.c.o: $(SRC_DIR)/%.c Makefile always
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 	@echo "--> Compiled:	" $<
 
 # Compilation rules for *.S files.
-$(OBJS_DIR)/%.S.o: src/%.S Makefile always
+$(OBJS_DIR)/%.S.o: $(SRC_DIR)/%.S Makefile always
 	mkdir -p "$$(dirname $@)"
 	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 	@echo "--> Compiled:	" $<
 
 # Compilation rules for *.asm (nasm) files.
-$(OBJS_DIR)/%.asm.o: src/%.asm Makefile always
+$(OBJS_DIR)/%.asm.o: $(SRC_DIR)/%.asm Makefile always
 	mkdir -p "$$(dirname $@)"
 	nasm $(KNASMFLAGS) $< -o $@
 	@echo "--> Compiled:	" $<
@@ -200,16 +185,12 @@ debug: $(OS_CODENAME).iso
 # Remove object files and the final executable.
 .PHONY: clean always
 
-clean:
-	rm -rf $(BUILD_DIR)
-	rm -rf $(ISO_DIR)
-
 clean-all: clean
-	rm -rf $(EXTERN_LIBS_DIR)/limine
-	rm -rf $(EXTERN_LIBS_DIR)/flanterm
-	rm -rf $(EXTERN_LIBS_DIR)/nanoprintf
+	rm -rf $(LIBS_DIR)/limine
+	rm -rf $(LIBS_DIR)/flanterm
+	rm -rf $(LIBS_DIR)/nanoprintf
 
-always: update_submodules
+always:
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(OBJS_DIR)
 	mkdir -p $(ISO_DIR)
