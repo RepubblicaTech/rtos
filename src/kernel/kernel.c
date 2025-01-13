@@ -191,13 +191,14 @@ void kstart(void) {
     isr_init();
     kprintf_ok("ISR init done\n");
 
+    // _crash_test();
+
     irq_init();
     kprintf_ok("PIC init done\n");
 
     pit_init(PIT_TICKS);
     kprintf_ok("PIT init done\n");
 
-    // _crash_test();
     isr_registerHandler(14, pf_handler);
 
     if (memmap_request.response == NULL || memmap_request.response->entry_count < 1) {
@@ -244,12 +245,6 @@ void kstart(void) {
     pmm_init();
     kprintf_ok("PMM init done\n");
 
-    if (!check_pae()) {
-        kprintf_info("PAE is disabled\n");
-    } else {
-        kprintf_info("PAE is enabled\n");
-    }
-
     if (rsdp_request.response == NULL) {
         kprintf_panic("Couldn't get RSDP address!\n");
         _hcf();
@@ -271,6 +266,12 @@ void kstart(void) {
         _hcf();
     }
     kprintf("%lluth level paging is enabled\n", 4 + paging_mode_response->mode);
+
+    if (!check_pae()) {
+        kprintf_info("PAE is disabled\n");
+    } else {
+        kprintf_info("PAE is enabled\n");
+    }
 
     kprintf_info("Initializing paging\n");
     // just checking if the PIT works :)
@@ -321,8 +322,6 @@ void kstart(void) {
 	}
 
 	kprintf("--- %s END ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
-
-    // _crash_test();
 
     for (;;);
 }
