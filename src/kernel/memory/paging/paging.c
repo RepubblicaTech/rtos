@@ -6,7 +6,7 @@
 	(C) RepubblicaTech 2024
 */
 
-#include <memory/paging/paging.h>
+#include "paging.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -82,6 +82,7 @@ void pf_handler(registers* regs) {
 
 	// CR2 contains the address that caused the fault
 	uint64_t cr2 = cpu_get_cr(2);
+	kprintf("\nAttempt to access address %#llx\n\n", cr2);
 
 	kprintf("RESERVED WRITE:				%d\n", PG_RESERVED(pf_error_code));
 	kprintf("INSTRUCTION_FETCH:			%d\n", PG_IF(pf_error_code));
@@ -89,13 +90,7 @@ void pf_handler(registers* regs) {
 	kprintf("SHADOW_STACK_ACCESS: 			%d\n", PG_SS(pf_error_code));
 	kprintf("SGX_VIOLATION: 				%d\n", PG_SGX(pf_error_code));
 
-	kprintf("\nAttempt to access address %#llx\n\n", cr2);
-
-	print_reg_dump(regs);
-
-	kprintf("--- PANIC LOG END --- HALTING\n");
-
-	_hcf();
+	panic_common(regs);
 }
 
 /********************
@@ -242,9 +237,7 @@ void paging_init(uint64_t* kernel_pml4) {
 	*/
 
 	// kernel addresses
-	uint64_t a_kernel_start = (uint64_t)&__kernel_start;					// higher half kernel start
 	uint64_t a_kernel_end = (uint64_t)&__kernel_end;						// higher half kernel end
-	uint64_t kernel_len = a_kernel_end - a_kernel_start;
 
 	uint64_t a_kernel_text_start = (uint64_t)&__kernel_text_start;
 	uint64_t a_kernel_text_end = (uint64_t)&__kernel_text_end;

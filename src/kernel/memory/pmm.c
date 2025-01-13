@@ -4,7 +4,7 @@
 	(C) RepubblicaTech 2024
 */
 
-#include <memory/pmm.h>
+#include "pmm.h"
 
 #include <limine.h>
 #include <kernel.h>
@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include <memory/paging/paging.h>
+#include "paging/paging.h"
 
 static struct bootloader_data limine_data;
 extern void _hcf();

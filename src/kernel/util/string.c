@@ -1,4 +1,4 @@
-#include <util/string.h>
+#include "string.h"
 #include <io.h>
 
 // GCC and Clang reserve the right to generate calls to the following

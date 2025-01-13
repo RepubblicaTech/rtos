@@ -45,6 +45,8 @@ void print_reg_dump(registers* regs);
 void isr_init();
 void isr_registerHandler(int interrupt, isrHandler handler);
 
+void panic_common(registers* regs);
+
 extern void _hcf();
 
 #endif

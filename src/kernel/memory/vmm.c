@@ -1,7 +1,7 @@
 #include "acpi/acpi.h"
-#include <memory/vmm.h>
-#include <memory/pmm.h>
-#include <memory/paging/paging.h>
+#include "vmm.h"
+#include "pmm.h"
+#include "paging/paging.h"
 
 #include <stdint.h>
 

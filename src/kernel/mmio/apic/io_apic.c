@@ -62,7 +62,7 @@ void apic_register_handler(int irq, irq_handler handler) {
 
 // maps an I/O APIC IRQ to an interrupt that calls the handler if fired
 // @param irq			- The hardware interrupt that'll be fired
-// @param interrupt		- This needs to be an interrupt vector that will be written to the I/O APIC
+// @param interrupt		- The interrupt vector that will be written to the I/O APIC
 // @param handler		- The ISR that will be called when the interrupt gets fired
 void ioapic_map_irq(int irq, int interrupt, irq_handler handler) {
 	uint32_t redtble_lo = 	(0 << 16)			   |	// Unmask the entry

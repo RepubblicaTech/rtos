@@ -25,7 +25,7 @@ mmio_device find_mmio(const char* sig) {
 	}
 
 	kprintf_panic("MMIO \"%s\" not found!", sig);
-	_hcf();
+	return *(mmio_device*)NULL;
 }
 
 void append_mmio(mmio_device device) {

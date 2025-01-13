@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include <memory/freelists/freelist.h>
+#include "freelists/freelist.h"
 
 extern struct bootloader_data limine_parsed_data;
 #define HHDM_OFFSET         limine_parsed_data.hhdm_offset
