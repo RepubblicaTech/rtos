@@ -12,11 +12,16 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [X] GDT
 - [X] Interrupt handling (IDT, ISRs, IRQs)
 - [X] PIC support
+- [ ] PIT Driver
+  - [X] Initialization
+  - [ ] PIT-supported sleep
 - [X] LAPIC/IOAPIC Initialization
+  - [ ] LAPIC timer init
 
 - [ ] ACPI
   - [X] Get RSDP/RSDT information
   - [X] MADT (LAPIC initialization)
+  - [ ] HPET (optional)
   - [ ] _we'll probably need more tables in the future_
 
 - [ ] Memory
@@ -24,13 +29,13 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
   - [ ] Memory management
     - [X] PMM
       - [X] Allocation/heap (`malloc`, `free`)
-    - [ ] VMM
+    - [X] VMM
       - [X] Paging
-      - [ ] Mapping devices to memory
+      - [X] Mapping devices to memory
         - [X] LAPIC
         - [X] I/O APIC
-        - [ ] _leave this in case of other devices to map_
-      - [ ] Actual VMM stuff (allocating, freeing pages etc.)
+      - [X] Actual VMM stuff (allocating, freeing virtual memory etc.)  
+    - [ ] Kernel heap (`kmalloc`, `kfree`)
 
 - [ ] File system support (ISO 9660, maybe FAT32/EXTx)
 
