@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src/kernel",
-                "${workspaceFolder}/src/kernel/include",
+                "${workspaceFolder}/src/kernel/system",
                 "${workspaceFolder}/src/arch/x86_64"
             ],
             "defines": [],
