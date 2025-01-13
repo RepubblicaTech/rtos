@@ -43,21 +43,22 @@ There are some packages that are needed for building and running the OS, make su
 
 `qemu` - the emulator (you can use whatever software you like, but i have only tested with QEMU as of October 2024)
 
-`diff` and `patch` - they are required to edit Flanterm's source files to point to the "correct" header files (due to the current project structure)
+`diff` and `patch` - they are required to patch Flanterm's header files to change the builtin font
 
-1. Clone the repository:
+Just clone the repository:
 
-`git clone https://github.com/RepubblicaTech/rtos.git`
+`git clone --recursive https://github.com/RepubblicaTech/rtos.git`
 
-2. Fetch and get the required libraries
-
-`git submodule update --init --recursive`
-
-Running `make deps` will copy all the required modules to the project directory, and patch those files if needed.
+(Optional, running `make` will do this anyways) download and copy over the required libraries
+`./libs/get_deps.sh src/kernel libs`
+NOTES:
+- `src/kernel` is the kernel source code directory
+- `libs` is the path to the Git submodules and the required patches (if needed)
+You *can* change them, but you *shouldn't* since these are the paths in the project
 
 ### Setting up a cross-compiler
 
-To compile the OS, you'll not be able to use the system default C compiler (gcc), but you'll need a cross-compiler which will target a generic x86_64 platform rather than your specific one.
+To build the kernel, you'll not be able to use the system default C compiler (gcc), but you'll need a cross-compiler which will target a generic x86_64 platform rather than your specific one.
 
 #### Prebuilt option
 
@@ -72,7 +73,7 @@ rtos
 └── toolchain
     ├── Makefile
     └── x86_64-elf	<-- You should create this directory
-	--- All of these files should come from the downloaded tar archive ---
+	--- All of these folders should come from the downloaded tar archive ---
         ├── bin
         ├── include
         ├── lib
