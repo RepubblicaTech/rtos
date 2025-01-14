@@ -20,7 +20,7 @@ check_submodule() {
 	if [ ! -d "$1" ]; then
 		# clone it
 		printf "Downloading and "
-		git submodule update --init "$1"
+		git submodule update --init "$1" >> /dev/null
 	fi
 	# update it
 	printf "Updating module $1\n"
