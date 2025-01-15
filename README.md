@@ -113,7 +113,7 @@ As of November 2024, project gets compiled with binutils version 2.43 and gcc 14
 
 From now on, a simple `make` should compile the project's source code and create a bootable ISO image compatible with most computers with an x86_64 CPU (for now).
 
-(the first build might take a bit longer since it needs to download Limine and compile it, but it won't take as much as the toolchain one)
+(the first build might take a bit longer since it needs to download the required libraries and compile it, but it won't take as much as the toolchain one)
 
 ## Some useful make args
 
