@@ -23,7 +23,7 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [ ] ACPI
   - [X] Get RSDP/RSDT information
   - [X] MADT (LAPIC initialization)
-  - [ ] HPET (optional)
+  - [ ] HPET (maybe)
   - [ ] _we'll probably need more tables in the future_
 
 - [X] Memory
