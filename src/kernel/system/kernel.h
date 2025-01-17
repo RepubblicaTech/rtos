@@ -10,6 +10,16 @@
 #include <limine.h>
 
 #include <stddef.h>
+
+// these come from the linker
+// from https://github.com/malwarepad/cavOS/blob/3ddf0b2f8d72aee57a13a906c19bde403e425c0d/src/kernel/include/bootloader.h#L7
+extern uint64_t __kernel_text_start, __kernel_text_end;
+extern uint64_t __kernel_rodata_start, __kernel_rodata_end;
+extern uint64_t __kernel_data_start, __kernel_data_end;
+extern uint64_t __kernel_start, __kernel_end;
+
+extern uint64_t __limine_reqs_start, __limine_reqs_end;
+
 typedef struct bootloader_data {
 
 	// Memory Map
@@ -31,15 +41,6 @@ typedef struct bootloader_data {
 	uint64_t p_lapic_base;
 	uint32_t p_ioapic_base;
 } bootloader_data;
-
-// these come from the linker
-// from https://github.com/malwarepad/cavOS/blob/3ddf0b2f8d72aee57a13a906c19bde403e425c0d/src/kernel/include/bootloader.h#L7
-extern uint64_t __kernel_text_start, __kernel_text_end;
-extern uint64_t __kernel_rodata_start, __kernel_rodata_end;
-extern uint64_t __kernel_data_start, __kernel_data_end;
-extern uint64_t __kernel_start, __kernel_end;
-
-extern uint64_t __limine_reqs_start, __limine_reqs_end;
 
 struct bootloader_data get_bootloader_data();
 
