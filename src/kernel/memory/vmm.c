@@ -47,7 +47,7 @@ vmm_context_t* vmm_ctx_init(uint64_t* pml4, uint64_t flags) {
 	vmm_context_t* ctx = (vmm_context_t*)PHYS_TO_VIRTUAL(fl_alloc(sizeof(vmm_context_t)));
 
 	ctx->pml4_table = pml4;
-	ctx->root_vmo = vmo_init(0, 0x1000, flags);
+	ctx->root_vmo = vmo_init(0, PMLT_SIZE, flags);
 
 	return ctx;
 }
@@ -79,13 +79,16 @@ virtmem_object_t* split_vmo_at(virtmem_object_t* src_vmo, size_t len) {
 		return src_vmo;		// we are not going to split it
 	}
 
-	new_vmo = vmo_init(src_vmo->base + (uint64_t)len, src_vmo->len - len, src_vmo->flags);
+	new_vmo = vmo_init(src_vmo->base + (uint64_t)(len * PMLT_SIZE), src_vmo->len - len, src_vmo->flags);
 	/*
 	src_vmo		  new_vmo
 	[     [                        ]
 	0	  0+len					   X
 	*/
-	debugf_debug("VMO %p has been split at (virt)%#llx\n", src_vmo, src_vmo->base + (uint64_t)len);
+
+	#ifdef VMM_DEBUG
+		debugf_debug("VMO %p has been split at (virt)%#llx\n", src_vmo, src_vmo->base + (uint64_t)(len * PMLT_SIZE));
+	#endif
 
 	src_vmo->len = len;
 
@@ -110,8 +113,9 @@ void vmm_init(vmm_context_t* ctx) {
 		// every VMO will have the same flags as the root one
 		i->flags = ctx->root_vmo->flags;
 
-		void *ptr = (void*)PHYS_TO_VIRTUAL(fl_alloc(0x1000));
-		map_region_to_page(ctx->pml4_table, (uint64_t)ptr, i->base, i->len, vmo_to_page_flags(ctx->root_vmo->flags));
+		// mapping will be done on VMA_ALLOC
+		// void *ptr = (void*)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
+		// map_region_to_page(ctx->pml4_table, (uint64_t)ptr, i->base, i->len, vmo_to_page_flags(ctx->root_vmo->flags));
 	}
 
 	// map the higher half
@@ -122,5 +126,5 @@ void vmm_init(vmm_context_t* ctx) {
 		ctx->pml4_table[i] = k_pml4[i];
 	}
 
-	_load_pml4(ctx->pml4_table);
+	_load_pml4((uint64_t*)VIRT_TO_PHYSICAL(ctx->pml4_table));
 }
