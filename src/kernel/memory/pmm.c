@@ -133,7 +133,9 @@ void *fl_alloc(size_t bytes) {
 	}
 
 	kmallocs++;
-	// debugf_debug("--- Allocation n.%d ---\n", kmallocs);
+	#ifdef PMM_DEBUG
+		debugf_debug("--- Allocation n.%d ---\n", kmallocs);
+	#endif
 
 	void *ptr;
 
@@ -141,8 +143,10 @@ void *fl_alloc(size_t bytes) {
 	freelist_node *fl_entry;
 
 	for (fl_entry = fl_head; fl_entry != NULL; fl_entry = fl_entry->next)
-	{
-		// debugf_debug("Looking for memory to allocate at address %p\n", fl_entry);
+	{	
+		#ifdef PMM_DEBUG
+			debugf_debug("Looking for memory to allocate at address %p\n", fl_entry);
+		#endif
 
 		// if the requested size fits in the freelist region...
 		if (bytes <= fl_entry->length) {
@@ -152,7 +156,9 @@ void *fl_alloc(size_t bytes) {
 			break;							// quit from the loop since we found a block
 		}
 		// if not, go to the next block
-		debugf_debug("Not enough memory found at %p. Looking for next range %p...\n", fl_entry, fl_entry->next);
+		#ifdef PMM_DEBUG
+			debugf_debug("Not enough memory found at %p. Looking for next range %p...\n", fl_entry, fl_entry->next);
+		#endif
 	}
 	// if we've got here and nothing was found, then kernel panic
 	if (fl_entry == NULL) {
@@ -160,7 +166,9 @@ void *fl_alloc(size_t bytes) {
 		_hcf();
 	}
 
-	// debugf_debug("allocated %lu byte%sat address %p\n", bytes, bytes > 1? "s " : " ",  fl_entry);
+	#ifdef PMM_DEBUG
+		debugf_debug("allocated %lu byte%sat address %p\n", bytes, bytes > 1? "s " : " ",  fl_entry);
+	#endif
 
 	// if memory gets allocated from the entry head, we should change it
 	if ((size_t)fl_entry == (size_t)fl_head) {
@@ -178,10 +186,12 @@ void *fl_alloc(size_t bytes) {
 
 	// freelist_node **fl_entries = fl_update_entries();
 
-	// debugf_debug("old head %p is now %p\n", ptr, fl_head);
-	// debugf_debug("\tprev: %p\n", fl_head->prev);
-	// debugf_debug("\tnext: %p\n", fl_head->next);
-	// debugf_debug("\tsize: %#llx\n", fl_head->size);
+	#ifdef PMM_DEBUG
+		debugf_debug("old head %p is now %p\n", ptr, fl_head);
+		debugf_debug("\tprev: %p\n", fl_head->prev);
+		debugf_debug("\tnext: %p\n", fl_head->next);
+		debugf_debug("\tsize: %#llx\n", fl_head->length);
+	#endif
 
 	// zero out the whole allocated region
 	memset(ptr, 0, bytes);
@@ -192,7 +202,9 @@ void *fl_alloc(size_t bytes) {
 
 void fl_free(void *ptr) {
 	kfrees++;
-	// debugf_debug("--- Deallocation n.%d ---\n", kfrees);
+	#ifdef PMM_DEBUG
+		debugf_debug("--- Deallocation n.%d ---\n", kfrees);
+	#endif
 
 	size_t s_fl_head, s_fl_ptr;
 
@@ -202,11 +214,13 @@ void fl_free(void *ptr) {
 	s_fl_head = (size_t)fl_head;
 	s_fl_ptr = (size_t)fl_ptr;
 
-	// debugf_debug("pointer %p is now a freelist entry\n", fl_ptr);
-	// debugf_debug("head is at location %p\n", fl_head);
+	#ifdef PMM_DEBUG
+		debugf_debug("pointer %p is now a freelist entry\n", fl_ptr);
+		debugf_debug("head is at location %p\n", fl_head);
 
-	// debugf_debug("deallocating pointer %p\n", fl_ptr);
-
+		debugf_debug("deallocating pointer %p\n", fl_ptr);
+	#endif
+	
 	// ---------------------- //
 	// --| POSSIBLE CASES |-- //
 	// ---------------------- //
@@ -216,7 +230,9 @@ void fl_free(void *ptr) {
 		// the head becomes the pointer
 		fl_head = fl_ptr;
 
-		// debugf_debug("%p is the new head\n", fl_head);
+		#ifdef PMM_DEBUG
+			debugf_debug("%p is the new head\n", fl_head);
+		#endif
 
 		return;		// deallocation is done
 	}
@@ -238,8 +254,10 @@ void fl_free(void *ptr) {
 			// entry->next becomes the pointer
 			fl_entry->next = fl_ptr;
 
-			// debugf_debug("%p now points to %p\n", fl_entry, fl_entry->next);
-
+			#ifdef PMM_DEBUG
+				debugf_debug("%p now points to %p\n", fl_entry, fl_entry->next);
+			#endif
+			
 			return;		// deallocation is done
 		}
 	}
@@ -259,8 +277,10 @@ void fl_free(void *ptr) {
 		fl_en->prev->next = last_fl;
 		last_fl->prev = fl_en->prev;
 
-		// debugf_debug("%p is at the end of the free list\n", fl_ptr);
-
+		#ifdef PMM_DEBUG
+			debugf_debug("%p is at the end of the free list\n", fl_ptr);
+		#endif
+		
 		return;		// deallocation is done
 	}
 }

@@ -2,6 +2,7 @@
 #define PMM_H 1
 
 #include <stddef.h>
+#include <kernel.h>
 
 #include "freelists/freelist.h"
 
