@@ -16,6 +16,8 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
   - [X] Initialization
   - [ ] PIT-supported sleep
 - [X] LAPIC/IOAPIC Initialization
+  - [X] IRQ redirection to I/O APIC
+  - [X] Interrupts work
   - [ ] LAPIC timer init
 
 - [ ] ACPI
@@ -24,18 +26,20 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
   - [ ] HPET (optional)
   - [ ] _we'll probably need more tables in the future_
 
-- [ ] Memory
+- [X] Memory
   - [X] Get memory map
-  - [ ] Memory management
+  - [X] Memory management
     - [X] PMM
-      - [X] Allocation/heap (`malloc`, `free`)
+      - [X] Allocating/freeing physical memory
     - [X] VMM
       - [X] Paging
       - [X] Mapping devices to memory
         - [X] LAPIC
         - [X] I/O APIC
       - [X] Actual VMM stuff (allocating, freeing virtual memory etc.)  
-    - [ ] Kernel heap (`kmalloc`, `kfree`)
+    - [X] Kernel heap (`kmalloc`, `kfree`)
+
+- [ ] Scheduling (+ Multitasking?)
 
 - [ ] File system support (ISO 9660, maybe FAT32/EXTx)
 
@@ -43,6 +47,8 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [ ] Jump to userspace
 
 ## 2nd Milestone
+- [ ] ELF loading
+  - [ ] OS-specific toolchain
 - [ ] Basic shell
   - [ ] (decent) Keyboard driver
   - [ ] some kind of PATH
