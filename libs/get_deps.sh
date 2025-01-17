@@ -9,7 +9,8 @@ LIBS_DIR=$2
 # required libraries
 declare -a libs=("limine"
 				"flanterm" 
-				"nanoprintf")
+				"nanoprintf"
+				"liballoc")
 
 stderr_echo() { 
 	echo "$@" >&2; 
@@ -36,7 +37,7 @@ copy_if_exists() {
 		return 1
 	fi
 
-	LAST_SLASH=${1##*/}
+	LAST_SLASH=${2##*/}
 	if [[ $LAST_SLASH == *"."* ]]; then
 		DIRECTORY=${2//$LAST_SLASH}
 	else
@@ -44,9 +45,8 @@ copy_if_exists() {
 	fi
 
 	if [ ! -d "$DIRECTORY" ]; then
-		stderr_echo "ERROR: target directory $2 not found. Creating it..."
+		stderr_echo "target directory $DIRECTORY not found. Creating it..."
 		mkdir -p "$DIRECTORY"
-		return 0
 	fi
 
 	echo "--> Copying: $1"
@@ -89,3 +89,9 @@ copy_if_exists $LIBS_DIR/flanterm/backends/*.c $KERNEL_DIR/flanterm/backends
 copy_if_exists $LIBS_DIR/patches/font.h $KERNEL_DIR/flanterm/backends
 
 patch -u $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch
+
+copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.h $KERNEL_DIR/memory/heap/liballoc.h
+copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.c $KERNEL_DIR/memory/heap/liballoc.c
+
+patch -u $KERNEL_DIR/memory/heap/liballoc.h -i $LIBS_DIR/patches/liballoc.h.patch
+patch -u $KERNEL_DIR/memory/heap/liballoc.c -i $LIBS_DIR/patches/liballoc.c.patch
