@@ -64,6 +64,7 @@ toolchain/x86_64-elf
 *limine*
 *nanoprintf*
 *flanterm
+*liballoc.*
 
 # ISO files
 *.iso

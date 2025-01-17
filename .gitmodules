@@ -10,3 +10,7 @@
 [submodule "libs/nanoprintf"]
 	path = libs/nanoprintf
 	url = https://github.com/charlesnicholson/nanoprintf.git
+	
+[submodule "libs/liballoc"]
+	path = libs/liballoc
+	url = https://github.com/blanham/liballoc.git
