@@ -26,8 +26,8 @@
 #include <memory/pmm.h>
 #include <memory/paging/paging.h>
 #include <memory/vmm.h>
-
 #include <memory/vma.h>
+#include <memory/heap/liballoc.h>
 
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
@@ -115,6 +115,8 @@ struct bootloader_data limine_parsed_data;
 struct bootloader_data get_bootloader_data() {
     return limine_parsed_data;
 }
+
+vmm_context_t* kernel_vmm_ctx;
 
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
@@ -282,19 +284,27 @@ void kstart(void) {
     uint64_t time = get_current_ticks();
     time -= start;
     time /= PIT_TICKS;
-    kprintf_ok("Kernel page table has been initialized\n\t\tTime taken: ~%llu seconds\n", time);
+    kprintf_ok("Paging init done\n\t\tTime taken: ~%llu seconds\n", time);
 
-    vmm_context_t* kernel_vmm_ctx = vmm_ctx_init(kernel_pml4, VMO_KERNEL_RW);
-    
+    kernel_vmm_ctx = vmm_ctx_init(kernel_pml4, VMO_KERNEL_RW);
+    vmm_init(kernel_vmm_ctx);
     void *ptr = (void*)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
     kernel_vmm_ctx->root_vmo = vmo_init((uint64_t)ptr, PMLT_SIZE, VMO_KERNEL_RW);
 
-    uint64_t* vmm_alloc1 = (uint64_t*)vma_alloc(kernel_vmm_ctx, 0x200, false);
-    uint64_t* vmm_alloc2 = (uint64_t*)vma_alloc(kernel_vmm_ctx, 0x200, false);
-
-    vma_free(kernel_vmm_ctx, vmm_alloc1, false);
-    vma_free(kernel_vmm_ctx, vmm_alloc2, false);
     kprintf_ok("Kernel VMM init done\n");
+
+    kprintf_info("Lil malloc test :3\n");
+    void* ptr1 = kmalloc(0xA0);
+    kprintf_info("Uuuh kmalloc(0xA0) -> %p\n", ptr1);
+    void* ptr2 = kmalloc(0xA3B0);
+    kprintf_info("Uuuh kmalloc(0xA3B0) -> %p\n", ptr2);
+
+    kfree(ptr1);
+    kfree(ptr2);
+    kprintf_info("We've freed both pointers :D\n");
+    ptr1 = kmalloc(0xF00);
+    kprintf_info("Uuuh kmalloc(0xF00) -> %p\n", ptr1);
+    kfree(ptr1);
 
     if (check_apic()) {
         kprintf_info("APIC device is supported\n");
@@ -322,6 +332,6 @@ void kstart(void) {
 	}
 
 	kprintf("--- %s END ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
-
+    
     for (;;);
 }
