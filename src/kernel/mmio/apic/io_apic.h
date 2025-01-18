@@ -5,6 +5,7 @@
 #include <irq.h>
 
 #define IOAPIC_IRQ_OFFSET	0x20
+#define IOREDTBL_ENTRIES	24
 
 #define MMIO_APIC_SIG		"IO_APIC"
 

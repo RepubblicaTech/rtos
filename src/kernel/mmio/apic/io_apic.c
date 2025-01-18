@@ -14,6 +14,8 @@
 
 #include <io.h>
 
+#include <memory/heap/liballoc.h>
+
 mmio_device* mmios;
 mmio_device mm_io_apic;
 madt_ioapic* io_apic;
@@ -39,7 +41,7 @@ void ioapic_reg_write(uint8_t reg, uint32_t value) {
 	regsel[4] = value;
 }
 
-irq_handler apic_irq_handlers[23];
+irq_handler apic_irq_handlers[IOREDTBL_ENTRIES];
 
 void apic_irq_handler(registers* regs) {
 	int apic_irq = regs->interrupt - IOAPIC_IRQ_OFFSET;
@@ -87,7 +89,7 @@ void ioapic_init() {
 	uint8_t ioapic_redir_entries = (ioapic_reg_read(0x01) >> 16) & 0xFF;
 	debugf_debug("Redirection entries: %#hhu\n", ioapic_redir_entries);
 
-	uint64_t ioredtbl[ioapic_redir_entries];
+	uint64_t* ioredtbl = (uint64_t*)kmalloc(sizeof(uint64_t) * ioapic_redir_entries);
 	int redir = 0;
 	for (int i = 0x10; i < 0x3f; i+=2)
 	{
@@ -96,7 +98,7 @@ void ioapic_init() {
 	}
 
 	// now that we got the redirection entries, we should now get all IRQ overrides
-	madt_ioapic_int_override* ioapic_int_override[ioapic_redir_entries];
+	madt_ioapic_int_override** ioapic_int_override = (madt_ioapic_int_override**)kmalloc(sizeof(madt_ioapic_int_override*) * ioapic_redir_entries);
 	int iso_entry = 0;
 	madt* madt_h = get_madt();
 	// 18/12/2024: Let' read and save all redirection entries :)
