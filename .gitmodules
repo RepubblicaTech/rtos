@@ -1,0 +1,16 @@
+[submodule "libs/limine"]
+	path = libs/limine
+	url = https://github.com/limine-bootloader/limine.git
+	branch = v8.x-binary
+
+[submodule "libs/flanterm"]
+	path = libs/flanterm
+	url = https://github.com/mintsuki/flanterm.git
+
+[submodule "libs/nanoprintf"]
+	path = libs/nanoprintf
+	url = https://github.com/charlesnicholson/nanoprintf.git
+	
+[submodule "libs/liballoc"]
+	path = libs/liballoc
+	url = https://github.com/blanham/liballoc.git

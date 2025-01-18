@@ -1,7 +1,7 @@
 #include "pit.h"
 
 #include <stdio.h>
-#include <io/io.h>
+#include <io.h>
 
 #include <util/util.h>
 
@@ -12,10 +12,14 @@ void pit_tick(registers* regs) {
 	set_ticks(get_current_ticks() + 1);
 }
 
+void pit_sleep(uint32_t millis) {
+	uint64_t last_tick = get_current_ticks() + millis;
+	while (get_current_ticks() < last_tick);
+}
+
 void pit_init(const uint32_t freq) {
 	set_ticks(0);
 
-	kprintf_info("Registering %s() for IRQ0\n", stringify(pit_tick));
 	irq_registerHandler(0, pit_tick);
 
 	uint32_t divisor = CONST_PIT_CLOCK / freq;

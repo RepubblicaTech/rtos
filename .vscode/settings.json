@@ -83,7 +83,11 @@
         "pit.h": "c",
         "util.h": "c",
         "mmio.h": "c",
-        "io_apic.h": "c"
+        "io_apic.h": "c",
+        "time.h": "c",
+        "font.h": "c",
+        "vma.h": "c",
+        "liballoc.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,

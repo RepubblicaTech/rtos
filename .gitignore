@@ -59,10 +59,12 @@ iso
 toolchain/binutils*
 toolchain/gcc*
 toolchain/x86_64-elf
-limine
 
-# Limine header file will be copied from the cloned repo
-src/kernel/include/limine.h
+# External libraries will be updated and copied from their repos
+*limine*
+*nanoprintf*
+*flanterm
+src/kernel/memory/heap/liballoc.*
 
 # ISO files
 *.iso
