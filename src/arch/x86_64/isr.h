@@ -36,16 +36,16 @@ typedef struct {
     uint64_t rsp;
     uint64_t ss;
 
-} __attribute__((packed)) registers;
+} __attribute__((packed)) registers_t;
 
-typedef void (*isrHandler)(registers* regs);
+typedef void (*isrHandler)(registers_t* regs);
 
-void print_reg_dump(registers* regs);
+void print_reg_dump(registers_t* regs);
 
 void isr_init();
 void isr_registerHandler(int interrupt, isrHandler handler);
 
-void panic_common(registers* regs);
+void panic_common(registers_t* regs);
 
 extern void _hcf();
 

@@ -68,7 +68,7 @@ SGX 	Software Guard Extensions 	1 -> SGX violation. The fault is unrelated to or
 	Simply gives information about a page fault error code
 	(C) RepubblicaTech 2024
 */
-void pf_handler(registers* regs) {
+void pf_handler(registers_t* regs) {
 	rsod_init();
 
 	uint64_t pf_error_code = (uint64_t)regs->error;

@@ -43,7 +43,7 @@ void ioapic_reg_write(uint8_t reg, uint32_t value) {
 
 irq_handler apic_irq_handlers[IOREDTBL_ENTRIES];
 
-void apic_irq_handler(registers* regs) {
+void apic_irq_handler(registers_t* regs) {
 	int apic_irq = regs->interrupt - IOAPIC_IRQ_OFFSET;
 
 	uint64_t apic_isr = lapic_read_reg(LAPIC_INSERVICE_REG);

@@ -51,7 +51,7 @@ void isr_init() {
     
 }
 
-void print_reg_dump(registers* regs) {
+void print_reg_dump(registers_t* regs) {
     kprintf("\nRegister dump:\n\n");
 
 	kprintf("--- GENERAL PURPOSE REGISTERS ---\n");
@@ -100,7 +100,7 @@ void print_reg_dump(registers* regs) {
 			regs->rsi);
 }
 
-void panic_common(registers* regs) {
+void panic_common(registers_t* regs) {
     print_reg_dump(regs);
     
     // stacktrace
@@ -115,7 +115,7 @@ void panic_common(registers* regs) {
     _hcf();
 }
 
-void isr_handler(registers* regs) {
+void isr_handler(registers_t* regs) {
 
     if (isr_handlers[regs->interrupt] != NULL) {
         isr_handlers[regs->interrupt](regs);

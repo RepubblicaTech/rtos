@@ -7,7 +7,7 @@
 
 #include <time.h>
 
-void pit_tick(registers* regs) {
+void pit_tick(registers_t* regs) {
 	// debugf(".");
 	set_ticks(get_current_ticks() + 1);
 }

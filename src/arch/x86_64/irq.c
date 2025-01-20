@@ -13,7 +13,7 @@
 
 irq_handler irq_handlers[16];
 
-void pic_irq_handler(registers* regs) {
+void pic_irq_handler(registers_t* regs) {
     int irq = regs->interrupt - PIC_REMAP_OFFSET;
 
     uint8_t pic_isr = pic_get_isr();

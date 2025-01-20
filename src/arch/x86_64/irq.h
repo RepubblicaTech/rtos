@@ -5,7 +5,7 @@
 
 #include "isr.h"
 
-typedef void (*irq_handler)(registers* regs);
+typedef void (*irq_handler)(registers_t* regs);
 
 extern void _enable_interrupts();
 extern void _disable_interrupts();

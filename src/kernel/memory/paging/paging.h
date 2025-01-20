@@ -6,10 +6,6 @@
 
 #include <isr.h>
 
-void pf_handler(registers* regs);
-
-void paging_init();
-
 /*
 	--- Some definitions ---
 
@@ -73,8 +69,7 @@ void paging_init();
 #define PAT_WRITEBACK			6
 #define PAT_UNCACHED			7
 
-
-void pf_handler(registers* regs);
+void pf_handler(registers_t* regs);
 
 /********************
  *   PAGING STUFF   *

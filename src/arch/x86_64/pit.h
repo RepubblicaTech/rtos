@@ -16,7 +16,7 @@ uint64_t get_current_ticks();
 
 void pit_sleep(uint32_t millis);
 
-void pit_tick(registers* regs);
+void pit_tick(registers_t* regs);
 void pit_init(const uint32_t freq);
 
 #endif
