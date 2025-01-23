@@ -123,10 +123,10 @@ freelist_node **fl_update_entries() {
 	return fl_entries_ptr;
 }
 
-int kmallocs = 0;					// keeping track of how many times fl_alloc was called
-int kfrees = 0;						// keeping track of how many times fl_free was called
+int kmallocs = 0;					// keeping track of how many times pmm_alloc was called
+int kfrees = 0;						// keeping track of how many times pmm_free was called
 
-void *fl_alloc(size_t bytes) {
+void *pmm_alloc(size_t bytes) {
 	if (bytes < 1) {
 		debugf_debug("Bro are you ok with %lu bytes?\n", bytes);
 		return NULL;
@@ -200,7 +200,7 @@ void *fl_alloc(size_t bytes) {
 	return (void*)VIRT_TO_PHYSICAL(ptr);
 }
 
-void fl_free(void *ptr) {
+void pmm_free(void *ptr) {
 	kfrees++;
 	#ifdef PMM_DEBUG
 		debugf_debug("--- Deallocation n.%d ---\n", kfrees);

@@ -14,7 +14,7 @@ extern struct bootloader_data limine_parsed_data;
 
 void pmm_init();
 
-void *fl_alloc(size_t bytes);
-void fl_free(void *ptr);
+void *pmm_alloc(size_t bytes);
+void pmm_free(void *ptr);
 
 #endif
