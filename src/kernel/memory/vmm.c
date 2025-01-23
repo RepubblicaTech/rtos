@@ -25,7 +25,7 @@ void vmo_dump(virtmem_object_t* vmo) {
 }
 
 virtmem_object_t* vmo_init(uint64_t base, size_t length, uint64_t flags) {
-	virtmem_object_t* vmo = (virtmem_object_t*)PHYS_TO_VIRTUAL(fl_alloc(sizeof(virtmem_object_t)));
+	virtmem_object_t* vmo = (virtmem_object_t*)PHYS_TO_VIRTUAL(pmm_alloc(sizeof(virtmem_object_t)));
 
 	vmo->base = base;
 	vmo->len = length;
@@ -38,13 +38,15 @@ virtmem_object_t* vmo_init(uint64_t base, size_t length, uint64_t flags) {
 }
 
 void vmo_destroy(virtmem_object_t* vmo) {
-	fl_free((void*)vmo);
+	pmm_free((void*)vmo);
 
 	vmo = NULL;
 }
 
 vmm_context_t* vmm_ctx_init(uint64_t* pml4, uint64_t flags) {
-	vmm_context_t* ctx = (vmm_context_t*)PHYS_TO_VIRTUAL(fl_alloc(sizeof(vmm_context_t)));
+	vmm_context_t* ctx = (vmm_context_t*)PHYS_TO_VIRTUAL(pmm_alloc(sizeof(vmm_context_t)));
+
+	if (pml4 == NULL) pml4 = (uint64_t*)pmm_alloc(PMLT_SIZE);
 
 	ctx->pml4_table = pml4;
 	ctx->root_vmo = vmo_init(0, PMLT_SIZE, flags);
@@ -114,7 +116,7 @@ void vmm_init(vmm_context_t* ctx) {
 		i->flags = ctx->root_vmo->flags;
 
 		// mapping will be done on VMA_ALLOC
-		// void *ptr = (void*)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
+		// void *ptr = (void*)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
 		// map_region_to_page(ctx->pml4_table, (uint64_t)ptr, i->base, i->len, vmo_to_page_flags(ctx->root_vmo->flags));
 	}
 
