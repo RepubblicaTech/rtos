@@ -56,7 +56,7 @@ void* vma_alloc(vmm_context_t* ctx, size_t pages, bool map_allocation) {
 
 	ptr = (void*)(cur_vmo->base);
 	if (map_allocation) {
-		void* phys = fl_alloc(pages * PMLT_SIZE);
+		void* phys = pmm_alloc(pages * PMLT_SIZE);
 		map_region_to_page(ctx->pml4_table, (uint64_t)phys, (uint64_t)ptr, (uint64_t)(pages * PMLT_SIZE), vmo_to_page_flags(cur_vmo->flags));
 	} else {
 		#ifdef VMM_DEBUG
@@ -98,7 +98,7 @@ void vma_free(vmm_context_t* ctx, void* ptr, bool unmap_allocation) {
 	FLAG_UNSET(cur_vmo->flags, VMO_ALLOCATED);
 
 	if (unmap_allocation) {
-		fl_free((void*)pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base));
+		pmm_free((void*)pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base));
 		unmap_region(ctx->pml4_table, cur_vmo->base, cur_vmo->len);
 	} else {
 		#ifdef VMM_DEBUG

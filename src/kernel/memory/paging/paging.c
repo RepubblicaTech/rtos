@@ -106,7 +106,7 @@ uint64_t *get_create_pmlt(uint64_t *pml_table, uint64_t pmlt_index, uint64_t fla
 	if (!(pml_table[pmlt_index] & PMLE_PRESENT)) {
 		// debugf_debug("Table %llp entry %#llx is not present, creating it...\n", pml_table, pmlt_index);
 
-		pml_table[pmlt_index] = (uint64_t)fl_alloc(PMLT_SIZE) | flags;
+		pml_table[pmlt_index] = (uint64_t)pmm_alloc(PMLT_SIZE) | flags;
 	}
 
 	// kprintf_info("Table %llp entry %#llx contents:%#llx flags:%#llx\n", pml_table, pmlt_index, pml_table[pmlt_index], flags);
@@ -214,7 +214,7 @@ uint64_t* get_kernel_pml4() {
 static struct bootloader_data limine_data;
 
 // this initializes kernel-level paging
-// `kernel_pml4` should already be `fl_alloc()`'d
+// `kernel_pml4` should already be `pmm_alloc()`'d
 void paging_init(uint64_t* kernel_pml4) {
 	
 	limine_data = get_bootloader_data();

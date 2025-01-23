@@ -279,7 +279,7 @@ void kstart(void) {
     // just checking if the PIT works :)
     uint64_t start = get_current_ticks();
     // kernel PML4 table
-    uint64_t* kernel_pml4 = (uint64_t*)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
+    uint64_t* kernel_pml4 = (uint64_t*)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
     paging_init(kernel_pml4);
     uint64_t time = get_current_ticks();
     time -= start;
@@ -288,7 +288,7 @@ void kstart(void) {
 
     kernel_vmm_ctx = vmm_ctx_init(kernel_pml4, VMO_KERNEL_RW);
     vmm_init(kernel_vmm_ctx);
-    void *ptr = (void*)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
+    void *ptr = (void*)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
     kernel_vmm_ctx->root_vmo = vmo_init((uint64_t)ptr, PMLT_SIZE, VMO_KERNEL_RW);
 
     kprintf_ok("Kernel VMM init done\n");
