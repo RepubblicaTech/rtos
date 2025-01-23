@@ -35,7 +35,7 @@ typedef struct vmm_context_t {
 #define VMO_KERNEL_RW		VMO_RW | VMO_KERNEL
 #define VMO_USER_RW			VMO_PRESENT | VMO_RW | VMO_USER
 
-void vmo_dump(virtmem_object_t* vmo);
+void vmm_switch_ctx(vmm_context_t* new_ctx);
 
 virtmem_object_t* vmo_init(uint64_t base, size_t length, uint64_t flags);
 void vmo_destroy(virtmem_object_t* vmo);

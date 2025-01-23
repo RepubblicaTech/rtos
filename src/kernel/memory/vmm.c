@@ -14,6 +14,12 @@
 
 #include <cpu.h>
 
+vmm_context_t* current_vmm_ctx;
+
+void vmm_switch_ctx(vmm_context_t* new_ctx) {
+	current_vmm_ctx = new_ctx;
+}
+
 // imagine making a function to print stuff that you're going to barely use LMAO
 void vmo_dump(virtmem_object_t* vmo) {
 	debugf_debug("VMO %p\n", vmo);

@@ -288,6 +288,7 @@ void kstart(void) {
 
     kernel_vmm_ctx = vmm_ctx_init(kernel_pml4, VMO_KERNEL_RW);
     vmm_init(kernel_vmm_ctx);
+    vmm_switch_ctx(kernel_vmm_ctx);
     void *ptr = (void*)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
     kernel_vmm_ctx->root_vmo = vmo_init((uint64_t)ptr, PMLT_SIZE, VMO_KERNEL_RW);
 
