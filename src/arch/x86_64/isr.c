@@ -92,7 +92,7 @@ void print_reg_dump(registers_t* regs) {
 			"\trsp (Stack pointer):        %#llx\n"
 			"\trdi:                        %#llx\n"
 			"\trsi:                        %#llx\n",
-			regs->eflags,
+			regs->rflags,
 			regs->rip,
 			regs->rbp,
 			regs->rsp,
