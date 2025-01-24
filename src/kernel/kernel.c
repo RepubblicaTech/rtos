@@ -28,11 +28,6 @@
 #include <memory/pmm.h>
 #include <memory/vma.h>
 #include <memory/vmm.h>
-<<<<<<< Updated upstream
-=======
-
-#include <scheduler/scheduler.h>
->>>>>>> Stashed changes
 
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
@@ -117,17 +112,6 @@ struct bootloader_data get_bootloader_data() {
 }
 
 vmm_context_t *kernel_vmm_ctx;
-<<<<<<< Updated upstream
-=======
-
-void proc_a() {
-    for (;;) kprintf("A");
-}
-
-void proc_b() {
-    for (;;) debugf("B");
-}
->>>>>>> Stashed changes
 
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
@@ -307,11 +291,7 @@ void kstart(void) {
     // just checking if the PIT works :)
     uint64_t start        = get_current_ticks();
     // kernel PML4 table
-<<<<<<< HEAD
-    uint64_t* kernel_pml4 = (uint64_t*)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
-=======
-    uint64_t *kernel_pml4 = (uint64_t *)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
->>>>>>> 1ed5a09bf09a1b3305b7b4c24af03169c276b820
+    uint64_t *kernel_pml4 = (uint64_t *)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
     paging_init(kernel_pml4);
     uint64_t time  = get_current_ticks();
     time          -= start;
@@ -320,16 +300,10 @@ void kstart(void) {
 
     kernel_vmm_ctx = vmm_ctx_init(kernel_pml4, VMO_KERNEL_RW);
     vmm_init(kernel_vmm_ctx);
-<<<<<<< HEAD
     vmm_switch_ctx(kernel_vmm_ctx);
-    void *ptr = (void*)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
-    kernel_vmm_ctx->root_vmo = vmo_init((uint64_t)ptr, PMLT_SIZE, VMO_KERNEL_RW);
-=======
-    void *ptr = (void *)PHYS_TO_VIRTUAL(fl_alloc(PMLT_SIZE));
+    void *ptr = (void *)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
     kernel_vmm_ctx->root_vmo =
         vmo_init((uint64_t)ptr, PMLT_SIZE, VMO_KERNEL_RW);
->>>>>>> 1ed5a09bf09a1b3305b7b4c24af03169c276b820
-
     kprintf_ok("Kernel VMM init done\n");
 
     kprintf_info("Lil malloc test :3\n");
@@ -374,20 +348,8 @@ void kstart(void) {
         kprintf("RSDT address: %#lp\n", rsdp->p_rsdt_address);
     }
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
     kprintf("--- %s END ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
 
     for (;;)
         ;
-<<<<<<< Updated upstream
-=======
-=======
-	kprintf("--- %s END ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
-
-    for (;;);
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 }

@@ -10,7 +10,7 @@
 #include <acpi/tables/madt.h>
 #include <mmio/mmio.h>
 
-#include <pit.h>
+#include <time.h>
 
 #include <io.h>
 
@@ -100,10 +100,6 @@ void ioapic_init() {
         redir++;
     }
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
     // now that we got the redirection entries, we should now get all IRQ
     // overrides
     madt_ioapic_int_override **ioapic_int_override =
@@ -126,12 +122,12 @@ void ioapic_init() {
         debugf("\tI/O APIC IRQ: %lu\n", ioapic_int_override[i]->ioapic_irq);
         debugf("\tLegacy PIC IRQ: %hhu\n",
                ioapic_int_override[i]->legacy_irq_source);
-
         ioapic_map_irq(ioapic_int_override[i]->ioapic_irq,
                        IOAPIC_IRQ_OFFSET +
                            ioapic_int_override[i]->legacy_irq_source,
                        apic_irq_handler);
     }
+
     for (int i = 1; i < ioapic_redir_entries; i++) {
         // to map the other normal interrupts, we'll just check if it's masked
         // or not
@@ -139,22 +135,6 @@ void ioapic_init() {
             ioapic_map_irq(i, i + IOAPIC_IRQ_OFFSET, apic_irq_handler);
         }
     }
-    apic_register_handler(0, pit_tick);
-<<<<<<< Updated upstream
-=======
-=======
-		ioapic_map_irq(ioapic_int_override[i]->ioapic_irq,
-					   IOAPIC_IRQ_OFFSET + ioapic_int_override[i]->legacy_irq_source, 
-					   apic_irq_handler);
-	}
-	for (int i = 1; i < ioapic_redir_entries; i++)
-	{
-		// to map the other normal interrupts, we'll just check if it's masked or not
-		if (ioapic_reg_read(0x10 + (2 * i)) & (1 << 16)) {
-			ioapic_map_irq(i, i + IOAPIC_IRQ_OFFSET, apic_irq_handler);
-		}
-	}
-	apic_register_handler(0, timer_tick);
->>>>>>> Stashed changes
->>>>>>> Stashed changes
+
+    apic_register_handler(0, timer_tick);
 }

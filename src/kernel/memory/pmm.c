@@ -124,27 +124,17 @@ freelist_node **fl_update_entries() {
     return fl_entries_ptr;
 }
 
-<<<<<<< HEAD
-int kmallocs = 0;					// keeping track of how many times pmm_alloc was called
-int kfrees = 0;						// keeping track of how many times pmm_free was called
+int kmallocs = 0; // keeping track of how many times pmm_alloc was called
+int kfrees   = 0; // keeping track of how many times pmm_free was called
 
 void *pmm_alloc(size_t bytes) {
-	if (bytes < 1) {
-		debugf_debug("Bro are you ok with %lu bytes?\n", bytes);
-		return NULL;
-	}
-=======
-int kmallocs = 0; // keeping track of how many times fl_alloc was called
-int kfrees   = 0; // keeping track of how many times fl_free was called
-
-void *fl_alloc(size_t bytes) {
     if (bytes < 1) {
         debugf_debug("Bro are you ok with %lu bytes?\n", bytes);
         return NULL;
     }
->>>>>>> 1ed5a09bf09a1b3305b7b4c24af03169c276b820
 
     kmallocs++;
+
 #ifdef PMM_DEBUG
     debugf_debug("--- Allocation n.%d ---\n", kmallocs);
 #endif
@@ -217,23 +207,16 @@ void *fl_alloc(size_t bytes) {
     return (void *)VIRT_TO_PHYSICAL(ptr);
 }
 
-<<<<<<< HEAD
 void pmm_free(void *ptr) {
-	kfrees++;
-	#ifdef PMM_DEBUG
-		debugf_debug("--- Deallocation n.%d ---\n", kfrees);
-	#endif
-=======
-void fl_free(void *ptr) {
     kfrees++;
 #ifdef PMM_DEBUG
     debugf_debug("--- Deallocation n.%d ---\n", kfrees);
 #endif
->>>>>>> 1ed5a09bf09a1b3305b7b4c24af03169c276b820
 
     size_t s_fl_head, s_fl_ptr;
 
-    // the entry will point to the virtual address of the deallocated pointer
+    // the entry will point to the virtual address of the deallocated
+    // pointer
     freelist_node *fl_ptr = (freelist_node *)(ptr + limine_data.hhdm_offset);
 
     s_fl_head = (size_t)fl_head;
