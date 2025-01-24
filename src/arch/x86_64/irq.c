@@ -8,19 +8,18 @@
 
 #include <stddef.h>
 
-
-#define PIC_REMAP_OFFSET        0x20
+#define PIC_REMAP_OFFSET 0x20
 
 irq_handler irq_handlers[16];
 
-void pic_irq_handler(registers_t* regs) {
+void pic_irq_handler(registers_t *regs) {
     int irq = regs->interrupt - PIC_REMAP_OFFSET;
 
     uint8_t pic_isr = pic_get_isr();
     uint8_t pic_irr = pic_get_irr();
 
     if (irq_handlers[irq] != NULL) {
-        irq_handlers[irq](regs);                // tries to handle the interrupt
+        irq_handlers[irq](regs); // tries to handle the interrupt
     } else {
         debugf("Unhandled IRQ %d  ISR=%#x  IRR=%#x\n", irq, pic_isr, pic_irr);
     }
@@ -36,7 +35,6 @@ void irq_init() {
     }
 
     _enable_interrupts();
-    
 }
 
 void irq_registerHandler(int irq, irq_handler handler) {

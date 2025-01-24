@@ -1,7 +1,7 @@
 #include "stdio.h"
 
-#include <flanterm/flanterm.h>
 #include <flanterm/backends/fb.h>
+#include <flanterm/flanterm.h>
 
 #include <limine.h>
 
@@ -13,12 +13,12 @@ extern struct flanterm_context *ft_ctx;
 extern struct flanterm_fb_context *ft_fb_ctx;
 extern struct limine_framebuffer *framebuffer;
 
-#define NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS 1
-#define NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS 1
-#define NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS 0
-#define NANOPRINTF_USE_LARGE_FORMAT_SPECIFIERS 1
-#define NANOPRINTF_USE_BINARY_FORMAT_SPECIFIERS 1
-#define NANOPRINTF_USE_WRITEBACK_FORMAT_SPECIFIERS 0
+#define NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS     1
+#define NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS       1
+#define NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS           0
+#define NANOPRINTF_USE_LARGE_FORMAT_SPECIFIERS           1
+#define NANOPRINTF_USE_BINARY_FORMAT_SPECIFIERS          1
+#define NANOPRINTF_USE_WRITEBACK_FORMAT_SPECIFIERS       0
 #define NANOPRINTF_SNPRINTF_SAFE_TRIM_STRING_ON_OVERFLOW 1
 typedef long ssize_t;
 
@@ -64,9 +64,9 @@ void rsod_init() {
 
     ft_ctx->set_cursor_pos(ft_ctx, 0, 0);
 
-    for (size_t i = 0; i < ft_ctx->rows; i++)
-    {
-        for (size_t i = 0; i < ft_ctx->cols; i++) putc(' ');
+    for (size_t i = 0; i < ft_ctx->rows; i++) {
+        for (size_t i = 0; i < ft_ctx->cols; i++)
+            putc(' ');
     }
 
     clearscreen();
@@ -81,7 +81,7 @@ void mputc(char c) {
     dputc(c);
 }
 
-int printf(void (*putc_function)(char), const char* fmt, ...) {
+int printf(void (*putc_function)(char), const char *fmt, ...) {
     char buffer[1024];
     va_list args;
 
