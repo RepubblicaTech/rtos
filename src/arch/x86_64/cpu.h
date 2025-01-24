@@ -121,7 +121,15 @@ bool check_msr();
 bool check_apic();
 bool check_x2apic();
 
+<<<<<<< Updated upstream
 const char *get_cpu_vendor();
+=======
+<<<<<<< Updated upstream
+const char *get_cpu_vendor();
+=======
+extern void* get_regs();
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 // returns the value from the requested MSR
 extern uint64_t _cpu_get_msr(uint32_t msr);

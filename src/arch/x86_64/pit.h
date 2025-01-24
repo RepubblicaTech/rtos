@@ -16,7 +16,15 @@ uint64_t get_current_ticks();
 
 void pit_sleep(uint32_t millis);
 
+<<<<<<< Updated upstream
 void pit_tick(registers_t *regs);
+=======
+<<<<<<< Updated upstream
+void pit_tick(registers_t *regs);
+=======
+void timer_tick(registers_t* regs);
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 void pit_init(const uint32_t freq);
 
 #endif

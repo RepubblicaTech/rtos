@@ -28,6 +28,11 @@
 #include <memory/pmm.h>
 #include <memory/vma.h>
 #include <memory/vmm.h>
+<<<<<<< Updated upstream
+=======
+
+#include <scheduler/scheduler.h>
+>>>>>>> Stashed changes
 
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
@@ -112,6 +117,17 @@ struct bootloader_data get_bootloader_data() {
 }
 
 vmm_context_t *kernel_vmm_ctx;
+<<<<<<< Updated upstream
+=======
+
+void proc_a() {
+    for (;;) kprintf("A");
+}
+
+void proc_b() {
+    for (;;) debugf("B");
+}
+>>>>>>> Stashed changes
 
 // The following will be our kernel's entry point.
 // If renaming _start() to something else, make sure to change the
@@ -324,10 +340,12 @@ void kstart(void) {
 
     kfree(ptr1);
     kfree(ptr2);
-    kprintf_info("We've freed both pointers :D\n");
     ptr1 = kmalloc(0xF00);
     kprintf_info("Uuuh kmalloc(0xF00) -> %p\n", ptr1);
     kfree(ptr1);
+    kprintf_info("We've freed all pointers :D\n");
+
+    kprintf_info("CPU Vendor Name: %s\n", get_cpu_vendor());
 
     kprintf_info("CPU Vendor Name: %s\n", get_cpu_vendor());
 
@@ -356,8 +374,20 @@ void kstart(void) {
         kprintf("RSDT address: %#lp\n", rsdp->p_rsdt_address);
     }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
     kprintf("--- %s END ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
 
     for (;;)
         ;
+<<<<<<< Updated upstream
+=======
+=======
+	kprintf("--- %s END ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
+
+    for (;;);
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 }

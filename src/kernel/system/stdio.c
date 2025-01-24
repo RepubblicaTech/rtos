@@ -9,6 +9,8 @@
 
 #include <io.h>
 
+#include <spinlock.h>
+
 extern struct flanterm_context *ft_ctx;
 extern struct flanterm_fb_context *ft_fb_ctx;
 extern struct limine_framebuffer *framebuffer;
@@ -81,7 +83,16 @@ void mputc(char c) {
     dputc(c);
 }
 
+<<<<<<< Updated upstream
 int printf(void (*putc_function)(char), const char *fmt, ...) {
+=======
+<<<<<<< Updated upstream
+int printf(void (*putc_function)(char), const char *fmt, ...) {
+=======
+int printf(void (*putc_function)(char), const char* fmt, ...) {
+    
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     char buffer[1024];
     va_list args;
 
@@ -96,6 +107,7 @@ int printf(void (*putc_function)(char), const char *fmt, ...) {
     for (int i = 0; i < length; ++i) {
         (*putc_function)(buffer[i]);
     }
+
 
     return length;
 }

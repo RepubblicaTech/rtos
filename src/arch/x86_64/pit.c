@@ -7,21 +7,39 @@
 
 #include <time.h>
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 void pit_tick(registers_t *regs) {
     // debugf(".");
     set_ticks(get_current_ticks() + 1);
 }
 
+=======
+>>>>>>> Stashed changes
 void pit_sleep(uint32_t millis) {
     uint64_t last_tick = get_current_ticks() + millis;
+<<<<<<< Updated upstream
     while (get_current_ticks() < last_tick)
         ;
+=======
+    while (get_current_ticks() < last_tick);
+>>>>>>> Stashed changes
 }
 
 void pit_init(const uint32_t freq) {
     set_ticks(0);
 
+<<<<<<< Updated upstream
     irq_registerHandler(0, pit_tick);
+=======
+<<<<<<< Updated upstream
+    irq_registerHandler(0, pit_tick);
+=======
+	irq_registerHandler(0, timer_tick);
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
     uint32_t divisor = CONST_PIT_CLOCK / freq;
 

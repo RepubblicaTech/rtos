@@ -51,6 +51,7 @@ virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
 
 <<<<<<< HEAD
 void vmo_destroy(virtmem_object_t* vmo) {
+<<<<<<< Updated upstream
 	pmm_free((void*)vmo);
 =======
 void vmo_destroy(virtmem_object_t *vmo) {
@@ -58,6 +59,12 @@ void vmo_destroy(virtmem_object_t *vmo) {
 >>>>>>> 1ed5a09bf09a1b3305b7b4c24af03169c276b820
 
     vmo = NULL;
+<<<<<<< Updated upstream
+=======
+=======
+	pmm_free(vmo);
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 }
 
 <<<<<<< HEAD
@@ -75,6 +82,29 @@ vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags) {
     ctx->root_vmo   = vmo_init(0, PMLT_SIZE, flags);
 
     return ctx;
+<<<<<<< Updated upstream
+=======
+}
+
+void vmm_ctx_destroy(vmm_context_t* ctx) {
+	if (VIRT_TO_PHYSICAL(ctx->pml4_table) == (uint64_t)cpu_get_cr(3)) {
+	} else {
+		kprintf_warn("Attempted to destroy a pagemap that's currently in use. Skipping\n");
+		return;
+	}
+
+	for (virtmem_object_t* i = ctx->root_vmo; i != NULL; i = i->next)
+	{
+		vmo_destroy(i);
+	}
+	
+	// TODO: unmap all the page frames
+	pmm_free(ctx->pml4_table);
+	pmm_free(ctx);
+
+	ctx->pml4_table = NULL;
+	ctx = NULL;
+>>>>>>> Stashed changes
 }
 
 uint64_t vmo_to_page_flags(uint64_t vmo_flags) {
@@ -110,6 +140,10 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
         return src_vmo; // we are not going to split it
     }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
     new_vmo = vmo_init(src_vmo->base + (uint64_t)(len * PMLT_SIZE),
                        src_vmo->len - len, src_vmo->flags);
     /*
@@ -117,6 +151,18 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
     [     [                        ]
     0	  0+len					   X
     */
+<<<<<<< Updated upstream
+=======
+=======
+	new_vmo = vmo_init(src_vmo->base + (uint64_t)(len * PMLT_SIZE), src_vmo->len - len, src_vmo->flags);
+	/* for some reason
+
+	src_vmo		  new_vmo
+	[     [                        ]
+	0	  0+len					   X
+	*/
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 #ifdef VMM_DEBUG
     debugf_debug("VMO %p has been split at (virt)%#llx\n", src_vmo,
@@ -166,5 +212,13 @@ void vmm_init(vmm_context_t *ctx) {
         ctx->pml4_table[i] = k_pml4[i];
     }
 
+<<<<<<< Updated upstream
     _load_pml4((uint64_t *)VIRT_TO_PHYSICAL(ctx->pml4_table));
+=======
+<<<<<<< Updated upstream
+    _load_pml4((uint64_t *)VIRT_TO_PHYSICAL(ctx->pml4_table));
+=======
+	// _load_pml4((uint64_t*)VIRT_TO_PHYSICAL(ctx->pml4_table));
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 }
