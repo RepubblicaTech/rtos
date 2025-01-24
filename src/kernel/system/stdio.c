@@ -85,7 +85,6 @@ void mputc(char c) {
     dputc(c);
 }
 
-
 int printf(void (*putc_function)(char), const char *fmt, ...) {
     char buffer[1024];
     va_list args;
@@ -103,7 +102,6 @@ int printf(void (*putc_function)(char), const char *fmt, ...) {
         (*putc_function)(buffer[i]);
         spinlock_release(&stdio_lock);
     }
-
 
     return length;
 }
