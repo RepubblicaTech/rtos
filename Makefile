@@ -179,6 +179,12 @@ run: $(OS_CODENAME).iso
 		-debugcon stdio \
 		-cdrom $<
 
+run-wsl: $(OS_CODENAME).iso
+	qemu-system-x86_64.exe \
+		-m 64M \
+		-debugcon stdio \
+		-cdrom $<
+
 debug: $(OS_CODENAME).iso
 	gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
 
