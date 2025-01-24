@@ -1,0 +1,14 @@
+BasedOnStyle: LLVM
+AccessModifierOffset: -4
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossComments: true
+  AlignCompound: true
+  AlignFunctionPointers: true
+AlignConsecutiveMacros:
+  Enabled: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortLambdasOnASingleLine: None
+IndentWidth: 4
+ContinuationIndentWidth: 4
