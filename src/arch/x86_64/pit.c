@@ -1,11 +1,9 @@
 #include "pit.h"
 
 #include <io.h>
-#include <stdio.h>
-
-#include <util/util.h>
-
+#include <stdbool.h>
 #include <time.h>
+#include <util/util.h>
 
 void pit_sleep(uint32_t millis) {
     uint64_t last_tick = get_current_ticks() + millis;

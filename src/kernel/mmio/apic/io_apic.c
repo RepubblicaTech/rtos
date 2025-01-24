@@ -96,7 +96,7 @@ void ioapic_init() {
         (uint64_t *)kmalloc(sizeof(uint64_t) * ioapic_redir_entries);
     int redir = 0;
     for (int i = 0x10; i < 0x3f; i += 2) {
-        ioredtbl[redir] = ioapic_reg_read(i) | (ioapic_reg_read(i + 1) << 32);
+        ioredtbl[redir] = ioapic_reg_read(i) | (ioapic_reg_read(i + 1) << 31);
         redir++;
     }
 

@@ -195,9 +195,6 @@ void kstart(void) {
     irq_init();
     kprintf_ok("PIC init done\n");
 
-    pit_init(PIT_TICKS);
-    kprintf_ok("PIT init done\n");
-
     isr_registerHandler(14, pf_handler);
 
     if (memmap_request.response == NULL ||
@@ -329,6 +326,11 @@ void kstart(void) {
         ioapic_init();
         kprintf_ok("APIC init done\n");
     }
+
+    // Note: pls dont move this over the APIC init block or it will cause an not
+    // appreciated interrupt and hang the system, thank you - Raphael
+    pit_init(PIT_TICKS);
+    kprintf_ok("PIT init done\n");
 
     sdt_pointer *rsdp = get_rsdp();
 
