@@ -192,9 +192,6 @@ void kstart(void) {
 
     // _crash_test();
 
-    irq_init();
-    kprintf_ok("PIC init done\n");
-
     isr_registerHandler(14, pf_handler);
 
     if (memmap_request.response == NULL ||
@@ -325,6 +322,9 @@ void kstart(void) {
         apic_init();
         ioapic_init();
         kprintf_ok("APIC init done\n");
+    } else {
+        irq_init();
+        kprintf_ok("PIC init done\n");
     }
 
     // Note: pls dont move this over the APIC init block or it will cause an not
