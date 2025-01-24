@@ -85,16 +85,8 @@ void mputc(char c) {
     dputc(c);
 }
 
-<<<<<<< Updated upstream
+
 int printf(void (*putc_function)(char), const char *fmt, ...) {
-=======
-<<<<<<< Updated upstream
-int printf(void (*putc_function)(char), const char *fmt, ...) {
-=======
-int printf(void (*putc_function)(char), const char* fmt, ...) {
-    
->>>>>>> Stashed changes
->>>>>>> Stashed changes
     char buffer[1024];
     va_list args;
 
