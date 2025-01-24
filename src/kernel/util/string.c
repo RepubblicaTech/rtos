@@ -8,7 +8,7 @@
 // They CAN be moved to a different .c file.
 
 void *memcpy(void *dest, const void *src, size_t n) {
-    uint8_t *pdest = (uint8_t *)dest;
+    uint8_t *pdest      = (uint8_t *)dest;
     const uint8_t *psrc = (const uint8_t *)src;
 
     for (size_t i = 0; i < n; i++) {
@@ -29,7 +29,7 @@ void *memset(void *s, int c, size_t n) {
 }
 
 void *memmove(void *dest, const void *src, size_t n) {
-    uint8_t *pdest = (uint8_t *)dest;
+    uint8_t *pdest      = (uint8_t *)dest;
     const uint8_t *psrc = (const uint8_t *)src;
 
     if (src > dest) {
@@ -38,7 +38,7 @@ void *memmove(void *dest, const void *src, size_t n) {
         }
     } else if (src < dest) {
         for (size_t i = n; i > 0; i--) {
-            pdest[i-1] = psrc[i-1];
+            pdest[i - 1] = psrc[i - 1];
         }
     }
 
@@ -58,9 +58,10 @@ int memcmp(const void *s1, const void *s2, size_t n) {
     return 0;
 }
 
-size_t strlen(const char* s) {
+size_t strlen(const char *s) {
     size_t len = 0;
-    for (; s[len] != '\0'; len++);
+    for (; s[len] != '\0'; len++)
+        ;
 
     return len;
 }

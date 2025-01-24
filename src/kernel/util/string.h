@@ -1,12 +1,12 @@
 #ifndef MEMORY_H
 #define MEMORY_H 1
 
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include <limine.h>
 #include <kernel.h>
+#include <limine.h>
 
 /*
     GCC and Clang reserve the right to generate calls to the following
@@ -20,17 +20,15 @@ void *memset(void *s, int c, size_t n);
 void *memmove(void *dest, const void *src, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
 
-size_t strlen(const char* s);
+size_t strlen(const char *s);
 
-static const char* const memory_block_type[] = {
-    "USABLE",
-    "RESERVED",
-    "ACPI_RECLAIMABLE",
-    "ACPI_NVS",
-    "BAD",
-    "BOOTLOADER_RECLAIMABLE",
-    "KERNEL_AND_MODULES",
-    "FRAMEBUFFER"
-};
+static const char *const memory_block_type[] = {"USABLE",
+                                                "RESERVED",
+                                                "ACPI_RECLAIMABLE",
+                                                "ACPI_NVS",
+                                                "BAD",
+                                                "BOOTLOADER_RECLAIMABLE",
+                                                "KERNEL_AND_MODULES",
+                                                "FRAMEBUFFER"};
 
 #endif

@@ -4,12 +4,12 @@
 #include <idt.h>
 #include <irq.h>
 
-#define IOAPIC_IRQ_OFFSET	0x20
-#define IOREDTBL_ENTRIES	24
+#define IOAPIC_IRQ_OFFSET 0x20
+#define IOREDTBL_ENTRIES  24
 
-#define MMIO_APIC_SIG		"IO_APIC"
+#define MMIO_APIC_SIG "IO_APIC"
 
-uint64_t* get_redtbl();
+uint64_t *get_redtbl();
 
 uint32_t ioapic_reg_read(uint8_t reg);
 void ioapic_reg_write(uint8_t reg, uint32_t value);
