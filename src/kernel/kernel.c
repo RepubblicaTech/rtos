@@ -401,6 +401,7 @@ void kstart(void) {
         }
 
         kprintf("Hypervisor: %s\n\n", hypervisor);
+        kfree(hypervisor);
     }
 
     kprintf("Total Memory: 0x%llx (%lu MBytes)\n",
