@@ -1,10 +1,10 @@
 #include "spinlock.h"
 
 void spinlock_acquire(atomic_flag *lock) {
-    while (atomic_flag_test_and_set_explicit(lock, memory_order_acquire))
+    while (__atomic_test_and_set(lock, __ATOMIC_ACQUIRE))
         ;
 }
 
 void spinlock_release(atomic_flag *lock) {
-    atomic_flag_clear_explicit(lock, memory_order_release);
+    __atomic_clear(lock, __ATOMIC_RELEASE);
 }
