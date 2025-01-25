@@ -32,7 +32,7 @@
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
 
-#define PIT_TICKS 100
+#define PIT_TICKS 1000 / 1 // 1 ms
 
 /*
     Set the base revision to 2, this is recommended as this is the latest
@@ -113,9 +113,7 @@ struct bootloader_data get_bootloader_data() {
 
 vmm_context_t *kernel_vmm_ctx;
 
-// The following will be our kernel's entry point.
-// If renaming _start() to something else, make sure to change the
-// linker script accordingly.
+// kernel main function
 void kstart(void) {
     asm("cli");
     // Ensure the bootloader actually understands our base revision (see spec).
@@ -148,11 +146,10 @@ void kstart(void) {
     }
     clearscreen();
 
-    kprintf("Hello!\n");
+    kprintf("Welcome to RTOS!\n");
 
     debugf_debug("Kernel built on %s\n", __DATE__);
 
-    debugf_debug("Hello from the E9 port!\n");
     debugf_debug("Current video mode is: %dx%d address: %p\n\n",
                  framebuffer->width, framebuffer->height, framebuffer->address);
 
@@ -182,21 +179,25 @@ void kstart(void) {
     debugf_debug("\tkernel_end: %llp\n", &__kernel_end);
 
     gdt_init();
-    kprintf_ok("GDT init done\n");
+    kprintf_ok("Initialized GDT\n");
 
     idt_init();
-    kprintf_ok("IDT init done\n");
+    kprintf_ok("Initialized IDT\n");
 
     isr_init();
-    kprintf_ok("ISR init done\n");
+    kprintf_ok("Initialized ISR\n");
 
-    // _crash_test();
+    irq_init();
+    kprintf_ok("Initialized PIC\n");
+
+    pit_init(PIT_TICKS);
+    kprintf_ok("Initialized PIT\n");
+    size_t start_tick_after_pit_init = get_current_ticks();
 
     isr_registerHandler(14, pf_handler);
 
     if (memmap_request.response == NULL ||
         memmap_request.response->entry_count < 1) {
-        // ERROR
         kprintf_panic("No memory map received!\n");
         _hcf();
     }
@@ -237,7 +238,7 @@ void kstart(void) {
             limine_parsed_data.memory_usable_total / 0x100000);
 
     if (hhdm_request.response == NULL) {
-        kprintf_panic("Couldn't get Higher Half Map!\n");
+        kprintf_panic("Couldn't get Higher Half Direct Map Offset!\n");
         _hcf();
     }
 
@@ -248,7 +249,7 @@ void kstart(void) {
                  limine_parsed_data.hhdm_offset);
 
     pmm_init();
-    kprintf_ok("PMM init done\n");
+    kprintf_ok("Initialized PMM\n");
 
     if (rsdp_request.response == NULL) {
         kprintf_panic("Couldn't get RSDP address!\n");
@@ -273,12 +274,13 @@ void kstart(void) {
                       paging_mode_response->mode);
         _hcf();
     }
-    kprintf("%lluth level paging is enabled\n", 4 + paging_mode_response->mode);
+    kprintf_info("%lluth level paging is available\n",
+                 4 + paging_mode_response->mode);
 
     if (!check_pae()) {
-        kprintf_info("PAE is disabled\n");
+        kprintf_info("PAE is not available\n");
     } else {
-        kprintf_info("PAE is enabled\n");
+        kprintf_info("PAE is available\n");
     }
 
     kprintf_info("Initializing paging\n");
@@ -289,8 +291,8 @@ void kstart(void) {
     paging_init(kernel_pml4);
     uint64_t time  = get_current_ticks();
     time          -= start;
-    time          /= PIT_TICKS;
-    kprintf_ok("Paging init done\n\t\tTime taken: ~%llu seconds\n", time);
+    kprintf_ok("Paging init done\n\t\tTime taken: %llu seconds %llums\n",
+               time / PIT_TICKS, time % 1000);
 
     kernel_vmm_ctx = vmm_ctx_init(kernel_pml4, VMO_KERNEL_RW);
     vmm_init(kernel_vmm_ctx);
@@ -298,59 +300,124 @@ void kstart(void) {
     void *ptr = (void *)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
     kernel_vmm_ctx->root_vmo =
         vmo_init((uint64_t)ptr, PMLT_SIZE, VMO_KERNEL_RW);
-    kprintf_ok("Kernel VMM init done\n");
+    kprintf_ok("Initialized VMM\n");
 
-    kprintf_info("Lil malloc test :3\n");
+    size_t malloc_test_start_timestamp = get_current_ticks();
+    kprintf_info("Malloc Test:\n");
     void *ptr1 = kmalloc(0xA0);
-    kprintf_info("Uuuh kmalloc(0xA0) -> %p\n", ptr1);
+    kprintf_info("[1] kmalloc(0xA0) @ %p\n", ptr1);
     void *ptr2 = kmalloc(0xA3B0);
-    kprintf_info("Uuuh kmalloc(0xA3B0) -> %p\n", ptr2);
-
+    kprintf_info("[2] kmalloc(0xA3B0) @ %p\n", ptr2);
     kfree(ptr1);
     kfree(ptr2);
     ptr1 = kmalloc(0xF00);
-    kprintf_info("Uuuh kmalloc(0xF00) -> %p\n", ptr1);
+    kprintf_info("[3] kmalloc(0xF00) @ %p\n", ptr1);
     kfree(ptr1);
-    kprintf_info("We've freed all pointers :D\n");
-
-    kprintf_info("CPU Vendor Name: %s\n", get_cpu_vendor());
-
-    kprintf_info("CPU Vendor Name: %s\n", get_cpu_vendor());
+    size_t malloc_test_end_timestamp  = get_current_ticks();
+    malloc_test_end_timestamp        -= malloc_test_start_timestamp;
+    kprintf_ok("Malloc test complete: Time taken: %dms\n",
+               malloc_test_end_timestamp);
 
     if (check_apic()) {
+        asm("cli");
         kprintf_info("APIC device is supported\n");
         apic_init();
         ioapic_init();
         kprintf_ok("APIC init done\n");
+        asm("sti");
     } else {
-        irq_init();
-        kprintf_ok("PIC init done\n");
+        kprintf_panic("APIC is not supported!");
     }
-
-    // Note: pls dont move this over the APIC init block or it will cause an not
-    // appreciated interrupt and hang the system, thank you - Raphael
-    pit_init(PIT_TICKS);
-    kprintf_ok("PIT init done\n");
 
     sdt_pointer *rsdp = get_rsdp();
 
-    kprintf("--- %s INFO ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
+    kprintf("--- ACPI INFO ---\n");
+    kprintf("Type: %s (Revision %s)\n", rsdp->revision > 0 ? "XSDP" : "RSDP",
+            rsdp->revision > 0 ? "2.0 - 6.1" : "1.0");
+    kprintf("%s address: 0x%.16llx\n", rsdp->revision > 0 ? "XSDP" : "RSDP",
+            limine_parsed_data.rsdp_table_address);
+    kprintf("%s address: 0x%.16llx\n", rsdp->revision > 0 ? "XSDT" : "RSDT",
+            rsdp->revision > 0 ? rsdp->p_xsdt_address : rsdp->p_rsdt_address);
 
     kprintf("Signature: %.8s\n", rsdp->signature);
-    kprintf("Checksum: %hhu\n\n", rsdp->checksum);
+    kprintf("Checksum: %hhu\n", rsdp->checksum);
 
     kprintf("OEM ID: %.6s\n", rsdp->oem_id);
-    kprintf("Revision: %s\n", rsdp->revision > 0 ? "2.0 - 6.1" : "1.0");
+    kprintf("Revision: %s\n\n", rsdp->revision > 0 ? "2.0 - 6.1" : "1.0");
 
     if (rsdp->revision > 0) {
-        kprintf("Length: %lu\n", rsdp->length);
-        kprintf("XSDT address: %#llp\n", rsdp->p_xsdt_address);
-        kprintf("Extended checksum: %hhu\n", rsdp->extended_checksum);
+        XSDT *xsdt = (XSDT *)get_root_sdt();
+        kprintf("XSDT Length: %lu\n", rsdp->length);
+        kprintf("XSDT Extended checksum: %hhu\n", rsdp->extended_checksum);
+        kprintf("XSDT OEM ID: %.6s\n", xsdt->header.oem_id);
+        kprintf("XSDT Signature: %.4s\n", xsdt->header.signature);
+        kprintf("XSDT Creator ID: 0x%llx\n", xsdt->header.creator_id);
     } else {
-        kprintf("RSDT address: %#lp\n", rsdp->p_rsdt_address);
+        RSDT *rsdt = (RSDT *)get_root_sdt();
+        kprintf("RSDT OEM ID: %.6s\n", rsdt->header.oem_id);
+        kprintf("RSDT Signature: %.4s\n", rsdt->header.signature);
+        kprintf("RSDT Creator ID: 0x%llx\n", rsdt->header.creator_id);
+    }
+    kprintf("--- ACPI INFO END ---\n\n");
+
+    kprintf("--- SYSTEM INFO ---\n");
+
+    {
+        char *cpu_name = kmalloc(49);
+
+        unsigned int data[4];
+        memset(cpu_name, 0, 49);
+
+        for (int i = 0; i < 3; i++) {
+            __asm__("cpuid"
+                    : "=a"(data[0]), "=b"(data[1]), "=c"(data[2]), "=d"(data[3])
+                    : "a"(0x80000002 + i));
+            memcpy(cpu_name + i * 16, data, 16);
+        }
+
+        kprintf("CPU Name: %s\n", cpu_name);
+        kfree(cpu_name);
     }
 
-    kprintf("--- %s END ---\n", rsdp->revision > 0 ? "XSDP" : "RSDP");
+    kprintf("CPU Vendor: %s\n", get_cpu_vendor());
+    char *hypervisor = kmalloc(49);
+
+    {
+        unsigned int data[4];
+        memset(hypervisor, 0, 49);
+
+        __asm__("cpuid"
+                : "=a"(data[0]), "=b"(data[1]), "=c"(data[2]), "=d"(data[3])
+                : "a"(0x40000000)); // Hypervisor info
+
+        if (data[0] == 0x40000000) {
+            // Hypervisor name is in EBX, ECX, and EDX
+            memcpy(hypervisor, &data[1], 4);
+            memcpy(hypervisor + 4, &data[2], 4);
+            memcpy(hypervisor + 8, &data[3], 4);
+            hypervisor[12] = '\0'; // Null-terminate the string
+        } else {
+            memcpy(hypervisor, "No Hypervisor", sizeof("No Hypervisor"));
+        }
+
+        kprintf("Hypervisor: %s\n\n", hypervisor);
+    }
+
+    kprintf("Total Memory: 0x%llx (%lu MBytes)\n",
+            limine_parsed_data.memory_total,
+            limine_parsed_data.memory_total / 0x100000);
+
+    kprintf("Total available Memory: 0x%llx (%lu MBytes)\n\n",
+            limine_parsed_data.memory_usable_total,
+            limine_parsed_data.memory_usable_total / 0x100000);
+
+    kprintf("--- SYSTEM INFO END ---\n\n");
+
+    size_t end_tick_after_init  = get_current_ticks();
+    end_tick_after_init        -= start_tick_after_pit_init;
+
+    kprintf("System started: Time took: %d seconds %d ms",
+            end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
 
     for (;;)
         ;
