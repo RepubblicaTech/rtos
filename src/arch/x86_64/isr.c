@@ -78,22 +78,6 @@ void print_reg_dump(registers_t *regs) {
             "\trsi:                        %#llx\n",
             regs->rflags, regs->rip, regs->rbp, regs->rsp, regs->rdi,
             regs->rsi);
-
-    kprintf("\n--- SEGMENT REGS ---\n");
-    kprintf("\tcs (Code segment):   %#llx\n"
-            "\tds (Data segment):   %#llx\n"
-            "\tss (Stack segment):  %#llx\n",
-            regs->cs, regs->ds, regs->ss);
-
-    kprintf("\n--- FLAGS, POINTER AND INDEX REGISTERS ---\n");
-    kprintf("\teflags:%#llx\n"
-            "\trip (Instruction address):  %#llx\n"
-            "\trbp (Base pointer):         %#llx\n"
-            "\trsp (Stack pointer):        %#llx\n"
-            "\trdi:                        %#llx\n"
-            "\trsi:                        %#llx\n",
-            regs->rflags, regs->rip, regs->rbp, regs->rsp, regs->rdi,
-            regs->rsi);
 }
 
 void panic_common(registers_t *regs) {
