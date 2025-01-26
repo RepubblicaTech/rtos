@@ -160,7 +160,11 @@ void vmm_init(vmm_context_t *ctx) {
     }
 
     uint64_t *k_pml4 = (uint64_t *)PHYS_TO_VIRTUAL(get_kernel_pml4());
+
     for (int i = 256; i < 512; i++) {
+        if (ctx->pml4_table == k_pml4)
+            continue;
+
         ctx->pml4_table[i] = k_pml4[i];
     }
 
