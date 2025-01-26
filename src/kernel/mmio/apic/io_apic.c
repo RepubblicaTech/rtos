@@ -135,6 +135,4 @@ void ioapic_init() {
             ioapic_map_irq(i, i + IOAPIC_IRQ_OFFSET, apic_irq_handler);
         }
     }
-
-    apic_register_handler(0, timer_tick);
 }
