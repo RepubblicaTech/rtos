@@ -65,7 +65,10 @@ To build the kernel, you'll not be able to use the system default C compiler (gc
 
 #### Prebuilt option
 
-If you either are lazy or don't have time for compiling the toolchain, you can grab a pre-made one from [here](https://newos.org/toolchains/) (you should grab the one that says `x86_64-elf-[the highest version number you can find]-[Linux/FreeBSD/Darwin]-x86_64.tar.xz`, and extract the contents of the folder inside the xz to a `x86_64-elf` directory inside the `toolchain` folder).
+If you either are lazy or don't have time for compiling the toolchain, you can grab a pre-made one from [here](https://newos.org/toolchains/).
+You should grab the one that says `x86_64-elf-[a version less or equal to the GCC installed in your OS]-[Linux/FreeBSD/Darwin]-x86_64.tar.xz`.
+Make sur
+Extract the contents of the folder inside the xz to a `x86_64-elf` directory inside the `toolchain` folder).
 
 You should end up with a structure like this:
 ```
