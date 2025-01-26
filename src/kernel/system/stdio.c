@@ -27,7 +27,7 @@ typedef long ssize_t;
 #define NANOPRINTF_IMPLEMENTATION
 #include <nanoprintf.h>
 
-atomic_flag stdio_lock;
+atomic_flag STDIO_LOCK;
 
 uint32_t current_bg;
 uint32_t current_fg;
@@ -86,6 +86,7 @@ void mputc(char c) {
 }
 
 int printf(void (*putc_function)(char), const char *fmt, ...) {
+    spinlock_acquire(&STDIO_LOCK);
     char buffer[1024];
     va_list args;
 
@@ -98,10 +99,9 @@ int printf(void (*putc_function)(char), const char *fmt, ...) {
     }
 
     for (int i = 0; i < length; ++i) {
-        spinlock_acquire(&stdio_lock);
         (*putc_function)(buffer[i]);
-        spinlock_release(&stdio_lock);
     }
 
+    spinlock_release(&STDIO_LOCK);
     return length;
 }
