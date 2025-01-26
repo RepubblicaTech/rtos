@@ -29,6 +29,8 @@
 #include <memory/vma.h>
 #include <memory/vmm.h>
 
+#include <scheduler/scheduler.h>
+
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
 
@@ -113,6 +115,18 @@ struct bootloader_data get_bootloader_data() {
 
 vmm_context_t *kernel_vmm_ctx;
 
+void proc_a() {
+    for (;;) {
+        debugf("A");
+    }
+}
+
+void proc_b() {
+    for (;;) {
+        debugf("B");
+    }
+}
+
 // kernel main function
 void kstart(void) {
     asm("cli");
@@ -192,6 +206,7 @@ void kstart(void) {
 
     pit_init(PIT_TICKS);
     kprintf_ok("Initialized PIT\n");
+    irq_registerHandler(0, timer_tick);
     size_t start_tick_after_pit_init = get_current_ticks();
 
     isr_registerHandler(14, pf_handler);
@@ -221,6 +236,7 @@ void kstart(void) {
             "Entry n. %lld; Region start: %#llx; length: %#llx; type: %s\n", i,
             entry->base, entry->length, memory_block_type[entry->type]);
     }
+
     limine_parsed_data.memory_total =
         limine_parsed_data
             .limine_memory_map[limine_parsed_data.memmap_entry_count - 1]
@@ -324,6 +340,7 @@ void kstart(void) {
         apic_init();
         ioapic_init();
         kprintf_ok("APIC init done\n");
+        apic_register_handler(0, timer_tick);
         asm("sti");
     } else {
         kprintf_panic("APIC is not supported!");
@@ -417,8 +434,16 @@ void kstart(void) {
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
 
-    kprintf("System started: Time took: %d seconds %d ms",
+    scheduler_init();
+    kprintf_ok("Scheduler init done\n");
+
+    kprintf("System started: Time took: %d seconds %d ms\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
+
+    ft_ctx->full_refresh(ft_ctx);
+
+    create_process(proc_a);
+    create_process(proc_b);
 
     for (;;)
         ;
