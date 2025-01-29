@@ -181,17 +181,17 @@ void kstart(void) {
                  limine_parsed_data.kernel_base_physical,
                  limine_parsed_data.kernel_base_virtual);
 
-    debugf_debug("\tlimine_requests_start: %llp; limine_requests_end: %llp\n",
-                 &__limine_reqs_start, &__limine_reqs_end);
     debugf_debug("Kernel sections:\n");
-    debugf_debug("\tkernel_start: %#llp\n", &__kernel_start);
-    debugf_debug("\tkernel_text_start: %llp; kernel_text_end: %llp\n",
+    debugf_debug("\tkernel_start: %#p\n", &__kernel_start);
+    debugf_debug("\tkernel_text_start: %p; kernel_text_end: %p\n",
                  &__kernel_text_start, &__kernel_text_end);
-    debugf_debug("\tkernel_rodata_start: %llp; kernel_rodata_end: %llp\n",
+    debugf_debug("\tkernel_rodata_start: %p; kernel_rodata_end: %p\n",
                  &__kernel_rodata_start, &__kernel_rodata_end);
-    debugf_debug("\tkernel_data_start: %llp; kernel_data_end: %llp\n",
+    debugf_debug("\tkernel_data_start: %p; kernel_data_end: %p\n",
                  &__kernel_data_start, &__kernel_data_end);
-    debugf_debug("\tkernel_end: %llp\n", &__kernel_end);
+    debugf_debug("\tlimine_requests_start: %p; limine_requests_end: %p\n",
+                 &__limine_reqs_start, &__limine_reqs_end);
+    debugf_debug("\tkernel_end: %p\n", &__kernel_end);
 
     gdt_init();
     kprintf_ok("Initialized GDT\n");
