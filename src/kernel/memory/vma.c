@@ -118,7 +118,7 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
 
     // find the physical address of the VMO
     uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
-    pmm_free((void *)PHYS_TO_VIRTUAL((void *)phys));
+    pmm_free((void *)PHYS_TO_VIRTUAL(phys));
 
     virtmem_object_t *prev_vmo, *next_vmo;
     prev_vmo = cur_vmo->prev;
