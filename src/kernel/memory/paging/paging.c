@@ -122,7 +122,7 @@ uint64_t *get_create_pmlt(uint64_t *pml_table, uint64_t pmlt_index,
         // debugf_debug("Table %llp entry %#llx is not present, creating
         // it...\n", pml_table, pmlt_index);
 
-        pml_table[pmlt_index] = (uint64_t)pmm_alloc(PMLT_SIZE) | flags;
+        pml_table[pmlt_index] = (uint64_t)pmm_alloc_page() | flags;
     }
 
     // kprintf_info("Table %llp entry %#llx contents:%#llx flags:%#llx\n",
@@ -154,7 +154,7 @@ uint64_t pg_virtual_to_phys(uint64_t *pml4_table, uint64_t virtual) {
 // map a page frame to a physical address that gets mapped to a virtual one
 void map_phys_to_page(uint64_t *pml4_table, uint64_t physical, uint64_t virtual,
                       uint64_t flags) {
-    // if (virtual % PMLT_SIZE) {
+    // if (virtual % PFRAME_SIZE) {
     // 	kprintf_panic("Attempted to map non-aligned addresses (phys)%#llx
     // (virt)%#llx!\n", physical, virtual); 	_hcf();
     // }
@@ -196,28 +196,28 @@ void unmap_page(uint64_t *pml4_table, uint64_t virtual) {
 void map_region_to_page(uint64_t *pml4_table, uint64_t physical_start,
                         uint64_t virtual_start, uint64_t len, uint64_t flags) {
 
-    uint64_t pages = ROUND_UP(len, PMLT_SIZE) / PMLT_SIZE;
+    uint64_t pages = ROUND_UP(len, PFRAME_SIZE) / PFRAME_SIZE;
 
     debugf_debug("Mapping address range (phys)%#llx-%#llx (virt)%#llx-%#llx\n",
                  physical_start, physical_start + len, virtual_start,
                  virtual_start + len);
 
     for (uint64_t i = 0; i < pages; i++) {
-        uint64_t phys = physical_start + (i * PMLT_SIZE);
-        uint64_t virt = virtual_start + (i * PMLT_SIZE);
+        uint64_t phys = physical_start + (i * PFRAME_SIZE);
+        uint64_t virt = virtual_start + (i * PFRAME_SIZE);
         map_phys_to_page(pml4_table, phys, virt, flags);
     }
 }
 
 void unmap_region(uint64_t *pml4_table, uint64_t virtual_start, uint64_t len) {
 
-    uint64_t pages = ROUND_UP(len, PMLT_SIZE) / PMLT_SIZE;
+    uint64_t pages = ROUND_UP(len, PFRAME_SIZE) / PFRAME_SIZE;
 
     debugf_debug("Unmapping address range (virt)%#llx-%#llx\n", virtual_start,
                  virtual_start + len);
 
     for (uint64_t i = 0; i < pages; i++) {
-        uint64_t virt = virtual_start + (i * PMLT_SIZE);
+        uint64_t virt = virtual_start + (i * PFRAME_SIZE);
         unmap_page(pml4_table, virt);
     }
 }
@@ -234,15 +234,14 @@ uint64_t *get_kernel_pml4() {
     return global_pml4;
 }
 
-static struct bootloader_data limine_data;
+extern struct limine_memmap_response *memmap_response;
 
 // this initializes kernel-level paging
 // `kernel_pml4` should already be `pmm_alloc()`'d
 void paging_init(uint64_t *kernel_pml4) {
-
-    limine_data = get_bootloader_data();
-
-    limine_data = get_bootloader_data();
+    if (kernel_pml4 == NULL) {
+        kernel_pml4 = pmm_alloc_page();
+    }
 
     limine_pml4 = _get_pml4();
     debugf_debug("Limine's PML4 sits at %llp\n", limine_pml4);
@@ -301,12 +300,13 @@ void paging_init(uint64_t *kernel_pml4) {
 
     // map the whole memory
     kprintf_info("Mapping all the memory\n");
-    for (uint64_t i = 0; i < limine_parsed_data.memmap_entry_count; i++) {
-        struct limine_memmap_entry *memmap_entry =
-            limine_parsed_data.limine_memory_map[i];
+    for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
+        struct limine_memmap_entry *memmap_entry = memmap_response->entries[i];
 
-        map_region_to_page(kernel_pml4, memmap_entry->base, memmap_entry->base,
-                           memmap_entry->length, PMLE_USER_READ_WRITE);
+        // we won't identity map
+        // map_region_to_page(kernel_pml4, memmap_entry->base,
+        // memmap_entry->base,
+        //                    memmap_entry->length, PMLE_USER_READ_WRITE);
         map_region_to_page(kernel_pml4, memmap_entry->base,
                            PHYS_TO_VIRTUAL(memmap_entry->base),
                            memmap_entry->length, PMLE_KERNEL_READ_WRITE);

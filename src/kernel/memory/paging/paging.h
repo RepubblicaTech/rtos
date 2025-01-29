@@ -20,11 +20,12 @@
         PG: suffix that refers to paging-related macros and constants
 */
 
+#include <memory/pmm.h>
+
 #define VIRT_BASE limine_parsed_data.kernel_base_virtual
 #define PHYS_BASE limine_parsed_data.kernel_base_physical
 
 // PMLT entry is 8-bytes wide instead of 4, so the entries are halved
-#define PMLT_SIZE    0x1000 // each page frame is 4KB wide
 #define PMLT_ENTRIES 512
 
 // PMLE Flags
