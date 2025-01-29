@@ -4,7 +4,7 @@
 
 #include <util/string.h>
 
-static struct bootloader_data limine_data;
+static struct bootloader_data *limine_data;
 extern void _hcf();
 
 int is_xsdp(sdt_pointer *pointer) {
@@ -15,7 +15,7 @@ int is_xsdp(sdt_pointer *pointer) {
 sdt_pointer *get_rsdp() {
     // we need the address that points to the RSDP
     limine_data           = get_bootloader_data();
-    uint64_t *v_rsdp_addr = (uint64_t *)limine_data.rsdp_table_address;
+    uint64_t *v_rsdp_addr = (uint64_t *)limine_data->rsdp_table_address;
 
     return (sdt_pointer *)v_rsdp_addr;
 }
