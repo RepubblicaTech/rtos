@@ -24,12 +24,12 @@ bool check_x2apic() {
     return edx & CPUID_FEAT_ECX_X2APIC;
 }
 
-void cpu_reg_write(uint32_t reg, uint32_t value) {
-    *(uint32_t volatile *)reg = value;
+void cpu_reg_write(uint32_t *reg, uint32_t value) {
+    *reg = value;
 }
 
-uint32_t cpu_reg_read(uint32_t reg) {
-    return *(uint32_t volatile *)reg;
+uint32_t cpu_reg_read(uint32_t *reg) {
+    return *reg;
 }
 
 const char *get_cpu_vendor() {
