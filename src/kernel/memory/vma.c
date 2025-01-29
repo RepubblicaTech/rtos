@@ -22,31 +22,30 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation) {
         vmo_dump(cur_vmo);
 #endif
 
-        if ((cur_vmo->flags & VMO_ALLOCATED) || cur_vmo->len < pages) {
-#ifdef VMM_DEBUG
-            debugf_debug("Current VMO is either too small or already "
-                         "allocated. Skipping...\n");
-#endif
-            if (cur_vmo->next == NULL) {
-                new_vmo       = vmo_init(cur_vmo->base +
-                                             (uint64_t)(cur_vmo->len * PMLT_SIZE),
-                                         pages, cur_vmo->flags & 0xFF);
-                cur_vmo->next = new_vmo;
-                new_vmo->prev = cur_vmo;
-#ifdef VMM_DEBUG
-                debugf_debug("VMO %p created successfully. Proceeding to next "
-                             "iteration\n",
-                             new_vmo);
-#endif
-            }
+        if ((cur_vmo->len >= pages) && (cur_vmo->flags & ~(VMO_ALLOCATED))) {
 
-            continue;
+#ifdef VMM_DEBUG
+            debugf_debug("Well, we've got enough memory :D\n");
+#endif
+            break;
         }
 
 #ifdef VMM_DEBUG
-        debugf_debug("Well, we've got enough memory :D\n");
+        debugf_debug("Current VMO is either too small or already "
+                     "allocated. Skipping...\n");
 #endif
-        break;
+        if (cur_vmo->next == NULL) {
+            new_vmo =
+                vmo_init(cur_vmo->base + (uint64_t)(cur_vmo->len * PFRAME_SIZE),
+                         pages, cur_vmo->flags & ~(VMO_ALLOCATED));
+            cur_vmo->next = new_vmo;
+            new_vmo->prev = cur_vmo;
+#ifdef VMM_DEBUG
+            debugf_debug("VMO %p created successfully. Proceeding to next "
+                         "iteration\n",
+                         new_vmo);
+#endif
+        }
     }
 
     if (cur_vmo == NULL) {
@@ -57,9 +56,9 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation) {
 
     ptr = (void *)(cur_vmo->base);
     if (map_allocation) {
-        void *phys = pmm_alloc(pages * PMLT_SIZE);
+        void *phys = pmm_alloc_pages(pages);
         map_region_to_page(ctx->pml4_table, (uint64_t)phys, (uint64_t)ptr,
-                           (uint64_t)(pages * PMLT_SIZE),
+                           (uint64_t)(pages * PFRAME_SIZE),
                            vmo_to_page_flags(cur_vmo->flags));
     } else {
 #ifdef VMM_DEBUG
@@ -71,9 +70,9 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation) {
     cur_vmo->flags |= VMO_ALLOCATED;
     ptr             = (void *)(cur_vmo->base);
     if (map_allocation) {
-        void *phys = pmm_alloc(pages * PMLT_SIZE);
+        void *phys = pmm_alloc_pages(pages);
         map_region_to_page(ctx->pml4_table, (uint64_t)phys, (uint64_t)ptr,
-                           (uint64_t)(pages * PMLT_SIZE),
+                           (uint64_t)(pages * PFRAME_SIZE),
                            vmo_to_page_flags(cur_vmo->flags));
     } else {
 #ifdef VMM_DEBUG
@@ -115,12 +114,32 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
 
     FLAG_UNSET(cur_vmo->flags, VMO_ALLOCATED);
 
+    // we'll remove the VMO from the list
+
+    // find the physical address of the VMO
+    uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
+    pmm_free((void *)PHYS_TO_VIRTUAL((void *)phys));
+
+    virtmem_object_t *prev_vmo, *next_vmo;
+    prev_vmo = cur_vmo->prev;
+    next_vmo = cur_vmo->next;
+    // delete the VMO from the list
+
+    if (prev_vmo != NULL)
+        prev_vmo->next = next_vmo;
+    if (next_vmo != NULL)
+        next_vmo->prev = prev_vmo;
+
     if (unmap_allocation) {
-        pmm_free((void *)pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base));
-        unmap_region(ctx->pml4_table, cur_vmo->base, cur_vmo->len);
+        pmm_free((void *)PHYS_TO_VIRTUAL(
+            pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base)));
+        unmap_region(ctx->pml4_table, cur_vmo->base,
+                     (cur_vmo->len * PFRAME_SIZE));
     } else {
 #ifdef VMM_DEBUG
         debugf_debug("We don't have to unmap\n");
 #endif
     }
+
+    pmm_free(cur_vmo);
 }
