@@ -226,16 +226,17 @@ void kstart(void) {
     // Load limine's memory map into OUR struct
     limine_parsed_data.usable_entry_count = 0;
     for (uint64_t i = 0; i < limine_parsed_data.memmap_entry_count; i++) {
-        entry = limine_parsed_data.limine_memory_map[i];
+        memmap_entry = limine_parsed_data.limine_memory_map[i];
 
-        if (entry->type == LIMINE_MEMMAP_USABLE) {
-            limine_parsed_data.memory_usable_total += entry->length;
+        if (memmap_entry->type == LIMINE_MEMMAP_USABLE) {
+            limine_parsed_data.memory_usable_total += memmap_entry->length;
             limine_parsed_data.usable_entry_count++;
         }
 
         debugf_debug(
             "Entry n. %lld; Region start: %#llx; length: %#llx; type: %s\n", i,
-            entry->base, entry->length, memory_block_type[entry->type]);
+            memmap_entry->base, memmap_entry->length,
+            memory_block_type[memmap_entry->type]);
     }
 
     limine_parsed_data.memory_total =
