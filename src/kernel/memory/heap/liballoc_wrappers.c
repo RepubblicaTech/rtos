@@ -3,6 +3,8 @@
 
 #include <memory/vma.h>
 
+#include <util/util.h>
+
 // liballoc will now work on the current VMM context loaded here
 extern vmm_context_t *current_vmm_ctx;
 
@@ -19,10 +21,12 @@ int liballoc_unlock() {
 }
 
 void *liballoc_alloc(size_t pages) {
-    return vma_alloc(current_vmm_ctx, (pages), false);
+    return vma_alloc(current_vmm_ctx, (pages), true);
 }
 
 int liballoc_free(void *ptr, size_t pages) {
-    pages = 0;
-    vma_free(current_vmm_ctx, ptr, false);
+    UNUSED(pages);
+    vma_free(current_vmm_ctx, ptr, true);
+
+    return 0;
 }
