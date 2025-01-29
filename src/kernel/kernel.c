@@ -218,7 +218,7 @@ void kstart(void) {
         _hcf();
     }
 
-    struct limine_memmap_response *memmap_response = memmap_request.response;
+    memmap_response = memmap_request.response;
 
     limine_parsed_data.limine_memory_map  = memmap_response->entries;
     limine_parsed_data.memmap_entry_count = memmap_response->entry_count;
