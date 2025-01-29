@@ -15,7 +15,7 @@ XSDT *xsdt;
 uint64_t *get_root_sdt() {
     sdt_pointer *sdp = get_rsdp();
     return (is_xsdp(sdp) ? (uint64_t *)sdp->p_xsdt_address
-                         : (uint64_t *)(uint64_t)sdp->p_rsdt_address);
+                         : (uint64_t *)sdp->p_rsdt_address);
 }
 
 int check_table_signature(acpi_sdt_header *table, const char *sig) {
