@@ -45,6 +45,6 @@ typedef struct bootloader_data {
     uint32_t p_ioapic_base;
 } bootloader_data;
 
-struct bootloader_data get_bootloader_data();
+struct bootloader_data *get_bootloader_data();
 
 #endif
