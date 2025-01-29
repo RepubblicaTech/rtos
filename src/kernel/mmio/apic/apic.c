@@ -15,19 +15,23 @@
 
 #include <mmio/mmio.h>
 
-static struct bootloader_data limine_data;
+#include <memory/pmm.h>
+
+static struct bootloader_data *limine_data;
 
 // write data to a LAPIC register
 // by
 // https://github.com/Tix3Dev/apoptOS/blob/370fd34a6d3c87a9d1a16d1a2ec072bd1836ba6c/src/kernel/hardware/apic/apic.c
 void lapic_write_reg(uint32_t reg, uint32_t data) {
-    cpu_reg_write(limine_data.p_lapic_base + reg, data);
+    cpu_reg_write((uint32_t *)PHYS_TO_VIRTUAL(limine_data->p_lapic_base + reg),
+                  data);
 }
 
 // get data from a LAPIC register
 // https://github.com/Tix3Dev/apoptOS/blob/370fd34a6d3c87a9d1a16d1a2ec072bd1836ba6c/src/kernel/hardware/apic/apic.c
 uint32_t lapic_read_reg(uint32_t reg) {
-    return cpu_reg_read(limine_data.p_lapic_base + reg);
+    return cpu_reg_read(
+        (uint32_t *)PHYS_TO_VIRTUAL(limine_data->p_lapic_base + reg));
 }
 
 void lapic_set_base(uint64_t lapic_base) {
@@ -52,8 +56,8 @@ void apic_init() {
     mmio_device mm_lapic = find_mmio(MMIO_LAPIC_SIG);
     debugf_debug("MMIO device \"%s\" base:%#llx size:%#llx\n", mm_lapic.name,
                  mm_lapic.base, mm_lapic.size);
-    limine_data.p_lapic_base = mm_lapic.base;
-    kprintf_info("LAPIC base address: %#llx\n", limine_data.p_lapic_base);
+    limine_data->p_lapic_base = mm_lapic.base;
+    kprintf_info("LAPIC base address: %#llx\n", mm_lapic.base);
 
     // disable the PIC
     pic_disable();

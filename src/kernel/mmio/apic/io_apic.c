@@ -15,12 +15,13 @@
 #include <io.h>
 
 #include <memory/heap/liballoc.h>
+#include <memory/pmm.h>
 
 mmio_device *mmios;
 mmio_device mm_io_apic;
 madt_ioapic *io_apic;
 
-static struct bootloader_data limine_data;
+static struct bootloader_data *limine_data;
 
 uint64_t *ioapic_redtbl;
 uint64_t *get_redtbl() {
@@ -28,15 +29,17 @@ uint64_t *get_redtbl() {
 }
 
 uint32_t ioapic_reg_read(uint8_t reg) {
-    uint32_t volatile *regsel = (uint32_t volatile *)limine_data.p_ioapic_base;
-    regsel[0]                 = reg;
+    uint32_t volatile *regsel =
+        (uint32_t volatile *)PHYS_TO_VIRTUAL(limine_data->p_ioapic_base);
+    regsel[0] = reg;
 
     return regsel[4];
 }
 
 void ioapic_reg_write(uint8_t reg, uint32_t value) {
-    uint32_t volatile *regsel = (uint32_t volatile *)limine_data.p_ioapic_base;
-    regsel[0]                 = reg;
+    uint32_t volatile *regsel =
+        (uint32_t volatile *)PHYS_TO_VIRTUAL(limine_data->p_ioapic_base);
+    regsel[0] = reg;
 
     regsel[4] = value;
 }
@@ -85,9 +88,9 @@ void ioapic_map_irq(int irq, int interrupt, irq_handler handler) {
 void ioapic_init() {
     limine_data = get_bootloader_data();
 
-    mm_io_apic                = find_mmio(MMIO_APIC_SIG);
-    limine_data.p_ioapic_base = mm_io_apic.base;
-    debugf_debug("I/O APIC Base address: %#lx\n", limine_data.p_ioapic_base);
+    mm_io_apic                 = find_mmio(MMIO_APIC_SIG);
+    limine_data->p_ioapic_base = mm_io_apic.base;
+    debugf_debug("I/O APIC Base address: %#lx\n", limine_data->p_ioapic_base);
 
     uint8_t ioapic_redir_entries = (ioapic_reg_read(0x01) >> 16) & 0xFF;
     debugf_debug("Redirection entries: %#hhu\n", ioapic_redir_entries);
