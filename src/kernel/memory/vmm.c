@@ -31,8 +31,8 @@ void vmo_dump(virtmem_object_t *vmo) {
 }
 
 virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
-    virtmem_object_t *vmo = (virtmem_object_t *)PHYS_TO_VIRTUAL(
-        pmm_alloc(sizeof(virtmem_object_t)));
+    virtmem_object_t *vmo =
+        (virtmem_object_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(length));
 
     vmo->base  = base;
     vmo->len   = length;
@@ -44,19 +44,15 @@ virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
     return vmo;
 }
 
-void vmo_destroy(virtmem_object_t *vmo) {
-    pmm_free(vmo);
-    vmo = NULL;
-}
 vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags) {
-    vmm_context_t *ctx =
-        (vmm_context_t *)PHYS_TO_VIRTUAL(pmm_alloc(sizeof(vmm_context_t)));
+    vmm_context_t *ctx = (vmm_context_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
 
-    if (pml4 == NULL)
-        pml4 = (uint64_t *)pmm_alloc(PMLT_SIZE);
+    if (pml4 == NULL) {
+        pml4 = (uint64_t *)pmm_alloc_page();
+    }
 
     ctx->pml4_table = pml4;
-    ctx->root_vmo   = vmo_init(0, PMLT_SIZE, flags);
+    ctx->root_vmo   = vmo_init(0, 1, flags);
 
     return ctx;
 }
@@ -70,7 +66,10 @@ void vmm_ctx_destroy(vmm_context_t *ctx) {
     }
 
     for (virtmem_object_t *i = ctx->root_vmo; i != NULL; i = i->next) {
-        vmo_destroy(i);
+        uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, i->base);
+        pmm_free((void *)PHYS_TO_VIRTUAL(phys));
+
+        pmm_free(i);
     }
 
     // TODO: unmap all the page frames
@@ -113,7 +112,7 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
         return src_vmo; // we are not going to split it
     }
 
-    new_vmo = vmo_init(src_vmo->base + (uint64_t)(len * PMLT_SIZE),
+    new_vmo = vmo_init(src_vmo->base + (uint64_t)(len * PFRAME_SIZE),
                        src_vmo->len - len, src_vmo->flags);
     /*
     src_vmo		  new_vmo
@@ -123,7 +122,7 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
 
 #ifdef VMM_DEBUG
     debugf_debug("VMO %p has been split at (virt)%#llx\n", src_vmo,
-                 src_vmo->base + (uint64_t)(len * PMLT_SIZE));
+                 src_vmo->base + (uint64_t)(len * PFRAME_SIZE));
 #endif
 
     src_vmo->len = len;
@@ -151,19 +150,21 @@ void vmm_init(vmm_context_t *ctx) {
         // every VMO will have the same flags as the root one
         i->flags = ctx->root_vmo->flags;
 
-        // mapping will be done on VMA_ALLOC
-        // void *ptr = (void*)PHYS_TO_VIRTUAL(pmm_alloc(PMLT_SIZE));
-        // map_region_to_page(ctx->pml4_table, (uint64_t)ptr, i->base,
-        // i->len, vmo_to_page_flags(ctx->root_vmo->flags));
-        // map the higher half
-        // (0xffff80000... - virtual kernel end (0xffffffff))
+        // mapping will be done on vma_alloc
     }
 
     uint64_t *k_pml4 = (uint64_t *)PHYS_TO_VIRTUAL(get_kernel_pml4());
 
+    if (ctx->pml4_table == k_pml4)
+        return;
+
     for (int i = 256; i < 512; i++) {
-        if (ctx->pml4_table == k_pml4)
+
+        if (k_pml4[i] == NULL)
             continue;
+
+        debugf("Copying %p[%d](%#llx) to %p[%d]\n", k_pml4, i, k_pml4[i],
+               ctx->pml4_table, i);
 
         ctx->pml4_table[i] = k_pml4[i];
     }

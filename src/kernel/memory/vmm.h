@@ -39,7 +39,6 @@ void vmm_switch_ctx(vmm_context_t *new_ctx);
 
 virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags);
 void vmo_dump(virtmem_object_t *vmo);
-void vmo_destroy(virtmem_object_t *vmo);
 virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len);
 
 vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags);
