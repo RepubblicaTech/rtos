@@ -1,5 +1,13 @@
 #include "pic.h"
+#include "irq.h"
+
+#include "stddef.h"
+
 #include <io.h>
+
+#include <stdio.h>
+
+irq_handler pic_irq_handlers[16];
 
 void pic_sendEOI(uint8_t irq) {
     if (irq >= 8)
@@ -125,4 +133,23 @@ uint16_t pic_get_irr(void) {
    NOT TO BE CONFUSED WITH INTERRUPT SERVICE ROUTINE!!!*/
 uint16_t pic_get_isr(void) {
     return __pic_get_irq_reg(PIC_READ_ISR);
+}
+
+void pic_irq_handler(registers_t *regs) {
+    int irq = regs->interrupt - PIC_REMAP_OFFSET;
+
+    uint8_t pic_isr = pic_get_isr();
+    uint8_t pic_irr = pic_get_irr();
+
+    if (pic_irq_handlers[irq] != NULL) {
+        pic_irq_handlers[irq](regs); // tries to handle the interrupt
+    } else {
+        debugf("Unhandled IRQ %d  ISR=%#x  IRR=%#x\n", irq, pic_isr, pic_irr);
+    }
+
+    pic_sendEOI(irq);
+}
+
+void pic_registerHandler(int irq, irq_handler handler) {
+    pic_irq_handlers[irq] = handler;
 }

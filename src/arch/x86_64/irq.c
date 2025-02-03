@@ -8,24 +8,8 @@
 
 #include <stddef.h>
 
-#define PIC_REMAP_OFFSET 0x20
-
-irq_handler irq_handlers[16];
-
-void pic_irq_handler(registers_t *regs) {
-    int irq = regs->interrupt - PIC_REMAP_OFFSET;
-
-    uint8_t pic_isr = pic_get_isr();
-    uint8_t pic_irr = pic_get_irr();
-
-    if (irq_handlers[irq] != NULL) {
-        irq_handlers[irq](regs); // tries to handle the interrupt
-    } else {
-        debugf("Unhandled IRQ %d  ISR=%#x  IRR=%#x\n", irq, pic_isr, pic_irr);
-    }
-
-    pic_sendEOI(irq);
-}
+#include <cpu.h>
+#include <mmio/apic/io_apic.h>
 
 void irq_init() {
     pic_config(PIC_REMAP_OFFSET, PIC_REMAP_OFFSET + 8);
@@ -37,7 +21,12 @@ void irq_init() {
     _enable_interrupts();
 }
 
+// this function should be used after checking if the APIC is supported or not
 void irq_registerHandler(int irq, irq_handler handler) {
     debugf_debug("Registering handler for IRQ %d\n", irq);
-    irq_handlers[irq] = handler;
+    if (check_apic()) {
+        apic_registerHandler(irq, handler);
+    } else {
+        pic_registerHandler(irq, handler);
+    }
 }

@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+#include <irq.h>
+#include <isr.h>
+
+#define PIC_REMAP_OFFSET 0x20
+
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA    0x21
 #define PIC2_COMMAND 0xA0
@@ -48,12 +53,19 @@
 #define PIC_ICW4_BUFFERRED     0x8
 #define PIC_ICW4_SFNM          0x10
 
+void pic_irq_handler(registers_t *regs);
+
 void pic_sendEOI(uint8_t irq);
 void pic_config(int offset1, int offset2);
+
 void irq_mask(uint8_t irq_line);
 void irq_unmask(uint8_t irq_line);
+
 void pic_disable(void);
+
 uint16_t pic_get_irr(void);
 uint16_t pic_get_isr(void);
+
+void pic_registerHandler(int irq, irq_handler handler);
 
 #endif
