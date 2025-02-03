@@ -19,115 +19,103 @@
 #include <spinlock.h>
 
 uint64_t pid_counter;
-process_t *current_process;
+uint64_t current_pid; // which process is currently running
+process_t **processes = NULL;
 
 process_t *get_current_process() {
-    return current_process;
+    return processes[current_pid];
 }
 
 atomic_flag SCHEDULER_LOCK;
 
 // to create a process, you need to give it some kind of starting point
 process_t *create_process(void (*entry)()) {
-    spinlock_acquire(&SCHEDULER_LOCK);
-    process_t *process          = kmalloc(sizeof(process_t));
-    vmm_context_t *proc_vmm_ctx = vmm_ctx_init(NULL, VMO_KERNEL_RW);
+    _load_pml4(get_kernel_pml4());
 
-    registers_t *cpu_frame = kmalloc(sizeof(registers_t));
-    cpu_frame->ds          = GDT_DATA_SEGMENT;
-    cpu_frame->ss          = cpu_frame->ds;
-    cpu_frame->cs          = GDT_CODE_SEGMENT;
+    process_t *process = kmalloc(sizeof(process_t));
+
+    process->pml4 = (uint64_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
+    pagemap_copy_to(process->pml4);
+
+    registers_t cpu_frame;
+    process->registers_frame.ds = GDT_DATA_SEGMENT;
+    process->registers_frame.cs = GDT_CODE_SEGMENT;
     // the stack grows downwards :^)
-    cpu_frame->rsp = (uint64_t)((uint64_t)kmalloc(PMLT_SIZE) + (PMLT_SIZE - 1));
-    cpu_frame->rip = (uint64_t)entry;
-    cpu_frame->rflags = 0x202;
+    process->registers_frame.rsp =
+        (uint64_t)(PHYS_TO_VIRTUAL(pmm_alloc_page()) + (PFRAME_SIZE - 1));
+    process->registers_frame.rip    = (uint64_t)entry;
+    process->registers_frame.rflags = 0x202;
 
-    process->pid             = pid_counter;
-    process->registers_frame = cpu_frame;
-    process->vmm_ctx         = proc_vmm_ctx;
+    process->pid = pid_counter;
 
     process->time_slice = SCHED_TIME_SLICE;
     process->state      = PROC_STATUS_NEW;
     process->pid        = pid_counter;
 
-    pid_counter++;
-
-    debugf_debug("Process (PID: %llu, entry:%#llx) has been created\n",
-                 process->pid, process->registers_frame->rip);
-
-    process->prev = NULL;
-    process->next = NULL;
+    // process->prev = NULL;
+    // process->next = NULL;
 
     // append the process to the list
-    if (current_process != NULL) {
-        process_t *last_process;
-        for (last_process = current_process; last_process->next != NULL;
-             last_process = last_process->next)
-            ;
+    processes[pid_counter] = process;
 
-        if (last_process->next != NULL)
-            process->next = last_process->next;
-        last_process->next = process;
-        process->prev      = last_process;
-    } else {
-        current_process = process;
-    }
+    pid_counter++;
 
-    spinlock_release(&SCHEDULER_LOCK);
+    // debugf_debug("Process (PID: %llu, entry:%#llx) has been created\n",
+    //              process->pid, process->registers_frame.rip);
+
     return process;
 }
 
 void destroy_process(process_t *process) {
     spinlock_acquire(&SCHEDULER_LOCK);
 
-    kfree(process->registers_frame);
-    process->registers_frame = NULL;
-
-    vmm_ctx_destroy(process->vmm_ctx);
-
     kfree(process);
 
     spinlock_release(&SCHEDULER_LOCK);
 }
 
-void process_handler(registers_t *registers_frame) {
-    // we need to switch the process as fast as possibile
-    // if it's NULL then close immediately
+void process_handler(registers_t *cur_registers_frame) {
+    if (!processes)
+        return;
+
+    // _load_pml4(get_kernel_pml4());
+    process_t *current_process = processes[current_pid];
     if (!current_process)
         return;
 
-    // if it's running and it has enough time slice, just decrease it
+    // time slice is <= 0
+    if (current_process->time_slice <= 0) {
+        current_process->time_slice = SCHED_TIME_SLICE;
+        current_pid                 = ++current_pid % pid_counter;
+        current_process             = processes[current_pid];
+    }
+
     if (current_process->state == PROC_STATUS_RUNNING &&
         current_process->time_slice > 0) {
         current_process->time_slice--;
-
-        memcpy(current_process->registers_frame, registers_frame,
+        memcpy(&processes[current_pid]->registers_frame, cur_registers_frame,
                sizeof(registers_t));
-    }
 
-    // here, its time slice is 0
-    // is there a next process?
-    if (current_process->next) {
-        current_process = current_process->next;
-    }
+        return;
 
-    current_process->state = PROC_STATUS_RUNNING;
+    } else {
+        current_process->state = PROC_STATUS_RUNNING;
+    }
 
     // here, we should have an existing next
-    memcpy(registers_frame, current_process->registers_frame,
+    memcpy(cur_registers_frame, &processes[current_pid]->registers_frame,
            sizeof(registers_t));
-    vmm_switch_ctx(current_process->vmm_ctx);
-    vmm_init(current_process->vmm_ctx);
-    _load_pml4((uint64_t *)current_process->vmm_ctx->pml4_table);
+    _load_pml4((uint64_t *)VIRT_TO_PHYSICAL(processes[current_pid]->pml4));
 }
 
 void scheduler_init() {
-    current_process = NULL;
-    pid_counter     = 0;
-
-    if (check_apic()) {
-        apic_register_handler(0, sched_timer_tick);
-    } else {
-        irq_registerHandler(0, sched_timer_tick);
+    processes = kcalloc(SCHED_MAX_PROCESSES, sizeof(process_t));
+    for (int i = 0; i < SCHED_MAX_PROCESSES; i++) {
+        processes[i] = NULL;
     }
+
+    pid_counter = 0;
+    current_pid = 0;
+
+    irq_registerHandler(0, sched_timer_tick);
 }

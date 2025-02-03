@@ -13,28 +13,24 @@
 
 #include <memory/vmm.h>
 
-#define SCHED_TIME_SLICE 10
+#define SCHED_TIME_SLICE    10
+#define SCHED_MAX_PROCESSES 2048
 
 typedef enum {
     PROC_STATUS_NEW,
     PROC_STATUS_RUNNING,
-    PROC_STATUS_DEAD,
-    PROC_STATUS_WAITING
+    PROC_STATUS_DEAD
 } process_state_t;
 
 typedef struct process_t {
-    struct process_t *prev;
-
-    registers_t *registers_frame;
+    registers_t registers_frame;
 
     uint64_t pid;
     process_state_t state;
 
     uint64_t time_slice;
 
-    vmm_context_t *vmm_ctx;
-
-    struct process_t *next;
+    uint64_t *pml4;
 } process_t;
 
 process_t *get_current_process();

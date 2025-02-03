@@ -117,13 +117,14 @@ struct bootloader_data *get_bootloader_data() {
 vmm_context_t *kernel_vmm_ctx;
 
 void proc_a() {
-    for (;;) {
-        debugf("A");
+    while (1) {
+        kprintf("A");
     }
 }
 
 void proc_b() {
-    for (;;) {
+    create_process(proc_a);
+    while (1) {
         debugf("B");
     }
 }
@@ -204,10 +205,10 @@ void kstart(void) {
 
     irq_init();
     kprintf_ok("Initialized PIC\n");
+    pic_registerHandler(0, timer_tick);
 
     pit_init(PIT_TICKS);
     kprintf_ok("Initialized PIT\n");
-    irq_registerHandler(0, timer_tick);
     size_t start_tick_after_pit_init = get_current_ticks();
 
     isr_registerHandler(14, pf_handler);
@@ -338,11 +339,11 @@ void kstart(void) {
         kprintf_info("APIC device is supported\n");
         apic_init();
         ioapic_init();
+        apic_registerHandler(0, timer_tick);
         kprintf_ok("APIC init done\n");
-        apic_register_handler(0, timer_tick);
         asm("sti");
     } else {
-        kprintf_panic("APIC is not supported!");
+        kprintf_info("APIC is not supported. Going on with legacy PIC\n");
     }
 
     sdt_pointer *rsdp = get_rsdp();
@@ -369,7 +370,7 @@ void kstart(void) {
         kprintf("XSDT Signature: %.4s\n", xsdt->header.signature);
         kprintf("XSDT Creator ID: 0x%llx\n", xsdt->header.creator_id);
     } else {
-        RSDT *rsdt = (RSDT *)get_root_sdt();
+        RSDT *rsdt = (RSDT *)PHYS_TO_VIRTUAL(get_root_sdt());
         kprintf("RSDT OEM ID: %.6s\n", rsdt->header.oem_id);
         kprintf("RSDT Signature: %.4s\n", rsdt->header.signature);
         kprintf("RSDT Creator ID: 0x%llx\n", rsdt->header.creator_id);
@@ -434,14 +435,12 @@ void kstart(void) {
     end_tick_after_init        -= start_tick_after_pit_init;
 
     scheduler_init();
-    kprintf_ok("Scheduler init done\n");
-
+    kprintf_ok("Initialized scheduler\n");
     kprintf("System started: Time took: %d seconds %d ms\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
 
     ft_ctx->full_refresh(ft_ctx);
 
-    create_process(proc_a);
     create_process(proc_b);
 
     for (;;)
