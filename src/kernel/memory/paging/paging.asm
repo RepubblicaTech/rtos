@@ -9,8 +9,7 @@ _invalidate:
 ; void _load_pml4(uint64_t *pml4_base)
 global _load_pml4
 _load_pml4:
-	mov rax, rdi
-	mov cr3, rax
+	mov cr3, rdi
 
 	ret
 
