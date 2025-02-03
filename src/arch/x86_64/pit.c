@@ -14,8 +14,6 @@ void pit_sleep(uint32_t millis) {
 void pit_init(const uint32_t freq) {
     set_ticks(0);
 
-    irq_registerHandler(0, timer_tick);
-
     uint32_t divisor = CONST_PIT_CLOCK / freq;
 
     // --- 0x36 0011 0110 ---
