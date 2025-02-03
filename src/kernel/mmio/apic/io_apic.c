@@ -62,7 +62,7 @@ void apic_irq_handler(registers_t *regs) {
     lapic_send_eoi();
 }
 
-void apic_register_handler(int irq, irq_handler handler) {
+void apic_registerHandler(int irq, irq_handler handler) {
     apic_irq_handlers[irq] = handler;
 }
 
