@@ -101,7 +101,7 @@ int printf(void (*putc_function)(char), const char *fmt, ...) {
     for (int i = 0; i < length; ++i) {
         (*putc_function)(buffer[i]);
     }
-
     spinlock_release(&STDIO_LOCK);
+
     return length;
 }
