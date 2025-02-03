@@ -16,6 +16,10 @@
 
 vmm_context_t *current_vmm_ctx;
 
+vmm_context_t *get_current_ctx() {
+    return current_vmm_ctx;
+}
+
 void vmm_switch_ctx(vmm_context_t *new_ctx) {
     current_vmm_ctx = new_ctx;
 }
@@ -48,7 +52,7 @@ vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags) {
     vmm_context_t *ctx = (vmm_context_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
 
     if (pml4 == NULL) {
-        pml4 = (uint64_t *)pmm_alloc_page();
+        pml4 = (uint64_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
     }
 
     ctx->pml4_table = pml4;
@@ -142,9 +146,22 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
     return src_vmo;
 }
 
-// Initializes a simple 4KiB VMO and loads the contexts' PML4 into CR3
+void pagemap_copy_to(uint64_t *non_kernel_pml4) {
+
+    uint64_t *k_pml4 = (uint64_t *)PHYS_TO_VIRTUAL(get_kernel_pml4());
+
+    if (non_kernel_pml4 == k_pml4)
+        return;
+
+    for (int i = 256; i < 512; i++) {
+        // debugf("Copying %p[%d](%#llx) to %p[%d]\n", k_pml4, i, k_pml4[i],
+        //        non_kernel_pml4, i);
+
+        non_kernel_pml4[i] = k_pml4[i];
+    }
+}
+
 // Assumes the CTX has been initialized with vmm_ctx_init()
-// --- DON'T USE THIS WITH THE KERNEL CTX!!! ---
 void vmm_init(vmm_context_t *ctx) {
     for (virtmem_object_t *i = ctx->root_vmo; i != NULL; i = i->next) {
         // every VMO will have the same flags as the root one
@@ -153,21 +170,5 @@ void vmm_init(vmm_context_t *ctx) {
         // mapping will be done on vma_alloc
     }
 
-    uint64_t *k_pml4 = (uint64_t *)PHYS_TO_VIRTUAL(get_kernel_pml4());
-
-    if (ctx->pml4_table == k_pml4)
-        return;
-
-    for (int i = 256; i < 512; i++) {
-
-        if (k_pml4[i] == NULL)
-            continue;
-
-        debugf("Copying %p[%d](%#llx) to %p[%d]\n", k_pml4, i, k_pml4[i],
-               ctx->pml4_table, i);
-
-        ctx->pml4_table[i] = k_pml4[i];
-    }
-
-    // _load_pml4((uint64_t *)VIRT_TO_PHYSICAL(ctx->pml4_table));
+    pagemap_copy_to(ctx->pml4_table);
 }

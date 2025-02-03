@@ -35,6 +35,7 @@ typedef struct vmm_context_t {
 #define VMO_KERNEL_RW VMO_RW | VMO_KERNEL
 #define VMO_USER_RW   VMO_PRESENT | VMO_RW | VMO_USER
 
+vmm_context_t *get_current_ctx();
 void vmm_switch_ctx(vmm_context_t *new_ctx);
 
 virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags);
@@ -46,6 +47,8 @@ void vmm_ctx_destroy(vmm_context_t *ctx);
 
 uint64_t vmo_to_page_flags(uint64_t vmo_flags);
 uint64_t page_to_vmo_flags(uint64_t pg_flags);
+
+void pagemap_copy_to(uint64_t *non_kernel_pml4);
 
 void vmm_init(vmm_context_t *ctx);
 
