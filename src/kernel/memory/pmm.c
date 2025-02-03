@@ -46,9 +46,6 @@ void pmm_init() {
         if (memmap_entry->type != LIMINE_MEMMAP_USABLE)
             continue;
 
-        memset((void *)PHYS_TO_VIRTUAL(memmap_entry->base), 0,
-               memmap_entry->length);
-
         freelist_node *fl_node =
             (freelist_node *)PHYS_TO_VIRTUAL(memmap_entry->base);
         fl_node->length = memmap_entry->length;
