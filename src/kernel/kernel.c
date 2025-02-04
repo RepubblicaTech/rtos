@@ -276,7 +276,7 @@ void kstart(void) {
     }
     rsdp_response                         = rsdp_request.response;
     limine_parsed_data.rsdp_table_address = (uint64_t *)rsdp_response->address;
-    debugf_debug("Address of RSDP: %#llp\n",
+    debugf_debug("Address of RSDP: %p\n",
                  limine_parsed_data.rsdp_table_address);
     acpi_init();
     kprintf_ok("ACPI tables parsing done\n");
@@ -370,7 +370,7 @@ void kstart(void) {
         kprintf("XSDT Signature: %.4s\n", xsdt->header.signature);
         kprintf("XSDT Creator ID: 0x%llx\n", xsdt->header.creator_id);
     } else {
-        RSDT *rsdt = (RSDT *)PHYS_TO_VIRTUAL(get_root_sdt());
+        RSDT *rsdt = (RSDT *)get_root_sdt();
         kprintf("RSDT OEM ID: %.6s\n", rsdt->header.oem_id);
         kprintf("RSDT Signature: %.4s\n", rsdt->header.signature);
         kprintf("RSDT Creator ID: 0x%llx\n", rsdt->header.creator_id);
