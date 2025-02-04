@@ -33,11 +33,13 @@ void mputc(char c);
 
 int printf(void (*putc_function)(char), const char *fmt, ...);
 
-#ifndef PRINTF_MIRROR
-#define kprintf(fmt, ...) printf(putc, fmt, ##__VA_ARGS__)
-#else
+#ifdef PRINTF_MIRROR
 #define kprintf(fmt, ...) printf(mputc, fmt, ##__VA_ARGS__)
+#else
+#define kprintf(fmt, ...) printf(putc, fmt, ##__VA_ARGS__)
 #endif
+
+#define mprintf(fmt, ...) printf(mputc, fmt, ##__VA_ARGS__)
 
 #define kprintf_ok(fmt, ...)                                                   \
     ({                                                                         \
