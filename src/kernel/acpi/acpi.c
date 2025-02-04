@@ -14,8 +14,11 @@ XSDT *xsdt;
 // returns the address of the R/XSDT
 uint64_t *get_root_sdt() {
     sdt_pointer *sdp = get_rsdp();
-    return (is_xsdp(sdp) ? (uint64_t *)sdp->p_xsdt_address
-                         : (uint64_t *)sdp->p_rsdt_address);
+
+    uint64_t *sdt =
+        (uint64_t *)(is_xsdp(sdp) ? sdp->p_xsdt_address : sdp->p_rsdt_address);
+
+    return (uint64_t *)PHYS_TO_VIRTUAL(sdt);
 }
 
 int check_table_signature(acpi_sdt_header *table, const char *sig) {
