@@ -42,6 +42,45 @@
                 }
             ],
             "launchCompleteCommand": "None"
+        },
+        {
+            "name": "(gdb) Kernel debug (UEFI)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/kernel.elf",
+            "preLaunchTask": "Build Kernel (UEFI)",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "logging": {
+                "engineLogging": true
+            },
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Kernel ELF symbols",
+                    "text": "symbol-file ${workspaceFolder}/build/kernel.elf",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Use Intel syntax",
+                    "text": "set disassembly-flavor intel",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Use hexadecimal values",
+                    "text": "set output-radix 16",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Remote QEMU target",
+                    "text": "target remote localhost:1234",
+                    "ignoreFailures": false
+                }
+            ],
+            "launchCompleteCommand": "None"
         }
     ]
 }
