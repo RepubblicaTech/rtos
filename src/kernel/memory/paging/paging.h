@@ -51,11 +51,12 @@
 // https://github.com/malwarepad/cavOS/blob/646237dfd6c4173a4c059cccd74c63dd31cfd052/src/kernel/include/paging.h
 
 // physical address offset mask
-#define PG_FLAGS_MASK 0xFFF
-#define PG_ADDR_MASK  0x0000fffffffff000
+#define PG_ADDR_MASK 0xfffffffff000
+// eg.
 // 0xffff8000000520ab
+// 0x    fffffffff000
 
-#define PG_FLAGS(a)    ((a) & PG_FLAGS_MASK)
+#define PG_FLAGS(a)    ((a) & ~(PG_ADDR_MASK))
 #define PG_GET_ADDR(x) ((x) & PG_ADDR_MASK)
 
 #define PMLT_MASK 0x1ff
