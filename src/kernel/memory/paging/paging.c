@@ -81,27 +81,27 @@ void pf_handler(registers_t *regs) {
 
     uint64_t pf_error_code = (uint64_t)regs->error;
 
-    kprintf("--- PANIC! ---\n");
-    kprintf("Page fault code %#016b\n\n-------------------------------\n",
+    mprintf("--- PANIC! ---\n");
+    mprintf("Page fault code %#016b\n\n-------------------------------\n",
             pf_error_code);
 
-    kprintf(PG_RING(pf_error_code) == 0 ? "Kernel " : "User ");
-    kprintf(PG_WR_RD(pf_error_code) == 0 ? "read attempt of a "
+    mprintf(PG_RING(pf_error_code) == 0 ? "Kernel " : "User ");
+    mprintf(PG_WR_RD(pf_error_code) == 0 ? "read attempt of a "
                                          : "write attempt to a ");
-    kprintf(PG_PRESENT(pf_error_code) == 0 ? "non-present page entry\n\n"
+    mprintf(PG_PRESENT(pf_error_code) == 0 ? "non-present page entry\n\n"
                                            : "present page entry\n\n");
 
     // CR2 contains the address that caused the fault
     uint64_t cr2 = cpu_get_cr(2);
-    kprintf("\nAttempt to access address %#llx\n\n", cr2);
+    mprintf("\nAttempt to access address %#llx\n\n", cr2);
 
-    kprintf("RESERVED WRITE:				%d\n",
+    mprintf("RESERVED WRITE:				%d\n",
             PG_RESERVED(pf_error_code));
-    kprintf("INSTRUCTION_FETCH:			%d\n", PG_IF(pf_error_code));
-    kprintf("PROTECTION_KEY_VIOLATION:		%d\n", PG_PK(pf_error_code));
-    kprintf("SHADOW_STACK_ACCESS: 			%d\n",
+    mprintf("INSTRUCTION_FETCH:			%d\n", PG_IF(pf_error_code));
+    mprintf("PROTECTION_KEY_VIOLATION:		%d\n", PG_PK(pf_error_code));
+    mprintf("SHADOW_STACK_ACCESS: 			%d\n",
             PG_SS(pf_error_code));
-    kprintf("SGX_VIOLATION: 				%d\n",
+    mprintf("SGX_VIOLATION: 				%d\n",
             PG_SGX(pf_error_code));
 
     panic_common(regs);
