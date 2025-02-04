@@ -117,14 +117,14 @@ struct bootloader_data *get_bootloader_data() {
 vmm_context_t *kernel_vmm_ctx;
 
 void proc_a() {
-    while (1) {
+    for (;;) {
         kprintf("A");
     }
 }
 
 void proc_b() {
     create_process(proc_a);
-    while (1) {
+    for (;;) {
         debugf("B");
     }
 }
