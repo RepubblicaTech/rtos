@@ -159,7 +159,7 @@ void *pmm_alloc_page() {
 #endif
 
     // zero out the whole allocated region
-    // memset((void *)ptr, 0, PFRAME_SIZE);
+    memset((void *)ptr, 0, PFRAME_SIZE);
 
     // we need the physical address of the free entry
     return (void *)VIRT_TO_PHYSICAL(ptr);
