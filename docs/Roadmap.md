@@ -39,9 +39,11 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
       - [X] Actual VMM stuff (allocating, freeing virtual memory etc.)  
     - [X] Kernel heap (`kmalloc`, `kfree`)
 
-- [ ] Scheduling (+ Multitasking?)
+- [ ] Scheduling
 
 - [ ] File system support (ISO 9660, maybe FAT32/EXTx)
+
+- [ ] SMP
 
 - [ ] Microkernel environment ([Eleanore Semaphore](https://wiki.osdev.org/Eleanore_Semaphore))
 - [ ] Jump to userspace
