@@ -133,7 +133,8 @@ void startup_screen() {
         }
     }
 
-    _hcf();
+    for (;;)
+        ;
 }
 
 // kernel main function

@@ -10,7 +10,7 @@
 
 typedef struct virtmem_object_t {
     uint64_t base;
-    size_t len;
+    size_t len; // length is in pages (4KiB blocks)!!
     uint64_t flags;
 
     struct virtmem_object_t *next;

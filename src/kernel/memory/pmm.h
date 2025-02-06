@@ -23,6 +23,6 @@ void pmm_init();
 
 void *pmm_alloc_page();
 void *pmm_alloc_pages(size_t pages);
-void pmm_free(void *ptr);
+void pmm_free(void *ptr, size_t pages);
 
 #endif

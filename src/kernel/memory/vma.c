@@ -118,7 +118,7 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
 
     // find the physical address of the VMO
     uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
-    pmm_free((void *)PHYS_TO_VIRTUAL(phys));
+    pmm_free((void *)PHYS_TO_VIRTUAL(phys), cur_vmo->len);
 
     virtmem_object_t *prev_vmo, *next_vmo;
     prev_vmo = cur_vmo->prev;
@@ -132,7 +132,8 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
 
     if (unmap_allocation) {
         pmm_free((void *)PHYS_TO_VIRTUAL(
-            pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base)));
+                     pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base)),
+                 cur_vmo->len);
         unmap_region(ctx->pml4_table, cur_vmo->base,
                      (cur_vmo->len * PFRAME_SIZE));
     } else {
@@ -141,5 +142,6 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
 #endif
     }
 
-    pmm_free(cur_vmo);
+    pmm_free(cur_vmo,
+             ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE);
 }

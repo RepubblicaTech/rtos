@@ -174,7 +174,7 @@ void *pmm_alloc_pages(size_t pages) {
     return ptr;
 }
 
-void pmm_free(void *ptr) {
+void pmm_free(void *ptr, size_t pages) {
     pmm_frees++;
 #ifdef PMM_DEBUG
     debugf_debug("--- Deallocation n.%d ---\n", pmm_frees);
@@ -185,7 +185,7 @@ void pmm_free(void *ptr) {
     // the entry will point to the virtual address of the deallocated
     // pointer
     freelist_node *fl_ptr = (freelist_node *)(ptr);
-    fl_ptr->length        = PFRAME_SIZE;
+    fl_ptr->length        = PFRAME_SIZE * (pages > 0 ? pages : 1);
 
     s_fl_head = (size_t)fl_head;
     s_fl_ptr  = (size_t)fl_ptr;

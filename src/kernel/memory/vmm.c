@@ -35,8 +35,8 @@ void vmo_dump(virtmem_object_t *vmo) {
 }
 
 virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
-    virtmem_object_t *vmo =
-        (virtmem_object_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(length));
+    virtmem_object_t *vmo = (virtmem_object_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(
+        ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE));
 
     vmo->base  = base;
     vmo->len   = length;
@@ -49,7 +49,8 @@ virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
 }
 
 vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags) {
-    vmm_context_t *ctx = (vmm_context_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
+    vmm_context_t *ctx = (vmm_context_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(
+        ROUND_UP(sizeof(vmm_context_t), PFRAME_SIZE) / PFRAME_SIZE));
 
     if (pml4 == NULL) {
         pml4 = (uint64_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
@@ -71,14 +72,15 @@ void vmm_ctx_destroy(vmm_context_t *ctx) {
 
     for (virtmem_object_t *i = ctx->root_vmo; i != NULL; i = i->next) {
         uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, i->base);
-        pmm_free((void *)PHYS_TO_VIRTUAL(phys));
+        pmm_free((void *)PHYS_TO_VIRTUAL(phys), i->len);
 
-        pmm_free(i);
+        pmm_free(i,
+                 ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE);
     }
 
     // TODO: unmap all the page frames
-    pmm_free(ctx->pml4_table);
-    pmm_free(ctx);
+    pmm_free(ctx->pml4_table, 1);
+    pmm_free(ctx, ROUND_UP(sizeof(vmm_context_t), PFRAME_SIZE) / PFRAME_SIZE);
 
     ctx->pml4_table = NULL;
 }

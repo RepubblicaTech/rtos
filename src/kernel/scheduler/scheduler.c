@@ -45,8 +45,8 @@ process_t *create_process(void (*entry)()) {
     process->registers_frame.cs = GDT_CODE_SEGMENT;
     // the stack grows downwards :^)
     process->registers_frame.rsp =
-        (uint64_t)(PHYS_TO_VIRTUAL(pmm_alloc_pages(4)) +
-                   ((PFRAME_SIZE * 4) - 1));
+        (uint64_t)(PHYS_TO_VIRTUAL(pmm_alloc_pages(PROC_STACK_PAGES)) +
+                   (PROC_STACK_SIZE - 1));
     process->registers_frame.rbp    = 0;
     process->registers_frame.rip    = (uint64_t)entry;
     process->registers_frame.rflags = 0x202;
@@ -84,9 +84,9 @@ void destroy_process(process_t *process) {
 
             pmm_free(process->pml4, 1);
             pmm_free((void *)process->registers_frame.rbp - PROC_STACK_SIZE, 4);
-    kfree(process);
+            kfree(process);
 
-    spinlock_release(&SCHEDULER_LOCK);
+            spinlock_release(&SCHEDULER_LOCK);
         }
     }
 

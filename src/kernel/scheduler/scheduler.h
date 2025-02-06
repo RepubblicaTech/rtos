@@ -16,6 +16,9 @@
 #define SCHED_TIME_SLICE    10
 #define SCHED_MAX_PROCESSES 2048
 
+#define PROC_STACK_PAGES 4
+#define PROC_STACK_SIZE  (4 * PFRAME_SIZE)
+
 typedef enum {
     PROC_STATUS_NEW,
     PROC_STATUS_RUNNING,
