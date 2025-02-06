@@ -27,7 +27,8 @@ typedef long ssize_t;
 #define NANOPRINTF_IMPLEMENTATION
 #include <nanoprintf.h>
 
-atomic_flag STDIO_LOCK;
+atomic_flag STDIO_FB_LOCK;
+atomic_flag STDIO_E9_LOCK;
 
 uint32_t current_bg;
 uint32_t current_fg;
@@ -60,7 +61,20 @@ void clearscreen() {
 }
 
 void putc(char c) {
+    spinlock_acquire(&STDIO_FB_LOCK);
     flanterm_write(ft_ctx, &c, sizeof(c));
+    spinlock_release(&STDIO_FB_LOCK);
+}
+
+void dputc(char c) {
+    spinlock_acquire(&STDIO_E9_LOCK);
+    _outb(0xE9, c);
+    spinlock_release(&STDIO_E9_LOCK);
+}
+
+void mputc(char c) {
+    putc(c);
+    dputc(c);
 }
 
 void rsod_init() {
@@ -76,17 +90,7 @@ void rsod_init() {
     clearscreen();
 }
 
-void dputc(char c) {
-    _outb(0xE9, c);
-}
-
-void mputc(char c) {
-    putc(c);
-    dputc(c);
-}
-
 int printf(void (*putc_function)(char), const char *fmt, ...) {
-    spinlock_acquire(&STDIO_LOCK);
     char buffer[1024];
     va_list args;
 
@@ -101,7 +105,6 @@ int printf(void (*putc_function)(char), const char *fmt, ...) {
     for (int i = 0; i < length; ++i) {
         (*putc_function)(buffer[i]);
     }
-    spinlock_release(&STDIO_LOCK);
 
     return length;
 }
