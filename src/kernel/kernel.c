@@ -118,15 +118,22 @@ vmm_context_t *kernel_vmm_ctx;
 
 void proc_a() {
     for (;;) {
-        kprintf("A");
+        debugf("B");
     }
 }
 
-void proc_b() {
+void startup_screen() {
     create_process(proc_a);
-    for (;;) {
-        debugf("B");
+
+    volatile uint32_t *fb_ptr = framebuffer->address;
+    // cool startup screen :)
+    for (uint64_t y = 0; y < framebuffer->height; y++) {
+        for (uint64_t x = 0; x < framebuffer->width; x++) {
+            fb_ptr[framebuffer->width * y + x] = x + (y * x);
+        }
     }
+
+    _hcf();
 }
 
 // kernel main function
@@ -441,7 +448,7 @@ void kstart(void) {
 
     ft_ctx->full_refresh(ft_ctx);
 
-    create_process(proc_b);
+    create_process(startup_screen);
 
     for (;;)
         ;
