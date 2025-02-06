@@ -28,12 +28,13 @@
 //  to 0 3   LTIM    if set, operate in level triggered mode; if unset, operate
 //  in edge triggered mode 4   INIT    set to 1 to initialize PIC 5-7 ignored on
 //  x86, set to 0
-
-#define PIC_ICW1_ICW4       0x01
-#define PIC_ICW1_SINGLE     0x02
-#define PIC_ICW1_INTERVAL4  0x04
-#define PIC_ICW1_LEVEL      0x08
-#define PIC_ICW1_INITIALIZE 0x10
+typedef enum {
+    PIC_ICW1_ICW4       = 0x01,
+    PIC_ICW1_SINGLE     = 0x02,
+    PIC_ICW1_INTERVAL4  = 0x04,
+    PIC_ICW1_LEVEL      = 0x08,
+    PIC_ICW1_INITIALIZE = 0x10
+} pic_icw1;
 
 // Initialization Control Word 4
 // -----------------------------
@@ -45,13 +46,14 @@
 //  otherwise, selects buffer slave 3   BUF     if set, controller operates in
 //  buffered mode 4   SFNM    specially fully nested mode; used in systems with
 //  large number of cascaded controllers 5-7         reserved, set to 0
-
-#define PIC_ICW4_8086          0x1
-#define PIC_ICW4_AUTO_EOI      0x2
-#define PIC_ICW4_BUFFER_MASTER 0x4
-#define PIC_ICW4_BUFFER_SLAVE  0x0
-#define PIC_ICW4_BUFFERRED     0x8
-#define PIC_ICW4_SFNM          0x10
+typedef enum {
+    PIC_ICW4_BUFFER_SLAVE  = 0x00,
+    PIC_ICW4_8086          = 0x01,
+    PIC_ICW4_AUTO_EOI      = 0x02,
+    PIC_ICW4_BUFFER_MASTER = 0x04,
+    PIC_ICW4_BUFFERRED     = 0x08,
+    PIC_ICW4_SFNM          = 0x10
+} pic_icw4;
 
 void pic_irq_handler(registers_t *regs);
 
