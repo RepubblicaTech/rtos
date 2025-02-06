@@ -72,22 +72,32 @@ process_t *create_process(void (*entry)()) {
 }
 
 void destroy_process(process_t *process) {
+    if (!processes || !process)
+        return;
+
     spinlock_acquire(&SCHEDULER_LOCK);
 
+    _load_pml4(get_kernel_pml4());
+
+    for (int i = 0; i <= procs_counter; i++) {
+        if (processes[i] == process) {
+
+            pmm_free(process->pml4, 1);
+            pmm_free((void *)process->registers_frame.rbp - PROC_STACK_SIZE, 4);
     kfree(process);
 
     spinlock_release(&SCHEDULER_LOCK);
+        }
+    }
+
+    kprintf_warn("No such process %p. Ignoring\n", process);
 }
 
 void process_handler(registers_t *cur_registers_frame) {
-    if (!processes)
+    if (!processes || !processes[current_pid])
         return;
-
-    // _load_pml4(get_kernel_pml4());
 
     process_t *current_process = processes[current_pid];
-    if (!current_process)
-        return;
 
     if (current_process->state == PROC_STATUS_RUNNING &&
         current_process->time_slice > 0) {
