@@ -40,7 +40,7 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
       - [X] Actual VMM stuff (allocating, freeing virtual memory etc.)  
     - [X] Kernel heap (`kmalloc`, `kfree`)
 
-- [ ] Scheduling
+- [X] Scheduling
 
 - [ ] File system support (ISO 9660, maybe FAT32/EXTx)
 
