@@ -54,21 +54,10 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation) {
         _hcf();
     }
 
-    ptr = (void *)(cur_vmo->base);
-    if (map_allocation) {
-        void *phys = pmm_alloc_pages(pages);
-        map_region_to_page(ctx->pml4_table, (uint64_t)phys, (uint64_t)ptr,
-                           (uint64_t)(pages * PFRAME_SIZE),
-                           vmo_to_page_flags(cur_vmo->flags));
-    } else {
-#ifdef VMM_DEBUG
-        debugf_debug("No need to map the region\n");
-#endif
-    }
-
     cur_vmo         = split_vmo_at(cur_vmo, pages);
     cur_vmo->flags |= VMO_ALLOCATED;
     ptr             = (void *)(cur_vmo->base);
+
     if (map_allocation) {
         void *phys = pmm_alloc_pages(pages);
         map_region_to_page(ctx->pml4_table, (uint64_t)phys, (uint64_t)ptr,
