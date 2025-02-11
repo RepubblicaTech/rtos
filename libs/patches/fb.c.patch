@@ -1,5 +1,5 @@
---- flanterm/backends/fb.c	2024-12-22 18:55:05.181263008 +0100
-+++ src/kernel/flanterm/backends/fb.c	2024-12-19 20:00:42.909699470 +0100
+--- libs/flanterm/backends/fb.c	2025-02-08 11:25:18.085038824 +0100
++++ src/kernel/flanterm/backends/fb.c	2025-02-09 21:41:45.083118269 +0100
 @@ -42,6 +42,8 @@
  #define FLANTERM_FB_HEIGHT_LIMIT 1200
  #endif
@@ -9,7 +9,7 @@
  static uint8_t bump_alloc_pool[FLANTERM_FB_BUMP_ALLOC_POOL_SIZE];
  static size_t bump_alloc_ptr = 0;
  
-@@ -59,353 +61,6 @@
+@@ -72,353 +74,6 @@
  
  #endif
  
