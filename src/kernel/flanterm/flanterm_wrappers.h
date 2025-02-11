@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
-void flanterm_kfree(void *ptr, size_t unused);
+void *flanterm_alloc(size_t size);
+void flanterm_free(void *ptr, size_t size);
 
 #endif
