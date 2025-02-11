@@ -152,14 +152,14 @@ void pagemap_copy_to(uint64_t *non_kernel_pml4) {
 
     uint64_t *k_pml4 = (uint64_t *)PHYS_TO_VIRTUAL(get_kernel_pml4());
 
-    if (non_kernel_pml4 == k_pml4)
+    if ((uint64_t *)PHYS_TO_VIRTUAL(non_kernel_pml4) == k_pml4)
         return;
 
     for (int i = 256; i < 512; i++) {
         // debugf("Copying %p[%d](%#llx) to %p[%d]\n", k_pml4, i, k_pml4[i],
         //        non_kernel_pml4, i);
 
-        non_kernel_pml4[i] = k_pml4[i];
+        ((uint64_t *)PHYS_TO_VIRTUAL(non_kernel_pml4))[i] = k_pml4[i];
     }
 }
 
