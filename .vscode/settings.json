@@ -91,7 +91,8 @@
         "scheduler.h": "c",
         "spinlock.h": "c",
         "stdatomic.h": "c",
-        "stdalign.h": "c"
+        "stdalign.h": "c",
+        "flanterm_wrappers.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
