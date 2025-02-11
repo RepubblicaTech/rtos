@@ -10,7 +10,7 @@
 #define PIT_MODE_CMD 0x43
 
 // PIT runs at 1.1931812 MHz (~2 million Hertz)
-#define CONST_PIT_CLOCK 1193180
+#define CONST_PIT_CLOCK 1193181
 
 uint64_t get_current_ticks();
 
