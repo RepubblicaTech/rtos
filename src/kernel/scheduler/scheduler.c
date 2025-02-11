@@ -127,9 +127,7 @@ void process_handler(registers_t *cur_registers_frame) {
 
 void scheduler_init() {
     processes = kcalloc(SCHED_MAX_PROCESSES, sizeof(process_t));
-    for (int i = 0; i < SCHED_MAX_PROCESSES; i++) {
-        processes[i] = NULL;
-    }
+    memset(processes, 0, sizeof(process_t) * SCHED_MAX_PROCESSES);
 
     procs_counter = 0;
     current_pid   = 0;
