@@ -86,8 +86,9 @@ void panic_common(registers_t *regs) {
     // stacktrace
     mprintf("\n\n --- STACK TRACE ---\n");
     // ignore the 128 bytes red zone
-    for (uint64_t *sp = (uint64_t *)(regs->rbp); *sp != 0x0; sp++) {
-        mprintf("%llp: %#llx\n", sp, *sp);
+    for (uint64_t *sp = (uint64_t *)(regs->rsp); sp <= (uint64_t *)regs->rbp;
+         sp++) {
+        mprintf("%p: %#llx\n", sp, *sp);
     }
 
     mprintf("\nPANIC LOG END --- HALTING ---\n");
