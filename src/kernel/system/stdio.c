@@ -33,6 +33,15 @@ atomic_flag STDIO_E9_LOCK;
 uint32_t current_bg;
 uint32_t current_fg;
 
+// unlocks spinlocks by force
+// interrupts are disabled to avoid other ints to be fired
+void stdio_panic_init() {
+    asm("cli");
+
+    spinlock_release(&STDIO_FB_LOCK);
+    spinlock_release(&STDIO_E9_LOCK);
+}
+
 uint32_t get_screen_bg() {
     return current_bg;
 }

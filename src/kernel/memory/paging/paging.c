@@ -77,6 +77,7 @@ unrelated to ordinary paging.
         (C) RepubblicaTech 2024
 */
 void pf_handler(registers_t *regs) {
+    stdio_panic_init();
     rsod_init();
 
     uint64_t pf_error_code = (uint64_t)regs->error;
@@ -323,9 +324,9 @@ void paging_init(uint64_t *kernel_pml4) {
                                PHYS_TO_VIRTUAL(mmio_devs[i].base),
                                mmio_devs[i].size,
                                PMLE_KERNEL_READ_WRITE | PMLE_NOT_EXECUTABLE);
-            map_region_to_page(kernel_pml4, mmio_devs[i].base,
-                               mmio_devs[i].base, mmio_devs[i].size,
-                               PMLE_KERNEL_READ_WRITE | PMLE_NOT_EXECUTABLE);
+            // map_region_to_page(kernel_pml4, mmio_devs[i].base,
+            //                    mmio_devs[i].base, mmio_devs[i].size,
+            //                    PMLE_KERNEL_READ_WRITE | PMLE_NOT_EXECUTABLE);
         }
     }
 

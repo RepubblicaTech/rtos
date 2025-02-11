@@ -14,6 +14,8 @@
 #define WARNING_FG 0xea7500
 #define PANIC_FG   0xea0000
 
+void stdio_panic_init();
+
 uint32_t get_screen_bg();
 void set_screen_bg(uint32_t bg_rgb);
 

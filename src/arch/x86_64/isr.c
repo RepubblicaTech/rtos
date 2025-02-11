@@ -101,6 +101,7 @@ void isr_handler(registers_t *regs) {
     } else if (regs->interrupt >= 32) {
         debugf("Unhandled interrupt %d\n", regs->interrupt);
     } else {
+        stdio_panic_init();
         // rsod_init();
         set_screen_fg(PANIC_FG);
         mprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n",
