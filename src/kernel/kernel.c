@@ -6,6 +6,7 @@
 
 #include <flanterm/backends/fb.h>
 #include <flanterm/flanterm.h>
+#include <flanterm/flanterm_wrappers.h>
 
 #include <stdio.h>
 
@@ -116,25 +117,21 @@ struct bootloader_data *get_bootloader_data() {
 
 vmm_context_t *kernel_vmm_ctx;
 
-void proc_a() {
+void proc_a() { // cool stuff
     for (;;) {
+        set_screen_fg(SUCCESS_FG);
         debugf("B");
     }
 }
 
-void startup_screen() {
+void startup() {
     create_process(proc_a);
 
-    volatile uint32_t *fb_ptr = framebuffer->address;
-    // cool startup screen :)
-    for (uint64_t y = 0; y < framebuffer->height; y++) {
-        for (uint64_t x = 0; x < framebuffer->width; x++) {
-            fb_ptr[framebuffer->width * y + x] = x + (y * x);
-        }
+    // cool stuff
+    for (;;) {
+        set_screen_fg(WARNING_FG);
+        kprintf("A");
     }
-
-    for (;;)
-        ;
 }
 
 // kernel main function
@@ -437,19 +434,21 @@ void kstart(void) {
             limine_parsed_data.memory_usable_total,
             limine_parsed_data.memory_usable_total / 0x100000);
 
-    kprintf("--- SYSTEM INFO END ---\n\n");
+    kprintf("--- SYSTEM INFO END ---\n");
 
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
+
+    ft_ctx->full_refresh(ft_ctx);
+
+    clearscreen();
 
     scheduler_init();
     kprintf_ok("Initialized scheduler\n");
     kprintf("System started: Time took: %d seconds %d ms\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
 
-    ft_ctx->full_refresh(ft_ctx);
-
-    create_process(startup_screen);
+    create_process(startup);
 
     for (;;)
         ;
