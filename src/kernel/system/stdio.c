@@ -1,18 +1,13 @@
 #include "stdio.h"
 
-#include <flanterm/backends/fb.h>
-#include <flanterm/flanterm.h>
+#include <io.h>
 
 #include <limine.h>
 
-#include <util/va_list.h>
-
-#include <io.h>
-
 #include <spinlock.h>
 
-extern struct flanterm_context *ft_ctx;
-extern struct flanterm_fb_context *ft_fb_ctx;
+#include <util/va_list.h>
+
 extern struct limine_framebuffer *framebuffer;
 
 #define NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS     1
@@ -30,9 +25,6 @@ typedef long ssize_t;
 atomic_flag STDIO_FB_LOCK;
 atomic_flag STDIO_E9_LOCK;
 
-uint32_t current_bg;
-uint32_t current_fg;
-
 // unlocks spinlocks by force
 // interrupts are disabled to avoid other ints to be fired
 void stdio_panic_init() {
@@ -42,36 +34,14 @@ void stdio_panic_init() {
     spinlock_release(&STDIO_E9_LOCK);
 }
 
-uint32_t get_screen_bg() {
-    return current_bg;
-}
-
-uint32_t get_screen_fg() {
-    return current_fg;
-}
-
-void set_screen_bg(uint32_t bg_rgb) {
-    current_bg = bg_rgb;
-    ft_ctx->set_text_bg_rgb(ft_ctx, bg_rgb);
-}
-
-void set_screen_fg(uint32_t fg_rgb) {
-    current_fg = fg_rgb;
-    ft_ctx->set_text_fg_rgb(ft_ctx, fg_rgb);
-}
-
 void set_screen_bg_fg(uint32_t bg_rgb, uint32_t fg_rgb) {
-    set_screen_bg(bg_rgb);
-    set_screen_fg(fg_rgb);
-}
-
-void clearscreen() {
-    ft_ctx->clear(ft_ctx, true);
+    fb_set_bg(bg_rgb);
+    fb_set_fg(fg_rgb);
 }
 
 void putc(char c) {
     spinlock_acquire(&STDIO_FB_LOCK);
-    flanterm_write(ft_ctx, &c, sizeof(c));
+    fb_putc(c);
     spinlock_release(&STDIO_FB_LOCK);
 }
 
@@ -88,15 +58,7 @@ void mputc(char c) {
 
 void rsod_init() {
     set_screen_bg_fg(0xff0000, 0xffffff);
-
-    ft_ctx->set_cursor_pos(ft_ctx, 0, 0);
-
-    for (size_t i = 0; i < ft_ctx->rows; i++) {
-        for (size_t i = 0; i < ft_ctx->cols; i++)
-            putc(' ');
-    }
-
-    clearscreen();
+    fb_clearscreen();
 }
 
 int printf(void (*putc_function)(char), const char *fmt, ...) {
