@@ -23,7 +23,7 @@ mmio_device find_mmio(const char *sig) {
         }
     }
 
-    kprintf_panic("MMIO \"%s\" not found!", sig);
+    debugf_warn("MMIO \"%s\" not found!", sig);
     return *(mmio_device *)NULL;
 }
 
