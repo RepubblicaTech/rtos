@@ -39,6 +39,7 @@ typedef struct process_t {
 process_t *get_current_process();
 
 process_t *create_process(void (*entry)());
+void destroy_process(size_t pid);
 
 void process_handler(registers_t *registers_frame);
 

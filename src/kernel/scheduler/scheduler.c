@@ -19,7 +19,7 @@
 
 #include <spinlock.h>
 
-size_t procs_counter;
+size_t pid_counter;
 size_t current_pid; // which process is currently running
 process_t **processes;
 
@@ -59,10 +59,10 @@ process_t *create_process(void (*entry)()) {
 
     process->time_slice = SCHED_TIME_SLICE;
     process->state      = PROC_STATUS_NEW;
-    process->pid        = procs_counter;
+    process->pid        = pid_counter;
 
     // append the process to the list
-    processes[procs_counter++] = process;
+    processes[pid_counter++] = process;
 
     // debugf_ok("Process (PID: %llu, entry:%#llx) has been created\n",
     //           process->pid, process->registers_frame.rip);
@@ -73,15 +73,15 @@ process_t *create_process(void (*entry)()) {
 }
 
 void destroy_process(size_t pid) {
-    // last process' pid is still (procs_counter - 1)
-    if (pid >= procs_counter)
+    // last process' pid is still (pid_counter - 1)
+    if (pid >= pid_counter)
         return;
 
     process_t *process = processes[pid];
     if (!pid)
         return;
 
-    memset(process->pml4, 0, PFRAME_SIZE);
+    memset((void *)PHYS_TO_VIRTUAL(process->pml4), 0, PFRAME_SIZE);
     pmm_free(process->pml4, PROC_STACK_PAGES);
 
     void *a_rbp = (void *)(ROUND_UP(process->registers_frame.rbp, PFRAME_SIZE));
@@ -89,8 +89,14 @@ void destroy_process(size_t pid) {
 
     processes[pid] = NULL;
 
-    if (pid == procs_counter - 1)
-        procs_counter--;
+    if (pid == pid_counter - 1)
+        pid_counter--;
+
+    if (pid_counter == 0) {
+        // we'll sit here and do nothing :)
+        for (;;)
+            ;
+    }
 }
 
 void process_handler(registers_t *cur_registers_frame) {
@@ -109,7 +115,7 @@ void process_handler(registers_t *cur_registers_frame) {
         return;
     }
 
-    current_pid = (current_pid + 1) % procs_counter;
+    current_pid = (current_pid + 1) % pid_counter;
 
     process_t *next_process = processes[current_pid];
 
@@ -125,8 +131,8 @@ void scheduler_init() {
     processes = kcalloc(SCHED_MAX_PROCESSES, sizeof(process_t));
     memset(processes, 0, sizeof(process_t) * SCHED_MAX_PROCESSES);
 
-    procs_counter = 0;
-    current_pid   = 0;
+    pid_counter = 0;
+    current_pid = 0;
 
     irq_registerHandler(0, sched_timer_tick);
 }
