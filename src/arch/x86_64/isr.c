@@ -49,6 +49,8 @@ void isr_init() {
 }
 
 void print_reg_dump(registers_t *regs) {
+    debugf(ANSI_COLOR_RED);
+
     mprintf("\nRegister dump:\n\n");
 
     mprintf("--- GENERAL PURPOSE REGISTERS ---\n");
@@ -92,6 +94,7 @@ void panic_common(registers_t *regs) {
     }
 
     mprintf("\nPANIC LOG END --- HALTING ---\n");
+    debugf(ANSI_COLOR_RESET);
     _hcf();
 }
 
@@ -103,8 +106,8 @@ void isr_handler(registers_t *regs) {
         debugf("Unhandled interrupt %d\n", regs->interrupt);
     } else {
         stdio_panic_init();
-        // rsod_init();
-        set_screen_fg(PANIC_FG);
+
+        fb_set_fg(PANIC_FG);
         mprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n",
                 exceptions[regs->interrupt], regs->interrupt);
 
