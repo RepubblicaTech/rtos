@@ -14,7 +14,7 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [X] PIC support
 - [ ] PIT Driver
   - [X] Initialization
-  - [ ] PIT-supported sleep
+  - [X] PIT-supported sleep
 - [X] LAPIC/IOAPIC Initialization
   - [X] IRQ redirection to I/O APIC
   - [X] Interrupts work
@@ -24,6 +24,7 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
   - [X] Get RSDP/RSDT information
   - [X] MADT (LAPIC initialization)
   - [ ] HPET (maybe)
+  - [ ] uACPI implementaion
   - [ ] _we'll probably need more tables in the future_
 
 - [X] Memory
@@ -39,16 +40,17 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
       - [X] Actual VMM stuff (allocating, freeing virtual memory etc.)  
     - [X] Kernel heap (`kmalloc`, `kfree`)
 
-- [ ] Scheduling (+ Multitasking?)
+- [X] Scheduling
 
 - [ ] File system support (ISO 9660, maybe FAT32/EXTx)
+
+- [ ] SMP
 
 - [ ] Microkernel environment ([Eleanore Semaphore](https://wiki.osdev.org/Eleanore_Semaphore))
 - [ ] Jump to userspace
 
 ## 2nd Milestone
 - [ ] ELF loading
-  - [ ] OS-specific toolchain
 - [ ] Basic shell
   - [ ] (decent) Keyboard driver
   - [ ] some kind of PATH

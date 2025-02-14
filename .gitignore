@@ -61,9 +61,10 @@ toolchain/gcc*
 toolchain/x86_64-elf
 
 # External libraries will be updated and copied from their repos
-*limine*
-*nanoprintf*
-*flanterm
+src/kernel/system/limine.*
+src/kernel/system/nanoprintf.*
+src/kernel/flanterm/flanterm.*
+src/kernel/flanterm/backends
 src/kernel/memory/heap/liballoc.*
 
 # ISO files

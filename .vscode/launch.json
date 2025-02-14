@@ -1,14 +1,14 @@
 {
-	// Usare IntelliSense per informazioni sui possibili attributi.
-	// Al passaggio del mouse vengono visualizzate le descrizioni degli attributi esistenti.
-	// Per altre informazioni, visitare: https://go.microsoft.com/fwlink/?linkid=830387
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"name": "(gdb) Kernel debug",
-			"type": "cppdbg",
-			"request": "launch",
-			"program": "${workspaceFolder}/build/kernel.elf",
+    // Usare IntelliSense per informazioni sui possibili attributi.
+    // Al passaggio del mouse vengono visualizzate le descrizioni degli attributi esistenti.
+    // Per altre informazioni, visitare: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Kernel debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/kernel.elf",
             "preLaunchTask": "Build Kernel",
             "args": [],
             "stopAtEntry": false,
@@ -18,25 +18,69 @@
             "logging": {
                 "engineLogging": true
             },
-			"MIMode": "gdb",
+            "MIMode": "gdb",
             "setupCommands": [
                 {
-                    "description":  "Kernel ELF symbols",
+                    "description": "Kernel ELF symbols",
                     "text": "symbol-file ${workspaceFolder}/build/kernel.elf",
                     "ignoreFailures": false
                 },
                 {
-                    "description":  "Use Intel syntax",
+                    "description": "Use Intel syntax",
                     "text": "set disassembly-flavor intel",
                     "ignoreFailures": false
                 },
                 {
-                    "description":  "Remote QEMU target",
-                    "text": "target remote | qemu-system-x86_64 -S -gdb stdio -debugcon file:${workspaceFolder}/qemu_vscode.log -cdrom ${workspaceFolder}/kernel-v0.iso -m 64M",
+                    "description": "Use hexadecimal values",
+                    "text": "set output-radix 16",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Remote QEMU target",
+                    "text": "target remote localhost:1234",
                     "ignoreFailures": false
                 }
             ],
-			"launchCompleteCommand": "None"
-		}
-	]
+            "launchCompleteCommand": "None"
+        },
+        {
+            "name": "(gdb) Kernel debug (UEFI)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/kernel.elf",
+            "preLaunchTask": "Build Kernel (UEFI)",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "logging": {
+                "engineLogging": true
+            },
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Kernel ELF symbols",
+                    "text": "symbol-file ${workspaceFolder}/build/kernel.elf",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Use Intel syntax",
+                    "text": "set disassembly-flavor intel",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Use hexadecimal values",
+                    "text": "set output-radix 16",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Remote QEMU target",
+                    "text": "target remote localhost:1234",
+                    "ignoreFailures": false
+                }
+            ],
+            "launchCompleteCommand": "None"
+        }
+    ]
 }

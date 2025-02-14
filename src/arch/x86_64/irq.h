@@ -5,13 +5,13 @@
 
 #include "isr.h"
 
-typedef void (*irq_handler)(registers* regs);
+typedef void (*irq_handler)(registers_t *regs);
+
+void irq_registerHandler(int irq, irq_handler handler);
 
 extern void _enable_interrupts();
 extern void _disable_interrupts();
 
 void irq_init();
-void irq_registerHandler(int irq, irq_handler handler);
-
 
 #endif

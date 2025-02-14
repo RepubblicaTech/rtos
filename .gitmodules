@@ -2,7 +2,7 @@
 	path = libs/limine
 	url = https://github.com/limine-bootloader/limine.git
 	branch = v8.x-binary
-
+    
 [submodule "libs/flanterm"]
 	path = libs/flanterm
 	url = https://github.com/mintsuki/flanterm.git

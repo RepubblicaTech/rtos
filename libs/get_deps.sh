@@ -8,9 +8,9 @@ LIBS_DIR=$2
 
 # required libraries
 declare -a libs=("limine"
-				"flanterm" 
-				"nanoprintf"
-				"liballoc")
+                 "flanterm"
+				 "nanoprintf"
+				 "liballoc")
 
 stderr_echo() { 
 	echo "$@" >&2; 
@@ -79,6 +79,9 @@ done
 copy_if_exists $LIBS_DIR/limine/limine.h $KERNEL_DIR/system/limine.h
 copy_if_exists $LIBS_DIR/nanoprintf/nanoprintf.h $KERNEL_DIR/system/nanoprintf.h
 
+copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.h $KERNEL_DIR/memory/heap/liballoc.h
+copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.c $KERNEL_DIR/memory/heap/liballoc.c
+
 # copy flanterm headers
 copy_if_exists $LIBS_DIR/flanterm/*.h $KERNEL_DIR/flanterm
 copy_if_exists $LIBS_DIR/flanterm/*.c $KERNEL_DIR/flanterm
@@ -89,9 +92,6 @@ copy_if_exists $LIBS_DIR/flanterm/backends/*.c $KERNEL_DIR/flanterm/backends
 copy_if_exists $LIBS_DIR/patches/font.h $KERNEL_DIR/flanterm/backends
 
 patch -u $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch
-
-copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.h $KERNEL_DIR/memory/heap/liballoc.h
-copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.c $KERNEL_DIR/memory/heap/liballoc.c
 
 patch -u $KERNEL_DIR/memory/heap/liballoc.h -i $LIBS_DIR/patches/liballoc.h.patch
 patch -u $KERNEL_DIR/memory/heap/liballoc.c -i $LIBS_DIR/patches/liballoc.c.patch
