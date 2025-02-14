@@ -14,7 +14,7 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [X] PIC support
 - [ ] PIT Driver
   - [X] Initialization
-  - [ ] PIT-supported sleep
+  - [X] PIT-supported sleep
 - [X] LAPIC/IOAPIC Initialization
   - [X] IRQ redirection to I/O APIC
   - [X] Interrupts work
@@ -51,7 +51,6 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 
 ## 2nd Milestone
 - [ ] ELF loading
-  - [ ] OS-specific toolchain
 - [ ] Basic shell
   - [ ] (decent) Keyboard driver
   - [ ] some kind of PATH
