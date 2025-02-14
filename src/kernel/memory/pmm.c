@@ -29,7 +29,7 @@ void pmm_init() {
     freelist_node *fl_nodes[limine_parsed_data.usable_entry_count];
 
     usable_entry_count = 0;
-    for (uint64_t i = 0, temp = 0; i < memmap_response->entry_count; i++) {
+    for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
         struct limine_memmap_entry *memmap_entry = memmap_response->entries[i];
 
         if (memmap_entry->type != LIMINE_MEMMAP_USABLE)
@@ -184,7 +184,7 @@ void pmm_free(void *ptr, size_t pages) {
 
     // the entry will point to the virtual address of the deallocated
     // pointer
-    freelist_node *fl_ptr = (freelist_node *)(ptr);
+    freelist_node *fl_ptr = (freelist_node *)(PHYS_TO_VIRTUAL(ptr));
     fl_ptr->length        = PFRAME_SIZE * (pages > 0 ? pages : 1);
 
     s_fl_head = (size_t)fl_head;
