@@ -82,6 +82,7 @@ void pf_handler(registers_t *regs) {
 
     uint64_t pf_error_code = (uint64_t)regs->error;
 
+    debugf(ANSI_COLOR_RED);
     mprintf("--- PANIC! ---\n");
     mprintf("Page fault code %#016b\n\n-------------------------------\n",
             pf_error_code);
@@ -96,16 +97,15 @@ void pf_handler(registers_t *regs) {
     uint64_t cr2 = cpu_get_cr(2);
     mprintf("\nAttempt to access address %#llx\n\n", cr2);
 
-    mprintf("RESERVED WRITE:				%d\n",
-            PG_RESERVED(pf_error_code));
-    mprintf("INSTRUCTION_FETCH:			%d\n", PG_IF(pf_error_code));
-    mprintf("PROTECTION_KEY_VIOLATION:		%d\n", PG_PK(pf_error_code));
-    mprintf("SHADOW_STACK_ACCESS: 			%d\n",
-            PG_SS(pf_error_code));
-    mprintf("SGX_VIOLATION: 				%d\n",
-            PG_SGX(pf_error_code));
+    mprintf("RESERVED WRITE: %d\n", PG_RESERVED(pf_error_code));
+    mprintf("INSTRUCTION_FETCH: %d\n", PG_IF(pf_error_code));
+    mprintf("PROTECTION_KEY_VIOLATION: %d\n", PG_PK(pf_error_code));
+    mprintf("SHADOW_STACK_ACCESS: %d\n", PG_SS(pf_error_code));
+    mprintf("SGX_VIOLATION: %d\n", PG_SGX(pf_error_code));
 
     panic_common(regs);
+
+    debugf(ANSI_COLOR_RESET);
 }
 
 /********************
@@ -221,6 +221,20 @@ void unmap_region(uint64_t *pml4_table, uint64_t virtual_start, uint64_t len) {
         uint64_t virt = virtual_start + (i * PFRAME_SIZE);
         unmap_page(pml4_table, virt);
     }
+}
+
+// Copy a virtual address range of a pagemap to another one
+// The virtual-to-physical mappings will be copied
+void copy_range_to_pagemap(uint64_t *dst_pml4, uint64_t *src_pml4,
+                           uint64_t virt_start, size_t len) {
+
+    uint64_t phys_start =
+        pg_virtual_to_phys((uint64_t *)PHYS_TO_VIRTUAL(src_pml4), virt_start);
+    uint64_t page_entry_flags = PG_FLAGS(
+        get_page_entry((uint64_t *)PHYS_TO_VIRTUAL(src_pml4), virt_start));
+
+    map_region_to_page((uint64_t *)PHYS_TO_VIRTUAL(dst_pml4), phys_start,
+                       virt_start, len, page_entry_flags);
 }
 
 // Paging initialization
