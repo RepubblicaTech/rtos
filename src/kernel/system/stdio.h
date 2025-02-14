@@ -6,7 +6,8 @@
 
 #include <stdint.h>
 
-#include <fb/fb.h>
+#include <flanterm/backends/fb.h>
+#include <flanterm/flanterm.h>
 
 #define DEFAULT_FG 0xeeeeee
 #define DEFAULT_BG 0x050505
@@ -16,10 +17,16 @@
 #define WARNING_FG 0xea7500
 #define PANIC_FG   0xea0000
 
-void stdio_panic_init();
+uint32_t fb_get_bg();
+void fb_set_bg(uint32_t bg_rgb);
+
+uint32_t fb_get_fb();
+void fb_set_fg(uint32_t fg_rgb);
 
 void set_screen_bg_fg(uint32_t bg_rgb, uint32_t fg_rgb);
 
+void stdio_panic_init();
+void clearscreen();
 void rsod_init();
 
 void putc(char c);
@@ -39,7 +46,7 @@ int printf(void (*putc_function)(char), const char *fmt, ...);
 
 #define kprintf_ok(fmt, ...)                                                   \
     ({                                                                         \
-        uint32_t prev_fg = fb_get_fg();                                        \
+        uint32_t prev_fg = fb_get_fb();                                        \
         fb_set_fg(0x00e826);                                                   \
         kprintf("[ %s():%d::SUCCESS ] " fmt, __FUNCTION__, __LINE__,           \
                 ##__VA_ARGS__);                                                \
@@ -48,7 +55,7 @@ int printf(void (*putc_function)(char), const char *fmt, ...);
 
 #define kprintf_info(fmt, ...)                                                 \
     ({                                                                         \
-        uint32_t prev_fg = fb_get_fg();                                        \
+        uint32_t prev_fg = fb_get_fb();                                        \
         fb_set_fg(INFO_FG);                                                    \
         kprintf("[ %s():%d::INFO ] " fmt, __FUNCTION__, __LINE__,              \
                 ##__VA_ARGS__);                                                \
@@ -57,19 +64,19 @@ int printf(void (*putc_function)(char), const char *fmt, ...);
 
 #define kprintf_warn(fmt, ...)                                                 \
     ({                                                                         \
-        uint32_t prev_fg = fb_get_fg();                                        \
+        uint32_t prev_fg = fb_get_fb();                                        \
         fb_set_fg(WARNING_FG);                                                 \
-        kprintf("--- [ WARNING @ %s():%d ] --- " fmt, __FUNCTION__, __LINE__,  \
+        kprintf("--- [ WARNING @ s():%d ] --- " fmt, __FUNCTION__, __LINE__,   \
                 ##__VA_ARGS__);                                                \
         fb_set_fg(prev_fg);                                                    \
     })
 
 #define kprintf_panic(fmt, ...)                                                \
     ({                                                                         \
-        uint32_t prev_fg = fb_get_fg();                                        \
+        uint32_t prev_fg = fb_get_fb();                                        \
         fb_set_fg(PANIC_FG);                                                   \
-        kprintf("--- [ PANIC @ %s():%d ] --- " fmt "", __FUNCTION__, __LINE__, \
-                ##__VA_ARGS__);                                                \
+        kprintf("--- [ PANIC @ %s():%d ] --- " fmt " Halting...",              \
+                __FUNCTION__, __LINE__, ##__VA_ARGS__);                        \
         fb_set_fg(prev_fg);                                                    \
     })
 
