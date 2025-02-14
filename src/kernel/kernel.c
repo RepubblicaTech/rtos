@@ -6,7 +6,6 @@
 
 #include <flanterm/backends/fb.h>
 #include <flanterm/flanterm.h>
-#include <flanterm/flanterm_wrappers.h>
 
 #include <stdio.h>
 
@@ -119,8 +118,8 @@ vmm_context_t *kernel_vmm_ctx;
 
 void proc_a() { // cool stuff
     for (;;) {
-        set_screen_fg(SUCCESS_FG);
-        debugf("B");
+        fb_set_fg(SUCCESS_FG);
+        kprintf("B");
     }
 }
 
@@ -129,7 +128,7 @@ void startup() {
 
     // cool stuff
     for (;;) {
-        set_screen_fg(WARNING_FG);
+        fb_set_fg(WARNING_FG);
         kprintf("A");
     }
 }
@@ -201,26 +200,25 @@ void kstart(void) {
 
     gdt_init();
     kprintf_ok("Initialized GDT\n");
-
     idt_init();
     kprintf_ok("Initialized IDT\n");
-
     isr_init();
-    kprintf_ok("Initialized ISR\n");
+    kprintf_ok("Initialized ISRs\n");
+    isr_registerHandler(14, pf_handler);
+
+    // _crash_test();
 
     irq_init();
-    kprintf_ok("Initialized PIC\n");
+    kprintf_ok("Initialized PIC and IRQs\n");
     pic_registerHandler(0, timer_tick);
-
     pit_init(PIT_TICKS);
     kprintf_ok("Initialized PIT\n");
-    size_t start_tick_after_pit_init = get_current_ticks();
 
-    isr_registerHandler(14, pf_handler);
+    size_t start_tick_after_pit_init = get_current_ticks();
 
     if (memmap_request.response == NULL ||
         memmap_request.response->entry_count < 1) {
-        kprintf_panic("No memory map received!\n");
+        debugf_panic("No memory map received!\n");
         _hcf();
     }
 
@@ -253,16 +251,8 @@ void kstart(void) {
             .limine_memory_map[limine_parsed_data.memmap_entry_count - 1]
             ->length;
 
-    kprintf("Total Memory size: %#lx (%lu MBytes)\n",
-            limine_parsed_data.memory_total,
-            limine_parsed_data.memory_total / 0x100000);
-
-    kprintf("Total usable memory: %#lx (%lu MBytes)\n",
-            limine_parsed_data.memory_usable_total,
-            limine_parsed_data.memory_usable_total / 0x100000);
-
     if (hhdm_request.response == NULL) {
-        kprintf_panic("Couldn't get Higher Half Direct Map Offset!\n");
+        debugf_panic("Couldn't get Higher Half Direct Map Offset!\n");
         _hcf();
     }
 
@@ -298,16 +288,16 @@ void kstart(void) {
                       paging_mode_response->mode);
         _hcf();
     }
-    kprintf_info("%lluth level paging is available\n",
+    debugf_debug("%lluth level paging is available\n",
                  4 + paging_mode_response->mode);
 
     if (!check_pae()) {
-        kprintf_info("PAE is not available\n");
+        debugf_debug("PAE is not available\n");
     } else {
-        kprintf_info("PAE is available\n");
+        debugf_debug("PAE is available\n");
     }
 
-    kprintf_info("Initializing paging\n");
+    debugf_debug("Initializing paging\n");
     // just checking if the PIT works :)
     uint64_t start        = get_current_ticks();
     // kernel PML4 table
@@ -341,14 +331,14 @@ void kstart(void) {
 
     if (check_apic()) {
         asm("cli");
-        kprintf_info("APIC device is supported\n");
+        debugf_debug("APIC device is supported\n");
         apic_init();
         ioapic_init();
         apic_registerHandler(0, timer_tick);
         kprintf_ok("APIC init done\n");
         asm("sti");
     } else {
-        kprintf_info("APIC is not supported. Going on with legacy PIC\n");
+        debugf_debug("APIC is not supported. Going on with legacy PIC\n");
     }
 
     sdt_pointer *rsdp = get_rsdp();
