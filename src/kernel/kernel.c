@@ -118,8 +118,7 @@ vmm_context_t *kernel_vmm_ctx;
 
 void proc_a() { // cool stuff
     for (;;) {
-        fb_set_fg(SUCCESS_FG);
-        kprintf("B");
+        debugf("B");
     }
 }
 
@@ -127,10 +126,19 @@ void startup() {
     create_process(proc_a);
 
     // cool stuff
-    for (;;) {
-        fb_set_fg(WARNING_FG);
-        kprintf("A");
+    set_screen_bg_fg(0xfc493d, 0xeeeeee); // black-ish, white-ish
+
+    for (size_t i = 0; i < ft_ctx->rows; i++) {
+        for (size_t i = 0; i < ft_ctx->cols; i++)
+            kprintf(" ");
     }
+    clearscreen();
+
+    kprintf("Hello there.\n");
+    destroy_process(1);
+
+    for (;;)
+        ;
 }
 
 // kernel main function
