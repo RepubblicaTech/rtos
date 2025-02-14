@@ -17,7 +17,7 @@
 #define SCHED_MAX_PROCESSES 2048
 
 #define PROC_STACK_PAGES 4
-#define PROC_STACK_SIZE  (4 * PFRAME_SIZE)
+#define PROC_STACK_SIZE  (1 * PFRAME_SIZE)
 
 typedef enum {
     PROC_STATUS_NEW,
@@ -28,10 +28,10 @@ typedef enum {
 typedef struct process_t {
     registers_t registers_frame;
 
-    uint64_t pid;
-    process_state_t state;
+    size_t pid;
 
-    uint64_t time_slice;
+    process_state_t state;
+    size_t time_slice;
 
     uint64_t *pml4;
 } process_t;
@@ -39,7 +39,6 @@ typedef struct process_t {
 process_t *get_current_process();
 
 process_t *create_process(void (*entry)());
-void destroy_process(process_t *process);
 
 void process_handler(registers_t *registers_frame);
 

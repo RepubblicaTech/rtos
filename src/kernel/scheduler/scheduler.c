@@ -7,6 +7,7 @@
 #include <memory/pmm.h>
 
 #include <util/string.h>
+#include <util/util.h>
 
 #include <time.h>
 
@@ -19,8 +20,8 @@
 #include <spinlock.h>
 
 size_t procs_counter;
-uint64_t current_pid;  // which process is currently running
-process_t **processes; // *processes[SCHED_MAX_PROCESSES];
+size_t current_pid; // which process is currently running
+process_t **processes;
 
 process_t *get_current_process() {
     return processes[current_pid];
@@ -32,22 +33,26 @@ atomic_flag SCHEDULER_LOCK;
 process_t *create_process(void (*entry)()) {
     spinlock_acquire(&SCHEDULER_LOCK);
 
-    _load_pml4(get_kernel_pml4());
-
     process_t *process = kmalloc(sizeof(process_t));
 
     process->pml4 = (uint64_t *)pmm_alloc_page();
     pagemap_copy_to(process->pml4);
+    copy_range_to_pagemap(process->pml4, get_kernel_pml4(), (uint64_t)processes,
+                          sizeof(process_t) * SCHED_MAX_PROCESSES);
+
+    // yeah... this looks very ugly but ehh... i need that liballoc maj
+    // struct :/
+    copy_range_to_pagemap(process->pml4, get_kernel_pml4(), 0x1000, 0x10000);
 
     memset(&process->registers_frame, 0, sizeof(registers_t));
-    process->registers_frame.ds  = GDT_DATA_SEGMENT;
-    process->registers_frame.ss  = GDT_DATA_SEGMENT;
-    process->registers_frame.cs  = GDT_CODE_SEGMENT;
+    process->registers_frame.ds = GDT_DATA_SEGMENT;
+    process->registers_frame.ss = GDT_DATA_SEGMENT;
+    process->registers_frame.cs = GDT_CODE_SEGMENT;
+
     // the stack grows downwards :^)
-    // process->registers_frame.rbp =
-    //     (uint64_t)(PHYS_TO_VIRTUAL(pmm_alloc_pages(PROC_STACK_PAGES)));
-    process->registers_frame.rsp = (uint64_t)(PHYS_TO_VIRTUAL(
-        pmm_alloc_pages(PROC_STACK_PAGES) + (PROC_STACK_SIZE - 0x10)));
+    process->registers_frame.rsp =
+        ((uint64_t)PHYS_TO_VIRTUAL(pmm_alloc_pages(PROC_STACK_PAGES))) +
+        (PROC_STACK_SIZE);
 
     process->registers_frame.rip    = (uint64_t)entry;
     process->registers_frame.rflags = 0x202;
@@ -59,70 +64,61 @@ process_t *create_process(void (*entry)()) {
     // append the process to the list
     processes[procs_counter++] = process;
 
-    // debugf_debug("Process (PID: %llu, entry:%#llx) has been created\n",
-    //              process->pid, process->registers_frame.rip);
+    // debugf_ok("Process (PID: %llu, entry:%#llx) has been created\n",
+    //           process->pid, process->registers_frame.rip);
 
     spinlock_release(&SCHEDULER_LOCK);
 
     return process;
 }
 
-void destroy_process(process_t *process) {
-    if (!process)
+void destroy_process(size_t pid) {
+    // last process' pid is still (procs_counter - 1)
+    if (pid >= procs_counter)
         return;
 
-    if (get_current_process() == process) {
+    process_t *process = processes[pid];
+    if (!pid)
         return;
-    }
 
-    spinlock_acquire(&SCHEDULER_LOCK);
+    memset(process->pml4, 0, PFRAME_SIZE);
+    pmm_free(process->pml4, PROC_STACK_PAGES);
 
-    _load_pml4(get_kernel_pml4());
+    void *a_rbp = (void *)(ROUND_UP(process->registers_frame.rbp, PFRAME_SIZE));
+    pmm_free(a_rbp, PROC_STACK_PAGES);
 
-    for (int i = 0; i <= procs_counter; i++) {
-        if (processes[i] == process) {
+    processes[pid] = NULL;
 
-            pmm_free(process->pml4, 1);
-            pmm_free((void *)process->registers_frame.rbp - PROC_STACK_SIZE, 4);
-            kfree(process);
-
-            spinlock_release(&SCHEDULER_LOCK);
-        }
-    }
-
-    debugf("No such process %p. Ignoring\n", process);
+    if (pid == procs_counter - 1)
+        procs_counter--;
 }
 
 void process_handler(registers_t *cur_registers_frame) {
-    if (!processes[current_pid])
-        return;
-
     process_t *current_process = processes[current_pid];
 
-    if (current_process->state == PROC_STATUS_RUNNING &&
-        current_process->time_slice > 0) {
-        current_process->time_slice--;
-        memcpy(&current_process->registers_frame, cur_registers_frame,
-               sizeof(registers_t));
-        _load_pml4(current_process->pml4);
-
+    if (!current_process)
         return;
 
-    } else {
-        current_process->state = PROC_STATUS_RUNNING;
+    if (current_process->state == PROC_STATUS_RUNNING) {
+        memcpy(&current_process->registers_frame, cur_registers_frame,
+               sizeof(registers_t));
     }
 
-    // time slice is <= 0
-    if (current_process->time_slice <= 0) {
-        current_process->time_slice = SCHED_TIME_SLICE;
-        current_pid                 = ++current_pid % procs_counter;
-        current_process             = processes[current_pid];
-        current_process->state      = PROC_STATUS_RUNNING;
+    if (current_process->time_slice > 0) {
+        current_process->time_slice--;
+        return;
     }
 
-    memcpy(cur_registers_frame, &current_process->registers_frame,
-           sizeof(registers_t));
-    _load_pml4(current_process->pml4);
+    current_pid = (current_pid + 1) % procs_counter;
+
+    process_t *next_process = processes[current_pid];
+
+    if (next_process) {
+        next_process->state = PROC_STATUS_RUNNING;
+        memcpy(cur_registers_frame, &next_process->registers_frame,
+               sizeof(registers_t));
+        _load_pml4(next_process->pml4);
+    }
 }
 
 void scheduler_init() {
