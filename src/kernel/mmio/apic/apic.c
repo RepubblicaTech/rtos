@@ -57,7 +57,7 @@ void apic_init() {
     debugf_debug("MMIO device \"%s\" base:%#llx size:%#llx\n", mm_lapic.name,
                  mm_lapic.base, mm_lapic.size);
     limine_data->p_lapic_base = mm_lapic.base;
-    kprintf_info("LAPIC base address: %#llx\n", mm_lapic.base);
+    debugf_debug("LAPIC base address: %#llx\n", mm_lapic.base);
 
     // disable the PIC
     pic_disable();
