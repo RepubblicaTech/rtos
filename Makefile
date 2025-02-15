@@ -128,7 +128,7 @@ bootloader: libs limine_build $(BUILD_DIR)/$(KERNEL)
 	mkdir -p $(ISO_DIR)
 	@# Copy the relevant files over.
 	mkdir -p $(ISO_DIR)/boot
-	cp -v $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/boot/
+	cp -v $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/
 	mkdir -p $(ISO_DIR)/boot/limine
 	cp -v $(SRC_DIR)/limine.conf $(LIBS_DIR)/limine/limine-bios.sys $(LIBS_DIR)/limine/limine-bios-cd.bin \
 	      $(LIBS_DIR)/limine/limine-uefi-cd.bin $(ISO_DIR)/boot/limine/
@@ -137,6 +137,8 @@ bootloader: libs limine_build $(BUILD_DIR)/$(KERNEL)
 	mkdir -p $(ISO_DIR)/EFI/BOOT
 	cp -v $(LIBS_DIR)/limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
 	cp -v $(LIBS_DIR)/limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
+
+	echo "ISO 9660 is working" >> $(ISO_DIR)/test.txt
 
 limine_build: libs
 	@# Build "limine" utility
@@ -195,6 +197,10 @@ clean-all: clean
 	rm -rf $(LIBS_DIR)/limine
 	rm -rf $(LIBS_DIR)/flanterm
 	rm -rf $(LIBS_DIR)/nanoprintf
+
+clean:
+	rm -rf $(ISO_DIR)
+	rm -rf $(BUILD_DIR)
 
 always:
 	mkdir -p $(BUILD_DIR)
