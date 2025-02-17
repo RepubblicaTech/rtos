@@ -38,7 +38,7 @@ The disk devices will be simple. They are a combination of the disk type and dis
 
 ## Paths
 
-The paths in this VFS are UNIX based. The directory structure is different though (by which I mean the default directories). As an example path there would be `/bin/glob/cat`. I will explain the meaning of this later. Special paths are `~` which is the home of the current logged in user, when logged in as the root user the home directory will be the rootvfs' root directory (`/`). </br>
+The paths in this VFS are UNIX based. The directory structure is different though (by which I mean the default directories). As an example path there would be `/bin/glob/cat`. I will explain the meaning of this later. Special paths are `~` which is the home of the current logged in user, when logged in as the root user the home directory will be the rootvfs' root directory (`/`). Paths are also case sensitive like Linux. So in the same directory you can have the file `HELLO.txt` and the file `hello.txt` </br>
 
 ---
 
