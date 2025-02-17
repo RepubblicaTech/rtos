@@ -36,6 +36,9 @@
 
 #define PIT_TICKS 1000 / 1 // 1 ms
 
+#define INITRD_FILE "initrd.img"
+#define INITRD_PATH "/" INITRD_FILE
+
 /*
     Set the base revision to 2, this is recommended as this is the latest
     base revision described by the Limine boot protocol specification.
@@ -84,6 +87,11 @@ __attribute__((used,
                section(".requests"))) static volatile struct limine_rsdp_request
     rsdp_request = {.id = LIMINE_RSDP_REQUEST, .revision = 0};
 
+// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#module-feature
+__attribute__((
+    used, section(".requests"))) static volatile struct limine_module_request
+    module_request = {.id = LIMINE_MODULE_REQUEST, .revision = 0};
+
 // Define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 __attribute__((used,
@@ -108,6 +116,8 @@ struct limine_paging_mode_response *paging_mode_response;
 struct limine_kernel_address_response *kernel_address_response;
 struct limine_rsdp_response *rsdp_response;
 
+struct limine_module_response *module_response;
+
 struct bootloader_data limine_parsed_data;
 
 struct bootloader_data *get_bootloader_data() {
@@ -115,31 +125,6 @@ struct bootloader_data *get_bootloader_data() {
 }
 
 vmm_context_t *kernel_vmm_ctx;
-
-void proc_a() { // cool stuff
-    for (;;) {
-        debugf("B");
-    }
-}
-
-void startup() {
-    create_process(proc_a);
-
-    // cool stuff
-    set_screen_bg_fg(0xfc493d, 0xeeeeee); // black-ish, white-ish
-
-    for (size_t i = 0; i < ft_ctx->rows; i++) {
-        for (size_t i = 0; i < ft_ctx->cols; i++)
-            kprintf(" ");
-    }
-    clearscreen();
-
-    kprintf("Hello there.\n");
-    destroy_process(1);
-
-    for (;;)
-        ;
-}
 
 // kernel main function
 void kstart(void) {
@@ -434,19 +419,42 @@ void kstart(void) {
 
     kprintf("--- SYSTEM INFO END ---\n");
 
-    size_t end_tick_after_init  = get_current_ticks();
-    end_tick_after_init        -= start_tick_after_pit_init;
-
-    ft_ctx->full_refresh(ft_ctx);
-
-    clearscreen();
-
     scheduler_init();
     kprintf_ok("Initialized scheduler\n");
+
+    ft_ctx->full_refresh(ft_ctx);
+    clearscreen();
+
+    if (!module_request.response) {
+        kprintf_warn("No modules loaded.\n");
+    }
+
+    module_response = module_request.response;
+
+    struct limine_file *initrd;
+
+    for (uint64_t module = 0; module < module_response->module_count;
+         module++) {
+        struct limine_file *limine_module = module_response->modules[module];
+        kprintf_info("Module %s loaded\n", limine_module->path);
+
+        if (strcmp(INITRD_PATH, limine_module->path) == 0) {
+            kprintf_info("Found initrd image\n");
+            initrd = limine_module;
+        }
+    }
+
+    if (!initrd) {
+        kprintf_panic("No initrd file found.");
+        _hcf();
+    }
+
+    kprintf_info("Initrd loaded at address %p\n", initrd->address);
+
+    size_t end_tick_after_init  = get_current_ticks();
+    end_tick_after_init        -= start_tick_after_pit_init;
     kprintf("System started: Time took: %d seconds %d ms\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
-
-    create_process(startup);
 
     for (;;)
         ;
