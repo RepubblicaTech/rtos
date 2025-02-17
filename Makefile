@@ -13,6 +13,7 @@ KERNEL_SRC_DIR=$(SRC_DIR)/kernel
 BUILD_DIR=build
 ISO_DIR=iso
 OBJS_DIR=$(BUILD_DIR)/objs
+INITRD_DIR=target
 
 # Nuke built-in rules and variables.
 override MAKEFLAGS += -rR
@@ -124,7 +125,7 @@ $(OS_CODENAME).iso: bootloader
 	@# Install Limine stage 1 and 2 for legacy BIOS boot.
 	./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso
 
-bootloader: libs limine_build $(BUILD_DIR)/$(KERNEL)
+bootloader: libs limine_build $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/initrd.img
 	mkdir -p $(ISO_DIR)
 	@# Copy the relevant files over.
 	mkdir -p $(ISO_DIR)/boot
@@ -138,8 +139,6 @@ bootloader: libs limine_build $(BUILD_DIR)/$(KERNEL)
 	cp -v $(LIBS_DIR)/limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
 	cp -v $(LIBS_DIR)/limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
 
-	echo "ISO 9660 is working" >> $(ISO_DIR)/test.txt
-
 limine_build: libs
 	@# Build "limine" utility
 	make -C $(LIBS_DIR)/limine
@@ -147,6 +146,9 @@ limine_build: libs
 libs:
 	chmod +x $(LIBS_DIR)/get_deps.sh
 	./libs/get_deps.sh $(SRC_DIR)/kernel $(LIBS_DIR)
+
+$(ISO_DIR)/initrd.img: $(INITRD_DIR)
+	tar -cvf $@ $<
 
 # Link rules for the final kernel executable.
 $(BUILD_DIR)/$(KERNEL): Makefile $(SRC_DIR)/linker.ld $(OBJ) always
