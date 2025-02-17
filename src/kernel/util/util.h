@@ -18,4 +18,6 @@
 
 #define UNUSED(x) (void)x
 
+int oct2bin(unsigned char *str, int size);
+
 #endif
