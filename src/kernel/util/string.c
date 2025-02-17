@@ -59,9 +59,19 @@ int memcmp(const void *s1, const void *s2, size_t n) {
 }
 
 size_t strlen(const char *s) {
-    size_t len = 0;
-    for (; s[len] != '\0'; len++)
-        ;
+    size_t ret = 0;
+    while (*s != '\0') {
+        ret++;
+        s++;
+    }
+    return ret;
+}
 
-    return len;
+int strcmp(const char *s1, const char *s2) {
+    for (size_t i = 0; i < strlen(s1); i++) {
+        if (s1[i] != s2[i]) {
+            return s1[i] < s2[i] ? -1 : 1;
+        }
+    }
+    return 0;
 }
