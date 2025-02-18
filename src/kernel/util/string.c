@@ -75,3 +75,27 @@ int strcmp(const char *s1, const char *s2) {
     }
     return 0;
 }
+
+char *strstr(const char *s1, const char *s2) {
+    char *orig_s2 = (char *)s2;
+    if (*s2 == '\0') {
+        return (char *)s1;
+    }
+    while (*s1 != '\0') {
+        if (*s1 == *s2) {
+            while (*s2 != '\0') {
+                if (*s1 != *s2) {
+                    break;
+                }
+                s1++;
+                s2++;
+            }
+            if (*s2 == '\0') {
+                return (char *)s1;
+            }
+            s2 = orig_s2;
+        }
+        s1++;
+    }
+    return NULL;
+}
