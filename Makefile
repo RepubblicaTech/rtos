@@ -109,7 +109,7 @@ override OBJ := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o) $(
 override HEADER_DEPS := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
 
 # Default target.
-.PHONY: all limine_build toolchain libs
+.PHONY: all limine_build toolchain libs $(INITRD_DIR)
 
 all: $(OS_CODENAME).iso
 	@set -e
@@ -148,7 +148,7 @@ libs:
 	./libs/get_deps.sh $(SRC_DIR)/kernel $(LIBS_DIR)
 
 $(ISO_DIR)/initrd.img: $(INITRD_DIR)
-	tar -cvf $@ $<
+	tar -cvf $@ $^
 
 # Link rules for the final kernel executable.
 $(BUILD_DIR)/$(KERNEL): Makefile $(SRC_DIR)/linker.ld $(OBJ) always
