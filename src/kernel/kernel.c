@@ -455,18 +455,9 @@ void kstart(void) {
 
     ustar_fs *initramfs_disk = ramfs_init(initrd->address);
 
-    kprintf_ok("initrd.img entries list:\n");
-    for (size_t i = 0; i < initramfs_disk->file_count; i++) {
-        ustar_file_header *file = initramfs_disk->files[i];
-        kprintf_ok("Entry n.%zu: %s\n", i, file->path);
-    }
-
-    ustar_file **test_files = file_lookup(initramfs_disk, "another.txt");
+    ustar_file **test_files = file_lookup(initramfs_disk, "test.txt");
     kprintf_info("Reading %s's contents:\n", test_files[0]->path);
-    for (size_t i = 0; i < test_files[0]->size; i++) {
-        kprintf("%c", ((char *)test_files[0]->start)[i]);
-    }
-    kprintf("\n");
+    kprintf("%*s", test_files[0]->size, test_files[0]->start);
 
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
