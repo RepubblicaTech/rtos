@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define USTAR_SECTOR_ALIGN 0x200 // 512 bytes
 
@@ -54,6 +55,15 @@ typedef struct ustar_fs {
     // other stuff (maybe?)
 } ustar_fs;
 
+typedef struct ustar_file {
+    void *start;
+
+    char *path;
+    size_t size;
+} ustar_file;
+
 ustar_fs *ramfs_init(void *ramfs);
+
+ustar_file **file_lookup(ustar_fs *fs, char *filename);
 
 #endif

@@ -441,7 +441,7 @@ void kstart(void) {
         kprintf_info("Module %s loaded\n", limine_module->path);
 
         if (strcmp(INITRD_PATH, limine_module->path) == 0) {
-            kprintf_info("Found initrd image\n");
+            kprintf_ok("Found initrd image\n");
             initrd = limine_module;
         }
     }
@@ -457,8 +457,16 @@ void kstart(void) {
 
     kprintf_ok("initrd.img entries list:\n");
     for (size_t i = 0; i < initramfs_disk->file_count; i++) {
-        kprintf_ok("File n.%zu: %s\n", i, initramfs_disk->files[i]->path);
+        ustar_file_header *file = initramfs_disk->files[i];
+        kprintf_ok("Entry n.%zu: %s\n", i, file->path);
     }
+
+    ustar_file **test_file = file_lookup(initramfs_disk, "test.o");
+    kprintf_info("Reading %s's contents:\n", test_file[0]->path);
+    for (size_t i = 0; i < test_file[0]->size; i++) {
+        kprintf("%c", ((char *)test_file[0]->start)[i]);
+    }
+    kprintf("\n");
 
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
