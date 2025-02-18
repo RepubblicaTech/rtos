@@ -1,8 +1,8 @@
 #ifndef USTAR_H
 #define USTAR_H 1
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define USTAR_SECTOR_ALIGN 0x200 // 512 bytes
 
@@ -31,7 +31,7 @@ typedef struct ustar_file_header {
 
     char checksum[8];
 
-    ustar_file_type file_type;
+    char file_type;
 
     char linked_filename[100];
 
@@ -53,5 +53,7 @@ typedef struct ustar_fs {
 
     // other stuff (maybe?)
 } ustar_fs;
+
+ustar_fs *ramfs_init(void *ramfs);
 
 #endif

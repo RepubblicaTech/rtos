@@ -34,6 +34,8 @@
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
 
+#include <fs/ustar/ustar.h>
+
 #define PIT_TICKS 1000 / 1 // 1 ms
 
 #define INITRD_FILE "initrd.img"
@@ -450,6 +452,13 @@ void kstart(void) {
     }
 
     kprintf_info("Initrd loaded at address %p\n", initrd->address);
+
+    ustar_fs *initramfs_disk = ramfs_init(initrd->address);
+
+    kprintf_ok("initrd.img entries list:\n");
+    for (size_t i = 0; i < initramfs_disk->file_count; i++) {
+        kprintf_ok("File n.%zu: %s\n", i, initramfs_disk->files[i]->path);
+    }
 
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
