@@ -77,7 +77,7 @@ ustar_file **file_lookup(ustar_fs *fs, char *filename) {
             default:
                 void *file_ptr =
                     ((void *)file_header) + sizeof(ustar_file_header);
-                size_t file_size = (size_t)oct2bin(file_header->size, 11);
+                size_t file_size = (size_t)oct2bin(file_header->size, 12);
 
                 ustar_file *file = kmalloc(sizeof(ustar_file));
                 file->path       = file_header->path;

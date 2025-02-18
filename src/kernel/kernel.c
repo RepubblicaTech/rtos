@@ -461,10 +461,10 @@ void kstart(void) {
         kprintf_ok("Entry n.%zu: %s\n", i, file->path);
     }
 
-    ustar_file **test_file = file_lookup(initramfs_disk, "test.o");
-    kprintf_info("Reading %s's contents:\n", test_file[0]->path);
-    for (size_t i = 0; i < test_file[0]->size; i++) {
-        kprintf("%c", ((char *)test_file[0]->start)[i]);
+    ustar_file **test_files = file_lookup(initramfs_disk, "another.txt");
+    kprintf_info("Reading %s's contents:\n", test_files[0]->path);
+    for (size_t i = 0; i < test_files[0]->size; i++) {
+        kprintf("%c", ((char *)test_files[0]->start)[i]);
     }
     kprintf("\n");
 
