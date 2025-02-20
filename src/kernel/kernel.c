@@ -109,7 +109,6 @@ extern void _crash_test();
 
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
-struct flanterm_fb_context *ft_fb_ctx;
 
 struct limine_memmap_response *memmap_response;
 struct limine_memmap_entry *memmap_entry;
