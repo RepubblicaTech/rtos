@@ -42,25 +42,25 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [X] Scheduler
 
 - [Adaptive Driver Interface](https://github.com/project-adi)
-    - [ ] Implementation
-    - [ ] FS metalang
+  - [ ] Implementation
+  - [ ] FS metalang
 
 - File system
-    - USTAR
-        - [X] Basic initrd.img initialization
-        - [X] File lookup
-    - Virtual File System
-        - [X] Design
-        - [ ] Implementation
-    - RAMFS
-        - [ ] (un)loading files in safe-to-use memory
-        - [ ] Unloading files
+  - USTAR
+    - [X] Basic initrd.img initialization
+    - [X] File lookup
+  - Virtual File System
+    - [X] Design
+    - [ ] Implementation
+  - RAMFS
+    - [ ] (un)loading files in safe-to-use memory
+    - [ ] Unloading files
 
-    - [ ] ISO9660
-    
+  - [ ] ISO9660
+
 - Hard drive setup:
-    - [ ] FAT32 (boot partition)
-    - [ ] EXTx  (system partition)
+  - [ ] FAT32 (boot partition)
+  - [ ] EXTx  (system partition)
 
 - [ ] SMP
 
@@ -68,6 +68,7 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [ ] Jump to userspace
 
 ## 2nd Milestone
+
 - [ ] ELF loading
 - [ ] OS-specific toolchain
 - [ ] UNIX/POSIX compatibility layer
@@ -82,6 +83,10 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
   - [ ] Oh yeah, DOOM because we have to :3
 
 ## 3rd Milestone
+
 - GUI
-    - [ ] Obviously a lot of sketches and ideas
+  - [ ] Obviously a lot of sketches and ideas
         (aiming to something coming out of the 1980s)
+
+- Built In Dial-Up Modem Support
+  - [ ] Trust me when we are here i will have a modem
