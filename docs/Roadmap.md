@@ -24,7 +24,7 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
   - [X] Get RSDP/RSDT information
   - [X] MADT (LAPIC initialization)
   - [ ] HPET
-  - [ ] uACPI implementaion
+  - [ ] uACPI implementation
 
 - Memory
   - [X] Get memory map
