@@ -36,6 +36,9 @@
 
 #include <fs/ustar/ustar.h>
 
+#include <dev/device.h>
+#include <dev/std/helper.h>
+
 #define PIT_TICKS 1000 / 1 // 1 ms
 
 #define INITRD_FILE "initrd.img"
@@ -458,10 +461,23 @@ void kstart(void) {
     kprintf_info("Reading %s's contents:\n", test_files[0]->path);
     kprintf("%*s", test_files[0]->size, test_files[0]->start);
 
+    register_std_devices();
+    kprintf_ok("Registered standard devices\n");
+
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
     kprintf("System started: Time took: %d seconds %d ms\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
+
+    // device "null" test
+    device_t *dev = get_device("null");
+    if (dev) {
+        char buffer[32];
+        dev->read(dev, buffer, 32, 0);
+        debugf_debug("Device null read: '%s' <- Nothing means good.\n", buffer);
+    } else {
+        kprintf_warn("Device null not found\n");
+    }
 
     for (;;)
         ;

@@ -99,3 +99,13 @@ char *strstr(const char *s1, const char *s2) {
     }
     return NULL;
 }
+
+void *memchr(const void *str, int c, size_t n) {
+    const unsigned char *p = str;
+    for (size_t i = 0; i < n; i++) {
+        if (p[i] == (unsigned char)c) {
+            return (void *)(p + i);
+        }
+    }
+    return NULL;
+}

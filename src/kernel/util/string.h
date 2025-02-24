@@ -25,6 +25,8 @@ int strcmp(const char *s1, const char *s2);
 
 char *strstr(const char *s1, const char *s2);
 
+void *memchr(const void *str, int c, size_t n);
+
 static const char *const memory_block_type[] = {"USABLE",
                                                 "RESERVED",
                                                 "ACPI_RECLAIMABLE",
