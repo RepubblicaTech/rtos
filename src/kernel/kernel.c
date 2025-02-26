@@ -1,4 +1,6 @@
 #include "kernel.h"
+#include "dev/fs/initrd.h"
+#include "util/dump.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -477,6 +479,19 @@ void kstart(void) {
         debugf_debug("Device null read: '%s' <- Nothing means good.\n", buffer);
     } else {
         kprintf_warn("Device null not found\n");
+    }
+
+    dev_initrd_init(initramfs_disk);
+
+    dev = get_device("initrd");
+
+    if (dev) {
+        char buffer[64];
+        dev->read(dev, buffer, 64, 0);
+        kprintf("Initrd Test Dump:\n");
+        hex_dump(buffer, sizeof(buffer));
+    } else {
+        kprintf_warn("Device initrd not found\n");
     }
 
     for (;;)

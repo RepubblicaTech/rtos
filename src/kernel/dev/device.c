@@ -12,8 +12,8 @@ int register_device(device_t *dev) {
         return -1;
     }
     device_table[device_count++] = dev;
-    kprintf_ok("Device %s registered with type %s\n", dev->name,
-               dev->type == DEVICE_TYPE_BLOCK ? "BLK" : "CHR");
+    debugf("Device %s registered with type %s\n", dev->name,
+           dev->type == DEVICE_TYPE_BLOCK ? "BLK" : "CHR");
 
     return 0;
 }
