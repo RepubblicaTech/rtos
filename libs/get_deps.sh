@@ -91,7 +91,7 @@ copy_if_exists $LIBS_DIR/flanterm/backends/*.c $KERNEL_DIR/flanterm/backends
 # custom font for flanterm
 copy_if_exists $LIBS_DIR/patches/font.h $KERNEL_DIR/flanterm/backends
 
-patch -u $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch
+patch -su $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch >/dev/null 2>&1
+patch -su $KERNEL_DIR/memory/heap/liballoc.h -i $LIBS_DIR/patches/liballoc.h.patch >/dev/null 2>&1
+patch -su $KERNEL_DIR/memory/heap/liballoc.c -i $LIBS_DIR/patches/liballoc.c.patch >/dev/null 2>&1
 
-patch -u $KERNEL_DIR/memory/heap/liballoc.h -i $LIBS_DIR/patches/liballoc.h.patch
-patch -u $KERNEL_DIR/memory/heap/liballoc.c -i $LIBS_DIR/patches/liballoc.c.patch

@@ -1,3 +1,5 @@
+.SILENT:
+
 TARGET_BASE=x86_64
 TARGET=$(TARGET_BASE)-elf
 TOOLCHAIN_PREFIX=$(abspath toolchain/$(TARGET))
@@ -16,7 +18,7 @@ OBJS_DIR=$(BUILD_DIR)/objs
 INITRD_DIR=target
 
 # Nuke built-in rules and variables.
-override MAKEFLAGS += -rR
+override MAKEFLAGS += -rR --no-print-directory
 
 # This is the name that our final kernel executable will have.
 # Change as needed.
@@ -116,44 +118,46 @@ all: $(OS_CODENAME).iso
 
 $(OS_CODENAME).iso: bootloader
 	@# Create the bootable ISO.
-	xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
+	@xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
 	        -no-emul-boot -boot-load-size 4 -boot-info-table \
 	        --efi-boot boot/limine/limine-uefi-cd.bin \
 	        -efi-boot-part --efi-boot-image --protective-msdos-label \
-	        $(ISO_DIR) -o $(OS_CODENAME).iso
+	        $(ISO_DIR) -o $(OS_CODENAME).iso > /dev/null 2>&1
 
 	@# Install Limine stage 1 and 2 for legacy BIOS boot.
-	./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso
+	@./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso > /dev/null 2>&1
+	@echo "--> ISO:	" $@
 
 bootloader: libs limine_build $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/initrd.img
-	mkdir -p $(ISO_DIR)
+	@mkdir -p $(ISO_DIR)
 	@# Copy the relevant files over.
-	mkdir -p $(ISO_DIR)/boot
-	cp -v $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/
-	mkdir -p $(ISO_DIR)/boot/limine
-	cp -v $(SRC_DIR)/limine.conf $(LIBS_DIR)/limine/limine-bios.sys $(LIBS_DIR)/limine/limine-bios-cd.bin \
+	@mkdir -p $(ISO_DIR)/boot
+	@cp -v $(BUILD_DIR)/$(KERNEL) $(ISO_DIR)/
+	@mkdir -p $(ISO_DIR)/boot/limine
+	@cp -v $(SRC_DIR)/limine.conf $(LIBS_DIR)/limine/limine-bios.sys $(LIBS_DIR)/limine/limine-bios-cd.bin \
 	      $(LIBS_DIR)/limine/limine-uefi-cd.bin $(ISO_DIR)/boot/limine/
 
 	@# Create the EFI boot tree and copy Limine's EFI executables over.
-	mkdir -p $(ISO_DIR)/EFI/BOOT
-	cp -v $(LIBS_DIR)/limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
-	cp -v $(LIBS_DIR)/limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
+	@mkdir -p $(ISO_DIR)/EFI/BOOT
+	@cp -v $(LIBS_DIR)/limine/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/
+	@cp -v $(LIBS_DIR)/limine/BOOTIA32.EFI $(ISO_DIR)/EFI/BOOT/
 
 limine_build: libs
 	@# Build "limine" utility
-	make -C $(LIBS_DIR)/limine
+	@make -C $(LIBS_DIR)/limine
 
 libs:
-	chmod +x $(LIBS_DIR)/get_deps.sh
-	./libs/get_deps.sh $(SRC_DIR)/kernel $(LIBS_DIR)
+	@chmod +x $(LIBS_DIR)/get_deps.sh
+	@./libs/get_deps.sh $(SRC_DIR)/kernel $(LIBS_DIR)
 
 $(ISO_DIR)/initrd.img: $(INITRD_DIR)
-	tar -cvf $@ $^
+	@tar -cvf $@ $^
+	@echo "--> Initrd:	" $@
 
 # Link rules for the final kernel executable.
 $(BUILD_DIR)/$(KERNEL): Makefile $(SRC_DIR)/linker.ld $(OBJ) always
-	mkdir -p "$$(dirname $@)"
-	$(KLD) $(OBJ) $(KLDFLAGS) -o $@
+	@mkdir -p "$$(dirname $@)"
+	@$(KLD) $(OBJ) $(KLDFLAGS) -o $@
 	@echo "--> Built:	" $@
 
 # Include header dependencies.
@@ -161,50 +165,50 @@ $(BUILD_DIR)/$(KERNEL): Makefile $(SRC_DIR)/linker.ld $(OBJ) always
 
 # Compilation rules for *.c files.
 $(OBJS_DIR)/%.c.o: $(SRC_DIR)/%.c Makefile always
-	mkdir -p "$$(dirname $@)"
-	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
+	@mkdir -p "$$(dirname $@)"
+	@$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 	@echo "--> Compiled:	" $<
 
 # Compilation rules for *.S files.
 $(OBJS_DIR)/%.S.o: $(SRC_DIR)/%.S Makefile always
-	mkdir -p "$$(dirname $@)"
-	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
+	@mkdir -p "$$(dirname $@)"
+	@$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 	@echo "--> Compiled:	" $<
 
 # Compilation rules for *.asm (nasm) files.
 $(OBJS_DIR)/%.asm.o: $(SRC_DIR)/%.asm Makefile always
-	mkdir -p "$$(dirname $@)"
-	nasm $(KNASMFLAGS) $< -o $@
-	@echo "--> Compiled:	" $<
+	@mkdir -p "$$(dirname $@)"
+	@nasm $(KNASMFLAGS) $< -o $@
+	@echo "--> Assembled:	" $<
 
 run: $(OS_CODENAME).iso
-	qemu-system-x86_64 \
+	@qemu-system-x86_64 \
 		-m 64M \
 		-debugcon stdio \
 		-cdrom $<
 
 run-wsl: $(OS_CODENAME).iso
-	qemu-system-x86_64.exe \
+	@qemu-system-x86_64.exe \
 		-m 64M \
 		-debugcon stdio \
 		-cdrom $<
 
 debug: $(OS_CODENAME).iso
-	gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
+	@gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
 
 # Remove object files and the final executable.
 .PHONY: clean always
 
 clean-all: clean
-	rm -rf $(LIBS_DIR)/limine
-	rm -rf $(LIBS_DIR)/flanterm
-	rm -rf $(LIBS_DIR)/nanoprintf
+	@rm -rf $(LIBS_DIR)/limine
+	@rm -rf $(LIBS_DIR)/flanterm
+	@rm -rf $(LIBS_DIR)/nanoprintf
 
 clean:
-	rm -rf $(ISO_DIR)
-	rm -rf $(BUILD_DIR)
+	@rm -rf $(ISO_DIR)
+	@rm -rf $(BUILD_DIR)
 
 always:
-	mkdir -p $(BUILD_DIR)
-	mkdir -p $(OBJS_DIR)
-	mkdir -p $(ISO_DIR)
+	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(OBJS_DIR)
+	@mkdir -p $(ISO_DIR)
