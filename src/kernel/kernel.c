@@ -457,11 +457,11 @@ void kstart(void) {
 
     kprintf_info("Initrd loaded at address %p\n", initrd->address);
 
-    ustar_fs *initramfs_disk = ramfs_init(initrd->address);
+    ustar_fs_t *initramfs_disk = ramfs_init(initrd->address);
 
-    ustar_file **test_files = file_lookup(initramfs_disk, "test.txt");
-    kprintf_info("Reading %s's contents:\n", test_files[0]->path);
-    kprintf("%*s", test_files[0]->size, test_files[0]->start);
+    ustar_file_tree_t *test = file_lookup(initramfs_disk, "test.txt");
+    kprintf_info("Reading %s's contents:\n", test->found_files[0]->path);
+    kprintf("%*s", test->found_files[0]->size, test->found_files[0]->start);
 
     register_std_devices();
     kprintf_ok("Registered standard devices\n");
