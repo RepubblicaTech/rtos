@@ -10,7 +10,8 @@ LIBS_DIR=$2
 declare -a libs=("limine"
                  "flanterm"
 				 "nanoprintf"
-				 "liballoc")
+				 "liballoc"
+                 "libadi")
 
 stderr_echo() { 
 	echo "$@" >&2; 

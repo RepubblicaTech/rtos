@@ -14,3 +14,6 @@
 [submodule "libs/liballoc"]
 	path = libs/liballoc
 	url = https://github.com/blanham/liballoc.git
+[submodule "libs/libadi"]
+	path = libs/libadi
+	url = https://github.com/project-adi/libadi.git
