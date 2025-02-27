@@ -463,6 +463,15 @@ void kstart(void) {
     kprintf_info("Reading %s's contents:\n", test->found_files[0]->path);
     kprintf("%*s", test->found_files[0]->size, test->found_files[0]->start);
 
+    ustar_file_tree_t *directory =
+        file_lookup(initramfs_disk, "target/directory");
+
+    kprintf_info("Listing %s's contents:\n", "target/directory");
+    for (size_t i = 0; i < directory->count; i++) {
+        ustar_file_t *file = directory->found_files[i];
+        kprintf_info("File n.%zu: %s\n", i, file->path);
+    }
+
     register_std_devices();
     kprintf_ok("Registered standard devices\n");
 

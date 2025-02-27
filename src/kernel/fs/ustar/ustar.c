@@ -56,40 +56,51 @@ ustar_fs_t *ramfs_init(void *ramfs) {
 }
 
 // returns a struct with all the found files
-ustar_file_tree_t *file_lookup(ustar_fs_t *fs, char *filename) {
+ustar_file_tree_t *file_lookup(ustar_fs_t *fs, char *path) {
     ustar_file_t **found_files = kmalloc(sizeof(ustar_file_t));
     ustar_file_header *file_header;
-    size_t found = 0;
+    size_t found       = 0;
+    ustar_file_t *file = NULL;
     for (size_t i = 0; i < fs->file_count; i++) {
         file_header = fs->files[i];
 
-        if (strstr(file_header->path, filename) == NULL) {
+        if (strstr(file_header->path, path) == NULL)
             continue;
-        } else {
-            // we found a file, we're going to save it to our array
-            found++;
-            krealloc(found_files, sizeof(ustar_file_t) * found);
 
-            int ustar_entry_type = oct2bin(&file_header->file_type, 1);
-            switch (ustar_entry_type) {
-                // we might need handling special files (eg. directories)
+        int ustar_entry_type = oct2bin(&file_header->file_type, 1);
+        switch (ustar_entry_type) {
+        case USTAR_FILE_DIRECTORY:
+            void *temp = file_header;
+            ustar_file_header *next_file =
+                (ustar_file_header *)(temp + USTAR_SECTOR_ALIGN);
 
-            default:
-                void *file_ptr =
-                    ((void *)file_header) +
-                    USTAR_SECTOR_ALIGN; // don't use sizeof(file header)...
-                size_t file_size = (size_t)oct2bin(file_header->size, 11);
+            // if the directory contains what we need, we'll walk throught it
+            if (strstr(next_file->path, file_header->path) != NULL)
+                continue;
 
-                ustar_file_t *file = kmalloc(sizeof(ustar_file_t));
-                file->path         = file_header->path;
-                file->size         = file_size;
-                file->start        = file_ptr;
+            break;
 
-                file->type = (ustar_file_type)ustar_entry_type;
+        default:
+            void *file_ptr =
+                ((void *)file_header) +
+                USTAR_SECTOR_ALIGN; // don't use sizeof(file header)...
+            size_t file_size = (size_t)oct2bin(file_header->size, 11);
 
-                found_files[found - 1] = file;
-            }
+            file        = kmalloc(sizeof(ustar_file_t));
+            file->path  = file_header->path;
+            file->size  = file_size;
+            file->start = file_ptr;
+
+            file->type = (ustar_file_type)ustar_entry_type;
+
+            break;
         }
+
+        // we found a file, we're going to save it to our array
+        found++;
+        found_files = krealloc(found_files, sizeof(ustar_file_t) * found);
+
+        found_files[found - 1] = file;
     }
 
     ustar_file_tree_t *file_tree = kmalloc(sizeof(ustar_file_tree_t));
