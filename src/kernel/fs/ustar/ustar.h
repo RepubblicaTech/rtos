@@ -48,22 +48,30 @@ typedef struct ustar_file_header {
     char prefix[155];
 } __attribute__((packed)) ustar_file_header;
 
-typedef struct ustar_fs {
+typedef struct ustar_fs_t {
     size_t file_count;
     ustar_file_header **files; // pointer to files and directories
 
     // other stuff (maybe?)
-} ustar_fs;
+} ustar_fs_t;
 
-typedef struct ustar_file {
+typedef struct ustar_file_t {
     void *start;
 
     char *path;
     size_t size;
-} ustar_file;
 
-ustar_fs *ramfs_init(void *ramfs);
+    ustar_file_type type;
+} ustar_file_t;
 
-ustar_file **file_lookup(ustar_fs *fs, char *filename);
+// to use with `file_lookup` and other fs-related lookup functions
+typedef struct ustar_file_tree_t {
+    size_t count;
+    ustar_file_t **found_files;
+} ustar_file_tree_t;
+
+ustar_fs_t *ramfs_init(void *ramfs);
+
+ustar_file_tree_t *file_lookup(ustar_fs_t *fs, char *filename);
 
 #endif
