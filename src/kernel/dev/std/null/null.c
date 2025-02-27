@@ -6,7 +6,7 @@ void dev_null_init() {
     dev->type  = DEVICE_TYPE_CHAR;
     dev->read  = dev_null_read;
     dev->write = dev_null_write;
-    dev->data  = NULL;
+    dev->data  = "null-dev;no-wrt";
     register_device(dev);
 }
 

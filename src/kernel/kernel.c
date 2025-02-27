@@ -1,6 +1,4 @@
 #include "kernel.h"
-#include "dev/fs/initrd.h"
-#include "util/dump.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -39,6 +37,10 @@
 #include <fs/ustar/ustar.h>
 
 #include <dev/device.h>
+#include <dev/fs/initrd.h>
+#include <dev/port/e9/e9.h>
+#include <dev/port/parallel/parallel.h>
+#include <dev/port/serial/serial.h>
 #include <dev/std/helper.h>
 
 #define PIT_TICKS 1000 / 1 // 1 ms
@@ -428,9 +430,6 @@ void kstart(void) {
     scheduler_init();
     kprintf_ok("Initialized scheduler\n");
 
-    ft_ctx->full_refresh(ft_ctx);
-    clearscreen();
-
     if (!module_request.response) {
         kprintf_warn("No modules loaded.\n");
     }
@@ -473,35 +472,15 @@ void kstart(void) {
     }
 
     register_std_devices();
-    kprintf_ok("Registered standard devices\n");
+    dev_initrd_init(initramfs_disk);
+    dev_e9_init();
+    dev_serial_init();
+    dev_parallel_init();
 
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
     kprintf("System started: Time took: %d seconds %d ms\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
-
-    // device "null" test
-    device_t *dev = get_device("null");
-    if (dev) {
-        char buffer[32];
-        dev->read(dev, buffer, 32, 0);
-        debugf_debug("Device null read: '%s' <- Nothing means good.\n", buffer);
-    } else {
-        kprintf_warn("Device null not found\n");
-    }
-
-    dev_initrd_init(initramfs_disk);
-
-    dev = get_device("initrd");
-
-    if (dev) {
-        char buffer[64];
-        dev->read(dev, buffer, 64, 0);
-        kprintf("Initrd Test Dump:\n");
-        hex_dump(buffer, sizeof(buffer));
-    } else {
-        kprintf_warn("Device initrd not found\n");
-    }
 
     for (;;)
         ;

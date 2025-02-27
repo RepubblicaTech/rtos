@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define DEVICES_MAX     128
+#define DEVICES_MAX     1024
 #define DEVICE_NAME_MAX 32
 
 typedef enum {
@@ -23,5 +23,6 @@ typedef struct device {
 
 int register_device(device_t *dev);
 device_t *get_device(const char *name);
+int unregister_device(const char *name);
 
 #endif // DEVICE_H

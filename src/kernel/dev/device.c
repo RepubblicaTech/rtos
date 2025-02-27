@@ -1,5 +1,6 @@
 #include "device.h"
 
+#include <memory/heap/liballoc.h>
 #include <stdio.h>
 #include <util/string.h>
 
@@ -12,7 +13,7 @@ int register_device(device_t *dev) {
         return -1;
     }
     device_table[device_count++] = dev;
-    debugf("Device %s registered with type %s\n", dev->name,
+    debugf("Device '%s' registered with type %s\n", dev->name,
            dev->type == DEVICE_TYPE_BLOCK ? "BLK" : "CHR");
 
     return 0;
@@ -25,4 +26,16 @@ device_t *get_device(const char *name) {
         }
     }
     return NULL;
+}
+
+int unregister_device(const char *name) {
+
+    device_t *dev = get_device(name);
+    if (dev == NULL) {
+        return -1;
+    }
+
+    kfree(dev);
+
+    return 0;
 }
