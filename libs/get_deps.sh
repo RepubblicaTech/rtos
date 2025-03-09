@@ -11,7 +11,7 @@ declare -a libs=("limine"
                  "flanterm"
 				 "nanoprintf"
 				 "liballoc"
-                 "libadi")
+                 )
 
 stderr_echo() { 
 	echo "$@" >&2; 
