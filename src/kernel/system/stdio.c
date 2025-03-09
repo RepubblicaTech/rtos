@@ -6,6 +6,7 @@
 
 #include <spinlock.h>
 
+#include <stdarg.h>
 #include <util/va_list.h>
 
 extern struct flanterm_context *ft_ctx;
