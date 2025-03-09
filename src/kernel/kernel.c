@@ -1,4 +1,6 @@
 #include "kernel.h"
+#include "fs/vfs/ramfs/ramfs.h"
+#include "fs/vfs/vfs.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -480,6 +482,23 @@ void kstart(void) {
     end_tick_after_init        -= start_tick_after_pit_init;
     kprintf("System started: Time took: %d seconds %d ms\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
+
+    vfs_init();
+
+    ramfs_create(VFS_ROOT(), "kek.txt", 0755);
+    ramfs_mkdir(VFS_ROOT(), "directory", 0755);
+    vnode_t *result_dir[1] = {kmalloc(sizeof(vnode_t))};
+    ramfs_lookup(root_mount, "/directory", result_dir, 1);
+    ramfs_create(result_dir[0], "sussywussy.txt", 0755);
+
+    vnode_t *result[1] = {kmalloc(sizeof(vnode_t))};
+    ramfs_lookup(root_mount, "/directory/sussywussy.txt", result, 1);
+
+    ramfs_write(result[0], "Hello, world!", 20, 0);
+
+    char buf[20];
+    ramfs_read(result[0], buf, 20, 0);
+    kprintf("Read: %s\n", buf);
 
     for (;;)
         ;
