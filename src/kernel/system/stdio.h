@@ -36,15 +36,19 @@ void dputc(char c);
 
 void mputc(char c);
 
-int printf(void (*putc_function)(char), const char *fmt, ...);
+void kprintf_impl(const char *buffer, int len);
+void debugf_impl(const char *buffer, int len);
+void mprintf_impl(const char *buffer, int len);
+
+int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
 
 #ifdef PRINTF_MIRROR
-#define kprintf(fmt, ...) printf(mputc, fmt, ##__VA_ARGS__)
+#define kprintf(fmt, ...) printf(mprintf_impl, fmt, ##__VA_ARGS__)
 #else
-#define kprintf(fmt, ...) printf(putc, fmt, ##__VA_ARGS__)
+#define kprintf(fmt, ...) printf(kprintf_impl, fmt, ##__VA_ARGS__)
 #endif
 
-#define mprintf(fmt, ...) printf(mputc, fmt, ##__VA_ARGS__)
+#define mprintf(fmt, ...) printf(mprintf_impl, fmt, ##__VA_ARGS__)
 
 // snprintf and such are copied from nanoprintf directly
 
@@ -89,7 +93,7 @@ int printf(void (*putc_function)(char), const char *fmt, ...);
         fb_set_fg(prev_fg);                                                    \
     })
 
-#define debugf(fmt, ...) printf(dputc, fmt, ##__VA_ARGS__)
+#define debugf(fmt, ...) printf(debugf_impl, fmt, ##__VA_ARGS__)
 
 #define ANSI_COLOR_RED    "\33[31m"
 #define ANSI_COLOR_GREEN  "\33[32m"
