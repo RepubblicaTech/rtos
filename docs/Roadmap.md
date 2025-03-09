@@ -69,14 +69,15 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 
 ## 2nd Milestone
 
+- [ ] Syscalls
 - [ ] ELF loading
 - [ ] OS-specific toolchain
 - [ ] UNIX/POSIX compatibility layer
     (if someone wants to port coreutils, bash, whatever)
 - [ ] Basic shell
-  - [ ] some kind of PATH
-  - [ ] (decent) Keyboard driver
-  - basic commands
+  - [ ] Configuration System (registry)
+  - [ ] Enviroment Variables
+  - [ ] Input and Ouput syscalls
 - [ ] Video modes
   - [ ] Set better screen resolutions other than limine's default
   - [ ] (MAYBE) cool graphical stuff
@@ -87,6 +88,3 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - GUI
   - [ ] Obviously a lot of sketches and ideas
         (aiming to something coming out of the 1980s)
-
-- Built In Dial-Up Modem Support
-  - [ ] Trust me when we are here i will have a modem
