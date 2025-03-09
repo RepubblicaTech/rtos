@@ -1,9 +1,10 @@
 #include "kernel.h"
-#include "fs/vfs/ramfs/ramfs.h"
+#include "fs/vfs/devfs/devfs.h"
 #include "fs/vfs/vfs.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <util/assert.h>
 
 #include <flanterm/backends/fb.h>
 #include <flanterm/flanterm.h>
@@ -251,6 +252,9 @@ void kstart(void) {
             ->base +
         limine_parsed_data
             .limine_memory_map[limine_parsed_data.memmap_entry_count - 1]
+            ->length -
+        limine_parsed_data
+            .limine_memory_map[limine_parsed_data.memmap_entry_count - 1]
             ->length;
 
     if (hhdm_request.response == NULL) {
@@ -316,20 +320,20 @@ void kstart(void) {
     kprintf_ok("Initialized VMM\n");
 
     size_t malloc_test_start_timestamp = get_current_ticks();
-    kprintf_info("Malloc Test:\n");
+    debugf("Malloc Test:\n");
     void *ptr1 = kmalloc(0xA0);
-    kprintf_info("[1] kmalloc(0xA0) @ %p\n", ptr1);
+    debugf("[1] kmalloc(0xA0) @ %p\n", ptr1);
     void *ptr2 = kmalloc(0xA3B0);
-    kprintf_info("[2] kmalloc(0xA3B0) @ %p\n", ptr2);
+    debugf("[2] kmalloc(0xA3B0) @ %p\n", ptr2);
     kfree(ptr1);
     kfree(ptr2);
     ptr1 = kmalloc(0xF00);
-    kprintf_info("[3] kmalloc(0xF00) @ %p\n", ptr1);
+    debugf("[3] kmalloc(0xF00) @ %p\n", ptr1);
     kfree(ptr1);
     size_t malloc_test_end_timestamp  = get_current_ticks();
     malloc_test_end_timestamp        -= malloc_test_start_timestamp;
-    kprintf_ok("Malloc test complete: Time taken: %dms\n",
-               malloc_test_end_timestamp);
+    debugf_ok("Malloc test complete: Time taken: %dms\n",
+              malloc_test_end_timestamp);
 
     if (check_apic()) {
         asm("cli");
@@ -485,20 +489,23 @@ void kstart(void) {
 
     vfs_init();
 
-    ramfs_create(VFS_ROOT(), "kek.txt", 0755);
-    ramfs_mkdir(VFS_ROOT(), "directory", 0755);
-    vnode_t *result_dir[1] = {kmalloc(sizeof(vnode_t))};
-    ramfs_lookup(root_mount, "/directory", result_dir, 1);
-    ramfs_create(result_dir[0], "sussywussy.txt", 0755);
+    devfs_init();
 
-    vnode_t *result[1] = {kmalloc(sizeof(vnode_t))};
-    ramfs_lookup(root_mount, "/directory/sussywussy.txt", result, 1);
+    device_t *dev_e9       = get_device("e9");
+    device_t *dev_serial   = get_device("com1");
+    device_t *dev_parallel = get_device("lpt1");
+    device_t *dev_initrd   = get_device("initrd");
+    device_t *dev_null     = get_device("null");
 
-    ramfs_write(result[0], "Hello, world!", 20, 0);
+    devfs_add_dev(dev_e9);
+    devfs_add_dev(dev_serial);
+    devfs_add_dev(dev_parallel);
+    devfs_add_dev(dev_initrd);
+    devfs_add_dev(dev_null);
 
-    char buf[20];
-    ramfs_read(result[0], buf, 20, 0);
-    kprintf("Read: %s\n", buf);
+    vfs_debug_print(root_mount);
+
+    VFS_WRITE("/dev/com1", "Hello from the VFS!");
 
     for (;;)
         ;

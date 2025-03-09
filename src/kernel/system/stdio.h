@@ -9,6 +9,8 @@
 #include <flanterm/backends/fb.h>
 #include <flanterm/flanterm.h>
 
+#include <nanoprintf.h>
+
 #define DEFAULT_FG 0xeeeeee
 #define DEFAULT_BG 0x050505
 
@@ -43,6 +45,13 @@ int printf(void (*putc_function)(char), const char *fmt, ...);
 #endif
 
 #define mprintf(fmt, ...) printf(mputc, fmt, ##__VA_ARGS__)
+
+// snprintf and such are copied from nanoprintf directly
+
+#define sprintf(buf, fmt, ...) npf_snprintf(buf, 0xFFFFFFFF, fmt, ##__VA_ARGS__)
+#define vsnprintf(buf, len, fmt, ...)                                          \
+    npf_vsnprintf(buf, len, fmt, ##__VA_ARGS__)
+#define snprintf(buf, len, fmt, ...) npf_snprintf(buf, len, fmt, ##__VA_ARGS__)
 
 #define kprintf_ok(fmt, ...)                                                   \
     ({                                                                         \
