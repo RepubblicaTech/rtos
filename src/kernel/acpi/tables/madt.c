@@ -44,7 +44,7 @@ madt_record *find_record(madt *madt_h, const uint8_t entry_type) {
 // 3. MADT LAPIC
 
 mmio_device mmio_lapic;
-mmio_device mm_io_apic;
+mmio_device mmio_ioapic;
 
 void madt_devices_init() {
     uint64_t *root_sdt = get_root_sdt();
@@ -74,9 +74,9 @@ void madt_devices_init() {
     debugf_debug("I/O APIC global interrupt base: %#lx\n",
                  io_apic->global_sys_interrupt_base);
 
-    mm_io_apic.base = (uint64_t)io_apic->address;
-    mm_io_apic.size = 0x1000;
-    mm_io_apic.name = "IO_APIC";
+    mmio_ioapic.base = (uint64_t)io_apic->address;
+    mmio_ioapic.size = 0x1000;
+    mmio_ioapic.name = "IO_APIC";
 
-    append_mmio(mm_io_apic);
+    append_mmio(mmio_ioapic);
 }

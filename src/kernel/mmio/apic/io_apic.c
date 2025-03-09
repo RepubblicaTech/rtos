@@ -18,7 +18,6 @@
 #include <memory/pmm.h>
 
 mmio_device *mmios;
-mmio_device mm_io_apic;
 madt_ioapic *io_apic;
 
 static struct bootloader_data *limine_data;
@@ -88,8 +87,8 @@ void ioapic_map_irq(int irq, int interrupt, irq_handler handler) {
 void ioapic_init() {
     limine_data = get_bootloader_data();
 
-    mm_io_apic                 = find_mmio(MMIO_APIC_SIG);
-    limine_data->p_ioapic_base = mm_io_apic.base;
+    mmio_device mmio_ioapic    = find_mmio(MMIO_APIC_SIG);
+    limine_data->p_ioapic_base = mmio_ioapic.base;
     debugf_debug("I/O APIC Base address: %#lx\n", limine_data->p_ioapic_base);
 
     uint8_t ioapic_redir_entries = (ioapic_reg_read(0x01) >> 16) & 0xFF;
