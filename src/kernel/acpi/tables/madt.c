@@ -43,6 +43,9 @@ madt_record *find_record(madt *madt_h, const uint8_t entry_type) {
 // 2. MADT header
 // 3. MADT LAPIC
 
+mmio_device mmio_lapic;
+mmio_device mm_io_apic;
+
 void madt_devices_init() {
     uint64_t *root_sdt = get_root_sdt();
     madt_h             = (madt *)find_table(
@@ -56,16 +59,13 @@ void madt_devices_init() {
         (madt_lapic_addr_ovveride *)find_record(
             madt_h, MADT_ENTRY_LAPIC_ADDR_OVVERRIDE);
 
-    uint64_t lapic_base =
-        (lapic_override == 0x0 ? ((uint64_t)madt_h->lapic_control_address == 0x0
-                                      ? _cpu_get_msr(0x1B) & 0xfffff000
-                                      : (uint64_t)madt_h->lapic_control_address)
-                               : lapic_override->physical_base);
+    uint64_t lapic_base = _cpu_get_msr(0x1B) & 0xfffff000;
 
     debugf_debug("LAPIC base address: (phys)%#llx\n", lapic_base);
 
-    mmio_device mmio_lapic = {
-        .base = (uint64_t)lapic_base, .size = 0x1000, .name = "LAPIC"};
+    mmio_lapic.base = (uint64_t)lapic_base;
+    mmio_lapic.size = 0x1000;
+    mmio_lapic.name = "LAPIC";
     append_mmio(mmio_lapic);
 
     madt_ioapic *io_apic =
@@ -74,7 +74,9 @@ void madt_devices_init() {
     debugf_debug("I/O APIC global interrupt base: %#lx\n",
                  io_apic->global_sys_interrupt_base);
 
-    mmio_device mm_io_apic = {
-        .base = (uint64_t)io_apic->address, .size = 0x1000, .name = "IO_APIC"};
+    mm_io_apic.base = (uint64_t)io_apic->address;
+    mm_io_apic.size = 0x1000;
+    mm_io_apic.name = "IO_APIC";
+
     append_mmio(mm_io_apic);
 }
