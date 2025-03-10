@@ -111,7 +111,7 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
            ##__VA_ARGS__)
 
 #define debugf_warn(fmt, ...)                                                  \
-    debugf(COLOR(ANSI_COLOR_ORANGE, "[ %s()::PANIC ] " fmt), __FUNCTION__,     \
+    debugf(COLOR(ANSI_COLOR_ORANGE, "[ %s()::WARN ] " fmt), __FUNCTION__,      \
            ##__VA_ARGS__)
 
 #define debugf_panic(fmt, ...)                                                 \
