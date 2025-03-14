@@ -14,6 +14,15 @@ _outb:
 
 	ret
 
+global _outw
+_outw:
+    mov dx, di
+    mov ax, si
+
+    out dx, ax
+
+    ret
+
 ; uint8_t _inb(uint16_t port)
 ; rdi = port
 global _inb
@@ -27,6 +36,15 @@ _inb:
 	in al, dx
 
 	ret
+
+global _inw
+_inw:
+    mov dx, di
+    xor ax, ax
+
+    in ax, dx
+
+    ret
 
 global _io_wait
 _io_wait:
