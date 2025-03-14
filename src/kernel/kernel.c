@@ -1,13 +1,12 @@
 #include "kernel.h"
-#include "fs/vfs/devfs/devfs.h"
-#include "fs/vfs/vfs.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <util/assert.h>
 
 #include <flanterm/backends/fb.h>
 #include <flanterm/flanterm.h>
+#include <flanterm/flanterm_private.h>
 
 #include <stdio.h>
 
@@ -21,9 +20,10 @@
 #include <pit.h>
 
 #include <time.h>
-
 #include <cpu.h>
+
 #include <util/string.h>
+#include <util/assert.h>
 
 #include <memory/heap/liballoc.h>
 #include <memory/paging/paging.h>
@@ -37,6 +37,8 @@
 #include <acpi/rsdp.h>
 
 #include <fs/ustar/ustar.h>
+#include <fs/vfs/devfs/devfs.h>
+#include <fs/vfs/vfs.h>
 
 #include <dev/device.h>
 #include <dev/fs/initrd.h>
@@ -103,11 +105,6 @@ __attribute__((
     used, section(".requests"))) static volatile struct limine_module_request
     module_request = {.id = LIMINE_MODULE_REQUEST, .revision = 0};
 
-// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#mp-multiprocessor-feature
-__attribute__((used,
-               section(".requests"))) static volatile struct limine_smp_request
-    smp_request = {.id = LIMINE_SMP_REQUEST, .revision = 0};
-
 // Define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 __attribute__((used,
@@ -134,8 +131,6 @@ struct limine_paging_mode_response *paging_mode_response;
 struct limine_rsdp_response *rsdp_response;
 
 struct limine_module_response *module_response;
-
-struct limine_smp_response *smp_response;
 
 struct bootloader_data limine_parsed_data;
 
@@ -522,19 +517,6 @@ void kstart(void) {
     vfs_debug_print(root_mount);
 
     VFS_WRITE("/dev/com1", "Hello from the VFS!");
-
-    if (!smp_request.response) {
-        kprintf_panic("No SMP info given.");
-        _hcf();
-    }
-    smp_response = smp_request.response;
-
-    kprintf_info("Found %llu cores\n", smp_response->cpu_count);
-    for (uint64_t core = 0; core < smp_response->cpu_count; core++) {
-        struct limine_smp_info *cpu = smp_response->cpus[core];
-
-        cpu->goto_address = mp_common;
-    }
 
     for (;;)
         ;
