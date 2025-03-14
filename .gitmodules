@@ -14,3 +14,7 @@
 [submodule "libs/liballoc"]
 	path = libs/liballoc
 	url = https://github.com/blanham/liballoc.git
+
+[submodule "libs/uacpi"]
+	path = libs/uacpi
+	url = https://github.com/uACPI/uACPI.git

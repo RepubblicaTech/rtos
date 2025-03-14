@@ -11,6 +11,7 @@ declare -a libs=("limine"
                  "flanterm"
 				 "nanoprintf"
 				 "liballoc"
+                 "uacpi"
                  )
 
 stderr_echo() { 
