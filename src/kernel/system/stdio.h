@@ -8,6 +8,7 @@
 
 #include <flanterm/backends/fb.h>
 #include <flanterm/flanterm.h>
+#include <flanterm/flanterm_private.h>
 
 #include <nanoprintf.h>
 
