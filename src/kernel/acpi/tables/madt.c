@@ -55,10 +55,6 @@ void madt_devices_init() {
     debugf_debug("LAPIC ID: %#hhx\n", lapic->id);
     debugf_debug("LAPIC flags: %#02b\n", lapic->flags);
 
-    madt_lapic_addr_ovveride *lapic_override =
-        (madt_lapic_addr_ovveride *)find_record(
-            madt_h, MADT_ENTRY_LAPIC_ADDR_OVVERRIDE);
-
     uint64_t lapic_base = _cpu_get_msr(0x1B) & 0xfffff000;
 
     debugf_debug("LAPIC base address: (phys)%#llx\n", lapic_base);
