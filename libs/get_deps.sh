@@ -84,10 +84,12 @@ copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.h $KERNEL_DIR/memory/heap/liballo
 copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.c $KERNEL_DIR/memory/heap/liballoc.c
 
 # copy flanterm headers
-copy_if_exists $LIBS_DIR/flanterm/*.h $KERNEL_DIR/flanterm
-copy_if_exists $LIBS_DIR/flanterm/*.c $KERNEL_DIR/flanterm
-copy_if_exists $LIBS_DIR/flanterm/backends/*.h $KERNEL_DIR/flanterm/backends
-copy_if_exists $LIBS_DIR/flanterm/backends/*.c $KERNEL_DIR/flanterm/backends
+copy_if_exists $LIBS_DIR/flanterm/flanterm_private.h $KERNEL_DIR/flanterm
+copy_if_exists $LIBS_DIR/flanterm/flanterm.h $KERNEL_DIR/flanterm
+copy_if_exists $LIBS_DIR/flanterm/flanterm.c $KERNEL_DIR/flanterm
+copy_if_exists $LIBS_DIR/flanterm/backends/fb_private.h $KERNEL_DIR/flanterm/backends
+copy_if_exists $LIBS_DIR/flanterm/backends/fb.h $KERNEL_DIR/flanterm/backends
+copy_if_exists $LIBS_DIR/flanterm/backends/fb.c $KERNEL_DIR/flanterm/backends
 
 # custom font for flanterm
 copy_if_exists $LIBS_DIR/patches/font.h $KERNEL_DIR/flanterm/backends
