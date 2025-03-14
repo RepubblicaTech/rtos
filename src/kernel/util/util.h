@@ -16,6 +16,8 @@
 #define FLAG_SET(x, flag)   x |= (flag)
 #define FLAG_UNSET(x, flag) x &= ~(flag)
 
+#define BIT_GET(v, s) (((v) >> (s)) & 0b1)
+
 #define UNUSED(x) (void)x
 
 int oct2bin(const char *str, int size);
