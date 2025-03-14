@@ -17,6 +17,11 @@ ISO_DIR=iso
 OBJS_DIR=$(BUILD_DIR)/objs
 INITRD_DIR=target
 
+QEMU_FLAGS = 	-m 32M \
+			 	-debugcon stdio \
+				-M q35
+	
+
 # Nuke built-in rules and variables.
 override MAKEFLAGS += -rR --no-print-directory
 
@@ -78,6 +83,7 @@ override KCFLAGS += \
 	-mno-sse2 \
 	-mno-red-zone \
 	-mcmodel=kernel \
+	-D FLANTERM_IN_FLANTERM \
 
 # Internal C preprocessor flags that should not be changed by the user.
 override KCPPFLAGS := \
@@ -198,14 +204,12 @@ $(OBJS_DIR)/%.asm.o: $(SRC_DIR)/%.asm
 
 run: $(OS_CODENAME).iso
 	@qemu-system-x86_64 \
-		-m 64M \
-		-debugcon stdio \
+		$(QEMU_FLAGS) \
 		-cdrom $<
 
 run-wsl: $(OS_CODENAME).iso
-	@qemu-system-x86_64.exe \
-		-m 64M \
-		-debugcon stdio \
+	@qemu-system-x86_64.exe \ 
+		$(QEMU_FLAGS) \
 		-cdrom $<
 
 debug: $(OS_CODENAME).iso
