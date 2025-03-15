@@ -95,7 +95,8 @@
         "flanterm_wrappers.h": "c",
         "flanterm_private.h": "c",
         "vfs.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "smp.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
