@@ -23,7 +23,7 @@
 uint32_t fb_get_bg();
 void fb_set_bg(uint32_t bg_rgb);
 
-uint32_t fb_get_fb();
+uint32_t fb_get_fg();
 void fb_set_fg(uint32_t fg_rgb);
 
 void set_screen_bg_fg(uint32_t bg_rgb, uint32_t fg_rgb);
@@ -60,7 +60,7 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
 
 #define kprintf_ok(fmt, ...)                                                   \
     ({                                                                         \
-        uint32_t prev_fg = fb_get_fb();                                        \
+        uint32_t prev_fg = fb_get_fg();                                        \
         fb_set_fg(0x00e826);                                                   \
         kprintf("[ %s():%d::SUCCESS ] " fmt, __FUNCTION__, __LINE__,           \
                 ##__VA_ARGS__);                                                \
@@ -69,7 +69,7 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
 
 #define kprintf_info(fmt, ...)                                                 \
     ({                                                                         \
-        uint32_t prev_fg = fb_get_fb();                                        \
+        uint32_t prev_fg = fb_get_fg();                                        \
         fb_set_fg(INFO_FG);                                                    \
         kprintf("[ %s():%d::INFO ] " fmt, __FUNCTION__, __LINE__,              \
                 ##__VA_ARGS__);                                                \
@@ -78,7 +78,7 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
 
 #define kprintf_warn(fmt, ...)                                                 \
     ({                                                                         \
-        uint32_t prev_fg = fb_get_fb();                                        \
+        uint32_t prev_fg = fb_get_fg();                                        \
         fb_set_fg(WARNING_FG);                                                 \
         kprintf("--- [ WARNING @ s():%d ] --- " fmt, __FUNCTION__, __LINE__,   \
                 ##__VA_ARGS__);                                                \
@@ -87,7 +87,7 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
 
 #define kprintf_panic(fmt, ...)                                                \
     ({                                                                         \
-        uint32_t prev_fg = fb_get_fb();                                        \
+        uint32_t prev_fg = fb_get_fg();                                        \
         fb_set_fg(PANIC_FG);                                                   \
         kprintf("--- [ PANIC @ %s():%d ] --- " fmt " Halting...",              \
                 __FUNCTION__, __LINE__, ##__VA_ARGS__);                        \

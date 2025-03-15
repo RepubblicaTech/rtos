@@ -43,7 +43,7 @@ uint32_t fb_get_bg() {
     return current_bg;
 }
 
-uint32_t fb_get_fb() {
+uint32_t fb_get_fg() {
     return current_fg;
 }
 
