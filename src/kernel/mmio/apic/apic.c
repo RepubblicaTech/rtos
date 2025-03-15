@@ -1,3 +1,4 @@
+#include "time.h"
 #include <mmio/apic/apic.h>
 
 #include <acpi/tables/madt.h>
@@ -39,7 +40,7 @@ void lapic_set_base(uint64_t lapic_base) {
 }
 
 uint8_t lapic_get_id() {
-    return (uint8_t)lapic_read_reg(LAPIC_ID_REG);
+    return (uint8_t)(lapic_read_reg(LAPIC_ID_REG) >> 24) & 0xFF;
 }
 
 void lapic_send_eoi() {
@@ -80,4 +81,76 @@ void apic_init() {
     lapic_write_reg(LAPIC_TIMER_REG, 0xfe);
 
     debugf_debug("LAPIC ID: %#hhx\n", lapic_get_id());
+}
+
+uint32_t lapic_timer_calibrate(void) {
+    // Set the divide value register
+    lapic_write_reg(LAPIC_TIMER_DIV_REG, 0x3); // Divide by 16
+
+    // Set initial counter to max value
+    lapic_write_reg(LAPIC_TIMER_INIT_CNT, 0xFFFFFFFF);
+
+    // Use PIT for calibration
+    uint64_t start_tick = get_current_ticks();
+
+    // Wait for a measurable time (10ms should be sufficient)
+    pit_sleep(10);
+
+    // Stop the timer by setting a mask bit
+    lapic_write_reg(LAPIC_TIMER_REG, LAPIC_DISABLE);
+
+    // Get elapsed time
+    uint64_t end_tick      = get_current_ticks();
+    uint64_t elapsed_ticks = end_tick - start_tick;
+
+    // Read how many LAPIC timer ticks occurred
+    uint32_t lapic_ticks = 0xFFFFFFFF - lapic_read_reg(LAPIC_TIMER_CURR_CNT);
+
+    // Calculate ticks per ms
+    uint32_t ticks_per_ms = lapic_ticks / elapsed_ticks;
+
+    // Store this value for future use (can be static/global)
+    return ticks_per_ms;
+}
+
+uint32_t lapic_timer_ticks_per_ms = 0;
+
+void lapic_timer_init(void) {
+    // Calibrate the timer
+    lapic_timer_ticks_per_ms = lapic_timer_calibrate();
+
+    // Register the timer interrupt handler
+    isr_registerHandler(LAPIC_TIMER_VECTOR + LAPIC_IRQ_OFFSET,
+                        lapic_timer_handler);
+
+    // Configure the timer in periodic mode
+    // Set a reasonable value for your system (e.g., 10ms intervals)
+    uint32_t count = lapic_timer_ticks_per_ms * 10; // 10ms intervals
+
+    // Set the initial count
+    lapic_write_reg(LAPIC_TIMER_INIT_CNT, count);
+
+    // Set up the timer register with:
+    // - The timer vector
+    // - Periodic mode (bit 17)
+    // - Not masked (bit 16 = 0)
+    lapic_write_reg(LAPIC_TIMER_REG,
+                    LAPIC_TIMER_VECTOR + LAPIC_IRQ_OFFSET | (1 << 17));
+
+    debugf_debug("LAPIC Timer initialized: %u ticks per ms\n",
+                 lapic_timer_ticks_per_ms);
+}
+// Add to apic.c
+void lapic_timer_handler(registers_t *regs) {
+    // Handle the timer interrupt
+    // This could trigger your scheduler or update a time counter
+
+    // Update system ticks (similar to your PIT handler)
+    set_ticks(get_current_ticks() + 1);
+
+    // If you have per-CPU scheduling, you would handle it here
+    // process_handler(regs);
+
+    // Send EOI
+    lapic_send_eoi();
 }

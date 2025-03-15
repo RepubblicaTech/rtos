@@ -8,16 +8,16 @@
 mount_t *devfs_root = NULL;
 
 int devfs_read(vnode_t *vnode, void *buf, size_t size, size_t offset) {
-    debugf("devfs recived read request for device: '%s'\n",
-           vfs_get_full_path(vnode));
+    debugf_debug("devfs recived read request for device: '%s'\n",
+                 vfs_get_full_path(vnode));
     device_t *dev = (device_t *)vnode->data;
     dev->read(dev, buf, size, offset);
     return 0;
 }
 
 int devfs_write(vnode_t *vnode, const void *buf, size_t size, size_t offset) {
-    debugf("devfs recived write request for device: '%s'\n",
-           vfs_get_full_path(vnode));
+    debugf_debug("devfs recived write request for device: '%s'\n",
+                 vfs_get_full_path(vnode));
     device_t *dev = (device_t *)vnode->data;
     dev->write(dev, buf, size, offset);
     return 0;
@@ -64,5 +64,5 @@ void devfs_init() {
     devfs_root->root = devfs_dir;
     devfs_dir->mount = mount;
 
-    debugf_debug("DevFS initialized at /dev\n");
+    debugf_debug("devfs initialized at /dev\n");
 }

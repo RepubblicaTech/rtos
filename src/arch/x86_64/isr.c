@@ -4,6 +4,8 @@
 #include "limine.h"
 #include "memory/paging/paging.h"
 #include "memory/pmm.h"
+#include "mmio/apic/apic.h"
+#include "smp/smp.h"
 #include <kernel.h>
 
 #include <stddef.h>
@@ -90,6 +92,7 @@ void print_reg_dump(registers_t *regs) {
 }
 
 void panic_common(registers_t *regs) {
+    send_ipi_all_excluding_self(IPI_VECTOR_HALT);
     print_reg_dump(regs);
 
     // stacktrace
@@ -138,7 +141,9 @@ void panic_common(registers_t *regs) {
     }
     mprintf("\nPANIC LOG END --- HALTING ---\n");
     debugf(ANSI_COLOR_RESET);
-    _hcf();
+    asm("cli");
+    for (;;)
+        _hcf();
 }
 
 void isr_handler(registers_t *regs) {
@@ -146,7 +151,8 @@ void isr_handler(registers_t *regs) {
     if (isr_handlers[regs->interrupt] != NULL) {
         isr_handlers[regs->interrupt](regs);
     } else if (regs->interrupt >= 32) {
-        debugf("Unhandled interrupt %d\n", regs->interrupt);
+        debugf_warn("Unhandled interrupt %d on CPU %d\n", regs->interrupt,
+                    lapic_get_id());
     } else {
         stdio_panic_init();
 

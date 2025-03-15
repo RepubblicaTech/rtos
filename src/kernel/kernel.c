@@ -1,4 +1,6 @@
 #include "kernel.h"
+#include "limine.h"
+#include "smp/smp.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -19,11 +21,12 @@
 #include <pic.h>
 #include <pit.h>
 
-#include <time.h>
 #include <cpu.h>
+#include <time.h>
 
-#include <util/string.h>
+#include <cpu.h>
 #include <util/assert.h>
+#include <util/string.h>
 
 #include <memory/heap/liballoc.h>
 #include <memory/paging/paging.h>
@@ -48,6 +51,21 @@
 #include <dev/std/helper.h>
 
 #define PIT_TICKS 1000 / 1 // 1 ms
+
+void test_func(void) {
+
+    VFS_WRITE("/dev/com1", "Hello from the testfunc!\r\n");
+
+    for (;;)
+        ;
+}
+
+void test_func2(void) {
+    VFS_WRITE("/dev/com1", "\r\nHello from the testfunc2?\r\n");
+
+    for (;;)
+        ;
+}
 
 #define INITRD_FILE "initrd.img"
 #define INITRD_PATH "/" INITRD_FILE
@@ -105,6 +123,11 @@ __attribute__((
     used, section(".requests"))) static volatile struct limine_module_request
     module_request = {.id = LIMINE_MODULE_REQUEST, .revision = 0};
 
+// next time warn me when you remove a request
+__attribute__((used,
+               section(".requests"))) static volatile struct limine_smp_request
+    smp_request = {.id = LIMINE_SMP_REQUEST, .revision = 0};
+
 // Define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 __attribute__((used,
@@ -139,13 +162,6 @@ struct bootloader_data *get_bootloader_data() {
 }
 
 vmm_context_t *kernel_vmm_ctx;
-
-void mp_common(struct limine_smp_info *cpu) {
-    kprintf("Hello from CPU %lu\n", cpu->processor_id);
-
-    for (;;)
-        ;
-}
 
 // kernel main function
 void kstart(void) {
@@ -352,6 +368,7 @@ void kstart(void) {
         apic_init();
         ioapic_init();
         apic_registerHandler(0, timer_tick);
+
         kprintf_ok("APIC init done\n");
         asm("sti");
     } else {
@@ -443,9 +460,6 @@ void kstart(void) {
 
     kprintf("--- SYSTEM INFO END ---\n");
 
-    scheduler_init();
-    kprintf_ok("Initialized scheduler\n");
-
     if (!module_request.response) {
         kprintf_warn("No modules loaded.\n");
     }
@@ -493,11 +507,6 @@ void kstart(void) {
     dev_serial_init();
     dev_parallel_init();
 
-    size_t end_tick_after_init  = get_current_ticks();
-    end_tick_after_init        -= start_tick_after_pit_init;
-    kprintf("System started: Time took: %d seconds %d ms\n",
-            end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
-
     vfs_init();
 
     devfs_init();
@@ -514,10 +523,23 @@ void kstart(void) {
     devfs_add_dev(dev_initrd);
     devfs_add_dev(dev_null);
 
-    vfs_debug_print(root_mount);
+    register_ipi_handlers();
+    scheduler_init();
 
-    VFS_WRITE("/dev/com1", "Hello from the VFS!");
+    smp_init(smp_request.response);
+
+    // pause a small time
+    for (size_t i = 0; i < 1000000; i++)
+        ;
+
+    create_process(test_func, PRIORITY_NORMAL);
+
+    size_t end_tick_after_init  = get_current_ticks();
+    end_tick_after_init        -= start_tick_after_pit_init;
+    kprintf("System started: Time took: %d seconds %d ms.\n",
+            end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000,
+            lapic_get_id());
 
     for (;;)
-        ;
+        send_ipi_self(IPI_VECTOR_RESCHEDULE);
 }

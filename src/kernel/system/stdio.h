@@ -80,7 +80,7 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
     ({                                                                         \
         uint32_t prev_fg = fb_get_fg();                                        \
         fb_set_fg(WARNING_FG);                                                 \
-        kprintf("--- [ WARNING @ s():%d ] --- " fmt, __FUNCTION__, __LINE__,   \
+        kprintf("--- [ WARNING @ %s():%u ] --- " fmt, __FUNCTION__, __LINE__,  \
                 ##__VA_ARGS__);                                                \
         fb_set_fg(prev_fg);                                                    \
     })
@@ -112,8 +112,8 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
            ##__VA_ARGS__)
 
 #define debugf_warn(fmt, ...)                                                  \
-    debugf(COLOR(ANSI_COLOR_ORANGE, "[ %s()::WARN ] " fmt), __FUNCTION__,      \
-           ##__VA_ARGS__)
+    debugf(COLOR(ANSI_COLOR_ORANGE, "--- [ WARNING @ %s():%u ] --- " fmt),     \
+           __FUNCTION__, __LINE__, ##__VA_ARGS__);
 
 #define debugf_panic(fmt, ...)                                                 \
     debugf(COLOR(ANSI_COLOR_RED, "[ %s()::PANIC ] " fmt), __FUNCTION__,        \

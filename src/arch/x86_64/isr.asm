@@ -346,12 +346,3 @@ global _hcf
 _hcf:
     cli
     hlt
-
-global _crash_test
-_crash_test:
-    ; division by 0 exception
-    mov rax, 0x4E
-    mov rcx, 0
-    div rcx
-
-    ret

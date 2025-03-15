@@ -1,6 +1,7 @@
 #ifndef APIC_H
 #define APIC_H 1
 
+#include <isr.h>
 #include <stdint.h>
 
 // LAPIC memory-mapped registers
@@ -63,5 +64,10 @@ uint64_t apic_get_base();
 void apic_init();
 
 extern uint64_t _apic_global_enable();
+
+uint32_t lapic_timer_calibrate(void);
+void lapic_timer_init(void);
+void lapic_timer_handler(registers_t *regs);
+extern uint32_t lapic_timer_ticks_per_ms;
 
 #endif

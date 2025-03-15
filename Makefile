@@ -19,7 +19,8 @@ INITRD_DIR=target
 
 QEMU_FLAGS = 	-m 32M \
 			 	-debugcon stdio \
-				-M q35
+				-M q35 \
+				-smp 2 \
 	
 
 # Nuke built-in rules and variables.
@@ -124,7 +125,7 @@ all: $(OS_CODENAME).iso
 # Define the ISO image file as an explicit target with dependencies
 $(OS_CODENAME).iso: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/$(KERNEL) $(ISO_DIR)/initrd.img
 	@# Create the bootable ISO.
-	@xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
+	xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot boot/limine/limine-uefi-cd.bin \
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
@@ -208,9 +209,10 @@ run: $(OS_CODENAME).iso
 		-cdrom $<
 
 run-wsl: $(OS_CODENAME).iso
-	@qemu-system-x86_64.exe \ 
+	@qemu-system-x86_64.exe \
 		$(QEMU_FLAGS) \
 		-cdrom $<
+
 
 debug: $(OS_CODENAME).iso
 	@gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
