@@ -51,6 +51,7 @@ void uacpi_kernel_unmap(void *addr, uacpi_size len) {
     unmap_region(_get_pml4(), aligned, actual_len);
 }
 
+#ifndef UACPI_FORMATTED_LOGGING
 void uacpi_kernel_log(uacpi_log_level log_level, const uacpi_char *fmt) {
     uint32_t prev_bg = fb_get_bg();
     uint32_t prev_fg = fb_get_fg();
@@ -85,5 +86,33 @@ void uacpi_kernel_log(uacpi_log_level log_level, const uacpi_char *fmt) {
     debugf(ANSI_COLOR_RESET);
     set_screen_bg_fg(prev_bg, prev_fg);
 }
+#else
+void uacpi_kernel_log(uacpi_log_level log_level, const uacpi_char *fmt, ...) {
+    char buffer[1024];
+    va_list args;
 
-// void uacpi_kernel_log(uacpi_log_level log_level, const uacpi_char *fmt, ...);
+    va_start(args, fmt);
+    int length = npf_vsnprintf(buffer, sizeof(buffer), fmt, args);
+    va_end(args);
+
+    if (length < 0 || length >= (int)sizeof(buffer)) {
+        return;
+    }
+
+    uacpi_kernel_log(log_level, buffer);
+}
+
+void uacpi_kernel_vlog(uacpi_log_level log_level, const uacpi_char *fmt,
+                       uacpi_va_list va_args) {
+
+    char buffer[1024];
+
+    int length = npf_vsnprintf(buffer, sizeof(buffer), fmt, va_args);
+
+    if (length < 0 || length >= (int)sizeof(buffer)) {
+        return;
+    }
+
+    uacpi_kernel_log(log_level, buffer);
+}
+#endif
