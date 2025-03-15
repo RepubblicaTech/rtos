@@ -71,6 +71,7 @@ override KCFLAGS += \
 	-ffreestanding \
 	-I $(KERNEL_SRC_DIR) \
 	-I $(KERNEL_SRC_DIR)/system \
+	-I $(KERNEL_SRC_DIR)/acpi \
 	-I $(ARCH_DIR) \
 	-fno-stack-protector \
 	-fno-stack-check \
