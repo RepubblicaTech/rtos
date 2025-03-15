@@ -43,6 +43,10 @@ typedef struct bootloader_data {
 
     uint64_t p_lapic_base;
     uint32_t p_ioapic_base;
+
+    // SMP stuff
+    uint64_t cpu_count;
+    LIMINE_PTR(struct limine_smp_info **) cpus;
 } bootloader_data;
 
 struct bootloader_data *get_bootloader_data();

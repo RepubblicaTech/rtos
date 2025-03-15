@@ -1,32 +1,27 @@
-#include "kernel.h"
-#include "limine.h"
-#include "smp/smp.h"
+#include <kernel.h>
+
+#include <limine.h>
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <flanterm/backends/fb.h>
 #include <flanterm/flanterm.h>
 #include <flanterm/flanterm_private.h>
 
-#include <stdio.h>
-
 #include <gdt.h>
 #include <idt.h>
 #include <irq.h>
 #include <isr.h>
+
 #include <mmio/apic/apic.h>
 #include <mmio/apic/io_apic.h>
 #include <pic.h>
 #include <pit.h>
-
 #include <cpu.h>
 #include <time.h>
-
-#include <cpu.h>
-#include <util/assert.h>
-#include <util/string.h>
 
 #include <memory/heap/liballoc.h>
 #include <memory/paging/paging.h>
@@ -34,7 +29,9 @@
 #include <memory/vma.h>
 #include <memory/vmm.h>
 
+#include <smp/smp.h>
 #include <scheduler/scheduler.h>
+#include <smp/ipi.h>
 
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
@@ -50,22 +47,10 @@
 #include <dev/port/serial/serial.h>
 #include <dev/std/helper.h>
 
+#include <util/assert.h>
+#include <util/string.h>
+
 #define PIT_TICKS 1000 / 1 // 1 ms
-
-void test_func(void) {
-
-    VFS_WRITE("/dev/com1", "Hello from the testfunc!\r\n");
-
-    for (;;)
-        ;
-}
-
-void test_func2(void) {
-    VFS_WRITE("/dev/com1", "\r\nHello from the testfunc2?\r\n");
-
-    for (;;)
-        ;
-}
 
 #define INITRD_FILE "initrd.img"
 #define INITRD_PATH "/" INITRD_FILE
@@ -227,6 +212,7 @@ void kstart(void) {
     debugf_debug("\tlimine_requests_start: %p; limine_requests_end: %p\n",
                  &__limine_reqs_start, &__limine_reqs_end);
     debugf_debug("\tkernel_end: %p\n", &__kernel_end);
+
 
     gdt_init();
     kprintf_ok("Initialized GDT\n");
@@ -513,16 +499,16 @@ void kstart(void) {
     devfs_add_dev(dev_initrd);
     devfs_add_dev(dev_null);
 
-    register_ipi_handlers();
-    scheduler_init();
+    limine_parsed_data.cpu_count = smp_request.response->cpu_count;
+    limine_parsed_data.cpus      = smp_request.response->cpus;
 
-    smp_init(smp_request.response);
+    smp_init();
+
+    ipi_send(IPI_VECTOR_HALT, 1);
 
     // pause a small time
     for (size_t i = 0; i < 1000000; i++)
         ;
-
-    create_process(test_func, PRIORITY_NORMAL);
 
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
@@ -531,5 +517,5 @@ void kstart(void) {
             lapic_get_id());
 
     for (;;)
-        send_ipi_self(IPI_VECTOR_RESCHEDULE);
+        ;
 }

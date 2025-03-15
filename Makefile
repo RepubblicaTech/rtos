@@ -20,7 +20,7 @@ INITRD_DIR=target
 QEMU_FLAGS = 	-m 32M \
 			 	-debugcon stdio \
 				-M q35 \
-				-smp 2 \
+				-smp 12 \
 	
 
 # Nuke built-in rules and variables.
