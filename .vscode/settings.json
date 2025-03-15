@@ -96,7 +96,9 @@
         "flanterm_private.h": "c",
         "vfs.h": "c",
         "types.h": "c",
-        "smp.h": "c"
+        "smp.h": "c",
+        "uacpi.h": "c",
+        "kernel_api.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,
