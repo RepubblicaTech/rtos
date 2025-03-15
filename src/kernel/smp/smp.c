@@ -1,15 +1,22 @@
 #include "smp.h"
+
 #include "cpu.h"
 #include "gdt.h"
 #include "idt.h"
 #include "irq.h"
 #include "isr.h"
+
 #include "memory/paging/paging.h"
 #include "memory/vmm.h"
+
 #include "mmio/apic/apic.h"
+
 #include "scheduler/scheduler.h"
-#include "stdio.h"
+
 #include <stdint.h>
+#include <stdio.h>
+
+#include <util/util.h>
 
 uint64_t cpu_count = 0;
 
@@ -17,6 +24,7 @@ extern vmm_context_t *kernel_vmm_ctx;
 
 // IPI handler functions
 void ipi_test_handler(registers_t *regs) {
+    UNUSED(regs);
     uint32_t cpu_id = lapic_get_id();
     debugf_debug("CPU %u received TEST IPI\n", cpu_id);
     lapic_send_eoi();
@@ -24,7 +32,7 @@ void ipi_test_handler(registers_t *regs) {
 
 void ipi_reschedule_handler(registers_t *regs) {
     asm("cli");
-    uint32_t cpu_id = lapic_get_id();
+    // uint32_t cpu_id = lapic_get_id();
 
     // Trigger scheduling without waiting for next timer tick
     process_handler(regs);
@@ -35,6 +43,7 @@ void ipi_reschedule_handler(registers_t *regs) {
 }
 
 void ipi_tlb_shoot_handler(registers_t *regs) {
+    UNUSED(regs);
     uint32_t cpu_id = lapic_get_id();
     debugf_debug("CPU %u received TLB SHOOTDOWN IPI\n", cpu_id);
     // Invalidate TLB
@@ -43,6 +52,7 @@ void ipi_tlb_shoot_handler(registers_t *regs) {
 }
 
 void ipi_halt_handler(registers_t *regs) {
+    UNUSED(regs);
     uint32_t cpu_id = lapic_get_id();
     debugf_warn("CPU %u received HALT IPI - halting\n", cpu_id);
     lapic_send_eoi();

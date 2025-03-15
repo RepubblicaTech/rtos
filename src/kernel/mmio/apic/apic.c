@@ -13,6 +13,7 @@
 
 #include <io.h>
 #include <util/string.h>
+#include <util/util.h>
 
 #include <mmio/mmio.h>
 
@@ -142,6 +143,7 @@ void lapic_timer_init(void) {
 }
 // Add to apic.c
 void lapic_timer_handler(registers_t *regs) {
+    UNUSED(regs);
     // Handle the timer interrupt
     // This could trigger your scheduler or update a time counter
 
