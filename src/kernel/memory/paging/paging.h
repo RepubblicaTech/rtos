@@ -37,7 +37,7 @@
 #define PMLE_PWT            (1 << 3)
 #define PMLE_PCD            (1 << 4)
 #define PMLE_ACCESSED       (1 << 5)
-#define PMLE_NOT_EXECUTABLE 0x8000000000000000
+#define PMLE_NOT_EXECUTABLE (1ull << 63)
 
 // Page privileges attributes
 // from
