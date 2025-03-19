@@ -9,8 +9,11 @@
 #include "util/util.h"
 
 // @param map_allocation Tells the allocator if the found region needs to be
-// mapped (disable for kernel VMA, enable for other VMAs)
-void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation) {
+// mapped
+// @param phys optional parameter, maps the newly allocated virtual address to
+// such physical address
+void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
+                void *phys) {
     void *ptr = NULL;
 
     virtmem_object_t *cur_vmo = ctx->root_vmo;
@@ -54,14 +57,14 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation) {
         _hcf();
     }
 
-    cur_vmo         = split_vmo_at(cur_vmo, pages);
-    cur_vmo->flags |= VMO_ALLOCATED;
-    ptr             = (void *)(cur_vmo->base);
+    cur_vmo = split_vmo_at(cur_vmo, pages);
+    FLAG_SET(cur_vmo->flags, VMO_ALLOCATED);
+    ptr = (void *)(cur_vmo->base);
 
     if (map_allocation) {
-        void *phys = pmm_alloc_pages(pages);
-        map_region_to_page(ctx->pml4_table, (uint64_t)phys, (uint64_t)ptr,
-                           (uint64_t)(pages * PFRAME_SIZE),
+        void *phys_to_map = phys != NULL ? phys : pmm_alloc_pages(pages);
+        map_region_to_page(ctx->pml4_table, (uint64_t)phys_to_map,
+                           (uint64_t)ptr, (uint64_t)(pages * PFRAME_SIZE),
                            vmo_to_page_flags(cur_vmo->flags));
     } else {
 #ifdef VMM_DEBUG
