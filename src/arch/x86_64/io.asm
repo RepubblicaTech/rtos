@@ -14,12 +14,23 @@ _outb:
 
 	ret
 
+; void _outw(uint16_t port, uint16_t val)
 global _outw
 _outw:
     mov dx, di
     mov ax, si
 
     out dx, ax
+
+    ret
+
+; void _outd(uint16_t port, uint32_t val)
+global _outd
+_outd:
+    mov dx, di
+    mov ax, si
+
+    out dx, eax
 
     ret
 
@@ -37,12 +48,23 @@ _inb:
 
 	ret
 
+; uint16_t _inw(uint16_t port)
 global _inw
 _inw:
     mov dx, di
     xor ax, ax
 
     in ax, dx
+
+    ret
+
+; uint32_t _ind(uint16_t port)
+global _ind
+_ind:
+    mov dx, di
+    xor ax, ax
+
+    in eax, dx
 
     ret
 
