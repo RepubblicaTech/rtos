@@ -282,8 +282,9 @@ void kstart(void) {
         tsc = 1;
         kprintf_ok("Initialized TSC\n");
     }
-
-    debugf_debug("TSC not supported!\n");
+    else {
+        debugf_debug("TSC not supported!\n");
+    }
 
     if (memmap_request.response == NULL ||
         memmap_request.response->entry_count < 1) {
