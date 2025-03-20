@@ -21,7 +21,6 @@ QEMU_FLAGS = 	-m 32M \
 			 	-debugcon stdio \
 				-M q35 \
 				-smp 2 \
-	
 
 # Nuke built-in rules and variables.
 override MAKEFLAGS += -rR --no-print-directory
@@ -87,6 +86,8 @@ override KCFLAGS += \
 	-mcmodel=kernel \
 	-D FLANTERM_IN_FLANTERM \
 	-D UACPI_BAREBONES_MODE \
+	-D UACPI_KERNEL_INITIALIZATION \
+	-D UACPI_FORMATTED_LOGGING \
 
 # Internal C preprocessor flags that should not be changed by the user.
 override KCPPFLAGS := \
