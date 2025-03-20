@@ -1,9 +1,18 @@
 #include "isr.h"
 #include "gdt.h"
 #include "idt.h"
+#include "limine.h"
+#include "memory/paging/paging.h"
+#include "memory/pmm.h"
+#include "mmio/apic/apic.h"
+#include "smp/smp.h"
+#include <kernel.h>
 
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
+
+extern struct limine_hhdm_request *hhdm_request;
 
 isrHandler isr_handlers[IDT_MAX_DESCRIPTORS];
 
@@ -83,19 +92,58 @@ void print_reg_dump(registers_t *regs) {
 }
 
 void panic_common(registers_t *regs) {
+    send_ipi_all_excluding_self(IPI_VECTOR_HALT);
     print_reg_dump(regs);
 
     // stacktrace
     mprintf("\n\n --- STACK TRACE ---\n");
-    // ignore the 128 bytes red zone
-    for (uint64_t *sp = (uint64_t *)(regs->rsp); sp <= (uint64_t *)regs->rbp;
-         sp++) {
-        mprintf("%p: %#llx\n", sp, *sp);
-    }
+    uint64_t *rbp = (uint64_t *)regs->rbp;
+    int frame     = 0;
 
+    bootloader_data *bootloader_data = get_bootloader_data();
+
+    while (rbp) {
+        // In x86_64 calling convention:
+        // rbp[0] = previous rbp
+        // rbp[1] = return address
+
+        uint64_t return_addr =
+            rbp[1]; // Return address (points after call instruction)
+        uint64_t *prev_rbp = (uint64_t *)rbp[0];
+
+        // Approximate function address calculation
+        // Note: This is a simplification - normally you'd use debug info
+        // The function address is typically a few bytes before the return
+        // address
+        uint64_t approx_func_addr =
+            return_addr - 5; // Typical x86_64 call instruction is 5 bytes
+
+        // If this is in the higher-half kernel space, convert to physical
+        // address
+        uint64_t phys_addr = 0;
+        if (return_addr >= 0xffff800000000000) {
+            // Using HHDM offset from limine bootloader
+            phys_addr = return_addr - bootloader_data->hhdm_offset;
+            mprintf("Frame %d: [%p] func addr: %#llx (phys: %#llx)\n", frame,
+                    rbp, approx_func_addr, phys_addr);
+        } else {
+            mprintf("Frame %d: [%p] func addr: %#llx\n", frame, rbp,
+                    approx_func_addr);
+        }
+
+        // Move to previous frame
+        rbp = prev_rbp;
+        frame++;
+
+        // Guard against invalid pointers or corrupted stack
+        if (frame > 20 || !rbp || (uint64_t)rbp < 0x1000)
+            break;
+    }
     mprintf("\nPANIC LOG END --- HALTING ---\n");
     debugf(ANSI_COLOR_RESET);
-    _hcf();
+    asm("cli");
+    for (;;)
+        _hcf();
 }
 
 void isr_handler(registers_t *regs) {
@@ -103,7 +151,8 @@ void isr_handler(registers_t *regs) {
     if (isr_handlers[regs->interrupt] != NULL) {
         isr_handlers[regs->interrupt](regs);
     } else if (regs->interrupt >= 32) {
-        debugf("Unhandled interrupt %d\n", regs->interrupt);
+        debugf_warn("Unhandled interrupt %d on CPU %d\n", regs->interrupt,
+                    lapic_get_id());
     } else {
         stdio_panic_init();
 

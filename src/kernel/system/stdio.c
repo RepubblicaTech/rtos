@@ -6,6 +6,7 @@
 
 #include <spinlock.h>
 
+#include <stdarg.h>
 #include <util/va_list.h>
 
 extern struct flanterm_context *ft_ctx;
@@ -42,7 +43,7 @@ uint32_t fb_get_bg() {
     return current_bg;
 }
 
-uint32_t fb_get_fb() {
+uint32_t fb_get_fg() {
     return current_fg;
 }
 
@@ -66,20 +67,11 @@ void clearscreen() {
 }
 
 void putc(char c) {
-    spinlock_acquire(&STDIO_FB_LOCK);
     flanterm_write(ft_ctx, &c, sizeof(c));
-    spinlock_release(&STDIO_FB_LOCK);
 }
 
 void dputc(char c) {
-    spinlock_acquire(&STDIO_E9_LOCK);
     _outb(0xE9, c);
-    spinlock_release(&STDIO_E9_LOCK);
-}
-
-void mputc(char c) {
-    putc(c);
-    dputc(c);
 }
 
 void rsod_init() {
@@ -94,7 +86,32 @@ void rsod_init() {
     clearscreen();
 }
 
-int printf(void (*putc_function)(char), const char *fmt, ...) {
+void kprintf_impl(const char *buffer, int len) {
+    spinlock_acquire(&STDIO_FB_LOCK);
+
+    for (int i = 0; i < len; ++i) {
+        putc(buffer[i]);
+    }
+
+    spinlock_release(&STDIO_FB_LOCK);
+}
+
+void debugf_impl(const char *buffer, int len) {
+    spinlock_acquire(&STDIO_E9_LOCK);
+
+    for (int i = 0; i < len; ++i) {
+        dputc(buffer[i]);
+    }
+
+    spinlock_release(&STDIO_E9_LOCK);
+}
+
+void mprintf_impl(const char *buffer, int len) {
+    debugf_impl(buffer, len);
+    kprintf_impl(buffer, len);
+}
+
+int printf(void (*putc_function)(const char *, int), const char *fmt, ...) {
     char buffer[1024];
     va_list args;
 
@@ -106,9 +123,7 @@ int printf(void (*putc_function)(char), const char *fmt, ...) {
         return -1;
     }
 
-    for (int i = 0; i < length; ++i) {
-        (*putc_function)(buffer[i]);
-    }
+    (*putc_function)(buffer, length);
 
     return length;
 }

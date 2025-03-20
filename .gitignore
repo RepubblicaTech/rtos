@@ -63,9 +63,9 @@ toolchain/x86_64-elf
 # External libraries will be updated and copied from their repos
 src/kernel/system/limine.*
 src/kernel/system/nanoprintf.*
-src/kernel/flanterm/flanterm.*
-src/kernel/flanterm/backends
+src/kernel/flanterm
 src/kernel/memory/heap/liballoc.*
+src/kernel/acpi/uacpi
 
 # ISO files
 *.iso

@@ -18,7 +18,6 @@
 #include <memory/pmm.h>
 
 mmio_device *mmios;
-mmio_device mm_io_apic;
 madt_ioapic *io_apic;
 
 static struct bootloader_data *limine_data;
@@ -55,8 +54,8 @@ void apic_irq_handler(registers_t *regs) {
     if (apic_irq_handlers[apic_irq] != NULL) {
         apic_irq_handlers[apic_irq](regs);
     } else {
-        kprintf("Unhandled IRQ %d  ISR=%#llx  IRR=%#llx\n", apic_irq, apic_isr,
-                apic_irr);
+        debugf_warn("Unhandled IRQ %d  ISR=%#llx  IRR=%#llx\n", apic_irq,
+                    apic_isr, apic_irr);
     }
 
     lapic_send_eoi();
@@ -64,6 +63,12 @@ void apic_irq_handler(registers_t *regs) {
 
 void apic_registerHandler(int irq, irq_handler handler) {
     apic_irq_handlers[irq] = handler;
+}
+
+void apic_unregisterHandler(int irq) {
+    if (irq >= 0 && irq < IOREDTBL_ENTRIES) {
+        apic_irq_handlers[irq] = NULL;
+    }
 }
 
 // maps an I/O APIC IRQ to an interrupt that calls the handler if fired
@@ -88,8 +93,8 @@ void ioapic_map_irq(int irq, int interrupt, irq_handler handler) {
 void ioapic_init() {
     limine_data = get_bootloader_data();
 
-    mm_io_apic                 = find_mmio(MMIO_APIC_SIG);
-    limine_data->p_ioapic_base = mm_io_apic.base;
+    mmio_device mmio_ioapic    = find_mmio(MMIO_APIC_SIG);
+    limine_data->p_ioapic_base = mmio_ioapic.base;
     debugf_debug("I/O APIC Base address: %#lx\n", limine_data->p_ioapic_base);
 
     uint8_t ioapic_redir_entries = (ioapic_reg_read(0x01) >> 16) & 0xFF;
@@ -121,10 +126,11 @@ void ioapic_init() {
     }
     ioapic_redtbl = ioredtbl;
     for (int i = 0; i < iso_entry; i++) {
-        debugf("Interrupt override n.%d\n", i);
-        debugf("\tI/O APIC IRQ: %lu\n", ioapic_int_override[i]->ioapic_irq);
-        debugf("\tLegacy PIC IRQ: %hhu\n",
-               ioapic_int_override[i]->legacy_irq_source);
+        debugf_debug("Interrupt override n.%d\n", i);
+        debugf_debug("\tI/O APIC IRQ: %lu\n",
+                     ioapic_int_override[i]->ioapic_irq);
+        debugf_debug("\tLegacy PIC IRQ: %hhu\n",
+                     ioapic_int_override[i]->legacy_irq_source);
         ioapic_map_irq(ioapic_int_override[i]->ioapic_irq,
                        IOAPIC_IRQ_OFFSET +
                            ioapic_int_override[i]->legacy_irq_source,

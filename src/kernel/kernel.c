@@ -1,4 +1,6 @@
 #include "kernel.h"
+#include "limine.h"
+#include "smp/smp.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -6,6 +8,7 @@
 
 #include <flanterm/backends/fb.h>
 #include <flanterm/flanterm.h>
+#include <flanterm/flanterm_private.h>
 
 #include <stdio.h>
 
@@ -18,9 +21,11 @@
 #include <pic.h>
 #include <pit.h>
 
+#include <cpu.h>
 #include <time.h>
 
 #include <cpu.h>
+#include <util/assert.h>
 #include <util/string.h>
 
 #include <memory/heap/liballoc.h>
@@ -34,7 +39,36 @@
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
 
+#include <fs/ustar/ustar.h>
+#include <fs/vfs/devfs/devfs.h>
+#include <fs/vfs/vfs.h>
+
+#include <dev/device.h>
+#include <dev/fs/initrd.h>
+#include <dev/port/e9/e9.h>
+#include <dev/port/parallel/parallel.h>
+#include <dev/port/serial/serial.h>
+#include <dev/std/helper.h>
+
 #define PIT_TICKS 1000 / 1 // 1 ms
+
+void test_func(void) {
+
+    VFS_WRITE("/dev/com1", "Hello from the testfunc!\r\n");
+
+    for (;;)
+        ;
+}
+
+void test_func2(void) {
+    VFS_WRITE("/dev/com1", "\r\nHello from the testfunc2?\r\n");
+
+    for (;;)
+        ;
+}
+
+#define INITRD_FILE "initrd.img"
+#define INITRD_PATH "/" INITRD_FILE
 
 /*
     Set the base revision to 2, this is recommended as this is the latest
@@ -84,6 +118,16 @@ __attribute__((used,
                section(".requests"))) static volatile struct limine_rsdp_request
     rsdp_request = {.id = LIMINE_RSDP_REQUEST, .revision = 0};
 
+// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#module-feature
+__attribute__((
+    used, section(".requests"))) static volatile struct limine_module_request
+    module_request = {.id = LIMINE_MODULE_REQUEST, .revision = 0};
+
+// next time warn me when you remove a request
+__attribute__((used,
+               section(".requests"))) static volatile struct limine_smp_request
+    smp_request = {.id = LIMINE_SMP_REQUEST, .revision = 0};
+
 // Define the start and end markers for the Limine requests.
 // These can also be moved anywhere, to any .c file, as seen fit.
 __attribute__((used,
@@ -99,14 +143,17 @@ extern void _crash_test();
 
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
-struct flanterm_fb_context *ft_fb_ctx;
 
 struct limine_memmap_response *memmap_response;
 struct limine_memmap_entry *memmap_entry;
+
 struct limine_hhdm_response *hhdm_response;
-struct limine_paging_mode_response *paging_mode_response;
 struct limine_kernel_address_response *kernel_address_response;
+struct limine_paging_mode_response *paging_mode_response;
+
 struct limine_rsdp_response *rsdp_response;
+
+struct limine_module_response *module_response;
 
 struct bootloader_data limine_parsed_data;
 
@@ -115,31 +162,6 @@ struct bootloader_data *get_bootloader_data() {
 }
 
 vmm_context_t *kernel_vmm_ctx;
-
-void proc_a() { // cool stuff
-    for (;;) {
-        debugf("B");
-    }
-}
-
-void startup() {
-    create_process(proc_a);
-
-    // cool stuff
-    set_screen_bg_fg(0xfc493d, 0xeeeeee); // black-ish, white-ish
-
-    for (size_t i = 0; i < ft_ctx->rows; i++) {
-        for (size_t i = 0; i < ft_ctx->cols; i++)
-            kprintf(" ");
-    }
-    clearscreen();
-
-    kprintf("Hello there.\n");
-    destroy_process(1);
-
-    for (;;)
-        ;
-}
 
 // kernel main function
 void kstart(void) {
@@ -257,6 +279,9 @@ void kstart(void) {
             ->base +
         limine_parsed_data
             .limine_memory_map[limine_parsed_data.memmap_entry_count - 1]
+            ->length -
+        limine_parsed_data
+            .limine_memory_map[limine_parsed_data.memmap_entry_count - 1]
             ->length;
 
     if (hhdm_request.response == NULL) {
@@ -322,20 +347,20 @@ void kstart(void) {
     kprintf_ok("Initialized VMM\n");
 
     size_t malloc_test_start_timestamp = get_current_ticks();
-    kprintf_info("Malloc Test:\n");
+    debugf("Malloc Test:\n");
     void *ptr1 = kmalloc(0xA0);
-    kprintf_info("[1] kmalloc(0xA0) @ %p\n", ptr1);
+    debugf("[1] kmalloc(0xA0) @ %p\n", ptr1);
     void *ptr2 = kmalloc(0xA3B0);
-    kprintf_info("[2] kmalloc(0xA3B0) @ %p\n", ptr2);
+    debugf("[2] kmalloc(0xA3B0) @ %p\n", ptr2);
     kfree(ptr1);
     kfree(ptr2);
     ptr1 = kmalloc(0xF00);
-    kprintf_info("[3] kmalloc(0xF00) @ %p\n", ptr1);
+    debugf("[3] kmalloc(0xF00) @ %p\n", ptr1);
     kfree(ptr1);
     size_t malloc_test_end_timestamp  = get_current_ticks();
     malloc_test_end_timestamp        -= malloc_test_start_timestamp;
-    kprintf_ok("Malloc test complete: Time taken: %dms\n",
-               malloc_test_end_timestamp);
+    debugf_ok("Malloc test complete: Time taken: %dms\n",
+              malloc_test_end_timestamp);
 
     if (check_apic()) {
         asm("cli");
@@ -343,6 +368,7 @@ void kstart(void) {
         apic_init();
         ioapic_init();
         apic_registerHandler(0, timer_tick);
+
         kprintf_ok("APIC init done\n");
         asm("sti");
     } else {
@@ -434,20 +460,77 @@ void kstart(void) {
 
     kprintf("--- SYSTEM INFO END ---\n");
 
+    if (!module_request.response) {
+        kprintf_warn("No modules loaded.\n");
+    }
+
+    module_response = module_request.response;
+
+    struct limine_file *initrd;
+
+    for (uint64_t module = 0; module < module_response->module_count;
+         module++) {
+        struct limine_file *limine_module = module_response->modules[module];
+        kprintf_info("Module %s loaded\n", limine_module->path);
+
+        if (strcmp(INITRD_PATH, limine_module->path) == 0) {
+            kprintf_ok("Found initrd image\n");
+            initrd = limine_module;
+        }
+    }
+
+    if (!initrd) {
+        kprintf_panic("No initrd file found.");
+        _hcf();
+    }
+
+    kprintf_info("Initrd loaded at address %p\n", initrd->address);
+
+    ustar_fs_t *initramfs_disk = ramfs_init(initrd->address);
+
+    ustar_file_tree_t *test = file_lookup(initramfs_disk, "test.txt");
+    kprintf("%*s", test->found_files[0]->size, test->found_files[0]->start);
+
+    register_std_devices();
+    dev_initrd_init(initramfs_disk);
+    dev_e9_init();
+    dev_serial_init();
+    dev_parallel_init();
+
+    vfs_init();
+
+    devfs_init();
+
+    device_t *dev_e9       = get_device("e9");
+    device_t *dev_serial   = get_device("com1");
+    device_t *dev_parallel = get_device("lpt1");
+    device_t *dev_initrd   = get_device("initrd");
+    device_t *dev_null     = get_device("null");
+
+    devfs_add_dev(dev_e9);
+    devfs_add_dev(dev_serial);
+    devfs_add_dev(dev_parallel);
+    devfs_add_dev(dev_initrd);
+    devfs_add_dev(dev_null);
+
+    register_ipi_handlers();
+    scheduler_init();
+
+    smp_init(smp_request.response);
+
+    // pause a small time
+    for (size_t i = 0; i < 1000000; i++)
+        ;
+
+    create_process(test_func, PRIORITY_NORMAL);
+
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
+    kprintf("System started: Time took: %d seconds %d ms.\n",
+            end_tick_after_init / PIT_TICKS, end_tick_after_init % PIT_TICKS);
 
-    ft_ctx->full_refresh(ft_ctx);
-
-    clearscreen();
-
-    scheduler_init();
-    kprintf_ok("Initialized scheduler\n");
-    kprintf("System started: Time took: %d seconds %d ms\n",
-            end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000);
-
-    create_process(startup);
+    limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
 
     for (;;)
-        ;
+        send_ipi_self(IPI_VECTOR_RESCHEDULE);
 }

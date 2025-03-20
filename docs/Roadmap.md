@@ -12,37 +12,55 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [X] GDT
 - [X] Interrupt handling (IDT, ISRs, IRQs)
 - [X] PIC support
-- [ ] PIT Driver
+- PIT Driver
   - [X] Initialization
   - [X] PIT-supported sleep
-- [X] LAPIC/IOAPIC Initialization
+- LAPIC/IOAPIC Initialization
   - [X] IRQ redirection to I/O APIC
   - [X] Interrupts work
   - [ ] LAPIC timer init
 
-- [ ] ACPI
+- ACPI
   - [X] Get RSDP/RSDT information
   - [X] MADT (LAPIC initialization)
-  - [ ] HPET (maybe)
-  - [ ] uACPI implementaion
-  - [ ] _we'll probably need more tables in the future_
+  - [ ] HPET
+  - [ ] uACPI implementation
 
-- [X] Memory
+- Memory
   - [X] Get memory map
   - [X] Memory management
-    - [X] PMM
-      - [X] Allocating/freeing physical memory
-    - [X] VMM
+    - PMM
+      - [X] Allocating/freeing page frames
+    - VMM
       - [X] Paging
-      - [X] Mapping devices to memory
+      - Mapping devices to memory
         - [X] LAPIC
         - [X] I/O APIC
       - [X] Actual VMM stuff (allocating, freeing virtual memory etc.)  
     - [X] Kernel heap (`kmalloc`, `kfree`)
 
-- [X] Scheduling
+- [X] Scheduler
 
-- [ ] File system support (ISO 9660, maybe FAT32/EXTx)
+- [Adaptive Driver Interface](https://github.com/project-adi)
+  - [ ] Implementation
+  - [ ] FS metalang
+
+- File system
+  - USTAR
+    - [X] Basic initrd.img initialization
+    - [X] File lookup
+  - Virtual File System
+    - [X] Design
+    - [ ] Implementation
+  - RAMFS
+    - [ ] (un)loading files in safe-to-use memory
+    - [ ] Unloading files
+
+  - [ ] ISO9660
+
+- Hard drive setup:
+  - [ ] FAT32 (boot partition)
+  - [ ] EXTx  (system partition)
 
 - [ ] SMP
 
@@ -50,14 +68,23 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - [ ] Jump to userspace
 
 ## 2nd Milestone
+
+- [ ] Syscalls
 - [ ] ELF loading
+- [ ] OS-specific toolchain
+- [ ] UNIX/POSIX compatibility layer
+    (if someone wants to port coreutils, bash, whatever)
 - [ ] Basic shell
-  - [ ] (decent) Keyboard driver
-  - [ ] some kind of PATH
-  - [ ] basic commands
+  - [ ] Configuration System (registry)
+  - [ ] Enviroment Variables
+  - [ ] Input and Ouput syscalls
 - [ ] Video modes
   - [ ] Set better screen resolutions other than limine's default
   - [ ] (MAYBE) cool graphical stuff
+  - [ ] Oh yeah, DOOM because we have to :3
 
 ## 3rd Milestone
-- [ ] GUI
+
+- GUI
+  - [ ] Obviously a lot of sketches and ideas
+        (aiming to something coming out of the 1980s)

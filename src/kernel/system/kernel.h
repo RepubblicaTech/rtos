@@ -43,6 +43,8 @@ typedef struct bootloader_data {
 
     uint64_t p_lapic_base;
     uint32_t p_ioapic_base;
+
+    uint64_t boot_time; // milliseconds since boot
 } bootloader_data;
 
 struct bootloader_data *get_bootloader_data();

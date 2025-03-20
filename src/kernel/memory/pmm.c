@@ -167,7 +167,7 @@ void *pmm_alloc_page() {
 
 void *pmm_alloc_pages(size_t pages) {
     void *ptr = pmm_alloc_page();
-    for (int i = 1; i < pages; i++) {
+    for (size_t i = 1; i < pages; i++) {
         pmm_alloc_page();
     }
 

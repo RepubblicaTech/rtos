@@ -21,6 +21,17 @@ void *memmove(void *dest, const void *src, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
 
 size_t strlen(const char *s);
+int strcmp(const char *s1, const char *s2);
+
+char *strstr(const char *s1, const char *s2);
+
+void *memchr(const void *str, int c, size_t n);
+
+char *strncpy(char *dest, const char *src, size_t n);
+char *strdup(const char *s);
+char *strtok(char *str, const char *delim);
+char *strchr(const char *str, int c);
+char *strtok_r(char *str, const char *delim, char **saveptr);
 
 static const char *const memory_block_type[] = {"USABLE",
                                                 "RESERVED",

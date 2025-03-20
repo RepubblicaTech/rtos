@@ -1,7 +1,7 @@
 [submodule "libs/limine"]
 	path = libs/limine
 	url = https://github.com/limine-bootloader/limine.git
-	branch = v8.x-binary
+	branch = v9.x-binary
     
 [submodule "libs/flanterm"]
 	path = libs/flanterm
@@ -14,3 +14,7 @@
 [submodule "libs/liballoc"]
 	path = libs/liballoc
 	url = https://github.com/blanham/liballoc.git
+    
+[submodule "libs/uacpi"]
+	path = libs/uacpi
+	url = https://github.com/uACPI/uACPI.git

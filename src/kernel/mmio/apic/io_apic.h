@@ -19,5 +19,6 @@ void apic_registerHandler(int irq, irq_handler handler);
 void ioapic_map_irq(int irq, int interrupt, irq_handler handler);
 
 void ioapic_init();
+void apic_unregisterHandler(int irq);
 
 #endif

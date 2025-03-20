@@ -10,7 +10,9 @@ LIBS_DIR=$2
 declare -a libs=("limine"
                  "flanterm"
 				 "nanoprintf"
-				 "liballoc")
+				 "liballoc"
+                 "uacpi"
+                 )
 
 stderr_echo() { 
 	echo "$@" >&2; 
@@ -37,13 +39,15 @@ copy_if_exists() {
 		return 1
 	fi
 
+	# parse everything after last slash
 	LAST_SLASH=${2##*/}
 	if [[ $LAST_SLASH == *"."* ]]; then
-		DIRECTORY=${2//$LAST_SLASH}
+		DIRECTORY=${2//$LAST_SLASH}	# remove the last part if it's a file...
 	else
 		DIRECTORY=$2
 	fi
 
+	# ...to create the parent directory
 	if [ ! -d "$DIRECTORY" ]; then
 		stderr_echo "target directory $DIRECTORY not found. Creating it..."
 		mkdir -p "$DIRECTORY"
@@ -51,7 +55,7 @@ copy_if_exists() {
 
 	echo "--> Copying: $1"
 	echo "	  to: $2"
-	cp -f "$1" "$2"
+	cp -fr "$1" "$2"
 }
 
 if [ -z "$KERNEL_DIR" ]; then
@@ -83,15 +87,27 @@ copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.h $KERNEL_DIR/memory/heap/liballo
 copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.c $KERNEL_DIR/memory/heap/liballoc.c
 
 # copy flanterm headers
-copy_if_exists $LIBS_DIR/flanterm/*.h $KERNEL_DIR/flanterm
-copy_if_exists $LIBS_DIR/flanterm/*.c $KERNEL_DIR/flanterm
-copy_if_exists $LIBS_DIR/flanterm/backends/*.h $KERNEL_DIR/flanterm/backends
-copy_if_exists $LIBS_DIR/flanterm/backends/*.c $KERNEL_DIR/flanterm/backends
+copy_if_exists $LIBS_DIR/flanterm/flanterm_private.h $KERNEL_DIR/flanterm
+copy_if_exists $LIBS_DIR/flanterm/flanterm.h $KERNEL_DIR/flanterm
+copy_if_exists $LIBS_DIR/flanterm/flanterm.c $KERNEL_DIR/flanterm
+copy_if_exists $LIBS_DIR/flanterm/backends/fb_private.h $KERNEL_DIR/flanterm/backends
+copy_if_exists $LIBS_DIR/flanterm/backends/fb.h $KERNEL_DIR/flanterm/backends
+copy_if_exists $LIBS_DIR/flanterm/backends/fb.c $KERNEL_DIR/flanterm/backends
 
 # custom font for flanterm
 copy_if_exists $LIBS_DIR/patches/font.h $KERNEL_DIR/flanterm/backends
 
-patch -u $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch
+patch -su $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch >/dev/null 2>&1
+patch -su $KERNEL_DIR/memory/heap/liballoc.h -i $LIBS_DIR/patches/liballoc.h.patch >/dev/null 2>&1
+patch -su $KERNEL_DIR/memory/heap/liballoc.c -i $LIBS_DIR/patches/liballoc.c.patch >/dev/null 2>&1
 
-patch -u $KERNEL_DIR/memory/heap/liballoc.h -i $LIBS_DIR/patches/liballoc.h.patch
-patch -u $KERNEL_DIR/memory/heap/liballoc.c -i $LIBS_DIR/patches/liballoc.c.patch
+# copy uACPI
+# NOTE: very wacky, must make it better
+copy_if_exists $LIBS_DIR/uacpi/include/uacpi $KERNEL_DIR/acpi
+UACPI_BASE_PATH="$LIBS_FULL_DIR/uacpi"
+for uacpi_c in "$UACPI_BASE_PATH/source/"*; do
+    if [[ "$uacpi_c" == *".c" ]]; then
+        # printf "$uacpi_c\n"
+        copy_if_exists $uacpi_c $KERNEL_DIR/acpi/uacpi
+    fi
+done

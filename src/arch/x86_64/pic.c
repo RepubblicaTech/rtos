@@ -144,7 +144,8 @@ void pic_irq_handler(registers_t *regs) {
     if (pic_irq_handlers[irq] != NULL) {
         pic_irq_handlers[irq](regs); // tries to handle the interrupt
     } else {
-        debugf("Unhandled IRQ %d  ISR=%#x  IRR=%#x\n", irq, pic_isr, pic_irr);
+        debugf_warn("Unhandled IRQ %d  ISR=%#x  IRR=%#x\n", irq, pic_isr,
+                    pic_irr);
     }
 
     pic_sendEOI(irq);
