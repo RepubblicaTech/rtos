@@ -115,7 +115,7 @@ uint32_t lapic_timer_calibrate_pit(void) {
     // Calculate ticks per ms
     uint32_t ticks_per_ms = lapic_ticks / elapsed_ticks;
 
-    debugf_debug("APIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
+    debugf_debug("LAPIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
     
     // Store this value for future use (can be static/global)
     return ticks_per_ms;
@@ -129,13 +129,13 @@ uint32_t calibrate_apic_timer_tsc(void) {
 
     uint32_t end_count = lapic_read_reg(LAPIC_TIMER_CURR_CNT); 
 
-    uint32_t elapsed_apic_ticks = 0xFFFFFFFF - end_count;
+    uint32_t elapsed_lapic_ticks = 0xFFFFFFFF - end_count;
 
-    uint64_t apic_timer_frequency = (uint64_t) (elapsed_apic_ticks * 10);
+    uint64_t lapic_timer_frequency = (uint64_t) (elapsed_lapic_ticks * 10);
 
-    uint32_t ticks_per_ms = apic_timer_frequency / 1000;
+    uint32_t ticks_per_ms = lapic_timer_frequency / 1000;
 
-    debugf_debug("APIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
+    debugf_debug("LAPIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
 
     return ticks_per_ms;
 }
@@ -171,7 +171,7 @@ void lapic_timer_init(void) {
 // Add to apic.c
 void lapic_timer_handler(registers_t *regs) {
 
-    if (get_current_ticks() >= MAX_APIC_TICKS) set_ticks(0);
+    if (get_current_ticks() >= MAX_LAPIC_TICKS) set_ticks(0);
 
     UNUSED(regs);
     // Handle the timer interrupt
