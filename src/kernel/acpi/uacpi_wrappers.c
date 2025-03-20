@@ -27,21 +27,15 @@ uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rsdp_address) {
 
 void *uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len) {
     uint64_t aligned  = ROUND_DOWN(addr, PFRAME_SIZE);
-    size_t actual_len = len + (size_t)(addr - aligned);
+    size_t offset     = (size_t)(addr - aligned);
+    size_t actual_len = len + offset;
 
-    void *virt = vma_alloc(get_current_ctx(), actual_len, true);
-
-    uint64_t phys = pg_virtual_to_phys(_get_pml4(), (uint64_t)virt);
-    pmm_free((void *)phys, ROUND_UP(actual_len, PFRAME_SIZE));
-
-    // we'll overwrite the physical mapping :3
-    map_region_to_page(_get_pml4(), addr, (uint64_t)virt, actual_len,
-                       PMLE_KERNEL_READ_WRITE);
+    void *virt = vma_alloc(get_current_ctx(), actual_len, true, (void *)addr);
 
     // re-align the pointer to original addr offset
-    aligned += addr - aligned;
+    virt += offset;
 
-    return (void *)aligned;
+    return virt;
 }
 
 void uacpi_kernel_unmap(void *addr, uacpi_size len) {
