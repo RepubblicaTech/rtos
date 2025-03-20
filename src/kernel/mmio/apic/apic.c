@@ -6,6 +6,7 @@
 #include <cpu.h>
 #include <pic.h>
 #include <pit.h>
+#include <tsc.h>
 
 #include <kernel.h>
 
@@ -20,6 +21,10 @@
 #include <memory/pmm.h>
 
 static struct bootloader_data *limine_data;
+
+extern volatile int tsc;
+
+uint32_t lapic_timer_ticks_per_ms = 0;
 
 // write data to a LAPIC register
 // by
@@ -84,7 +89,7 @@ void apic_init() {
     debugf_debug("LAPIC ID: %#hhx\n", lapic_get_id());
 }
 
-uint32_t lapic_timer_calibrate(void) {
+uint32_t lapic_timer_calibrate_pit(void) {
     // Set the divide value register
     lapic_write_reg(LAPIC_TIMER_DIV_REG, 0x3); // Divide by 16
 
@@ -114,11 +119,31 @@ uint32_t lapic_timer_calibrate(void) {
     return ticks_per_ms;
 }
 
-uint32_t lapic_timer_ticks_per_ms = 0;
+uint32_t calibrate_apic_timer_tsc(void) {
+
+    lapic_write_reg(LAPIC_TIMER_INIT_CNT, 0xFFFFFFFF);
+
+    tsc_sleep(100000);
+
+    uint32_t end_count = lapic_read_reg(LAPIC_TIMER_CURR_CNT); 
+
+    uint32_t elapsed_apic_ticks = 0xFFFFFFFF - end_count;
+
+    uint64_t apic_timer_frequency = (uint64_t) (elapsed_apic_ticks * 10);
+
+    uint32_t ticks_per_ms = apic_timer_frequency / 1000;
+
+    debugf_debug("APIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
+
+    return ticks_per_ms;
+}
 
 void lapic_timer_init(void) {
     // Calibrate the timer
-    lapic_timer_ticks_per_ms = lapic_timer_calibrate();
+    if (tsc) {
+        lapic_timer_ticks_per_ms = calibrate_apic_timer_tsc();
+    }
+    lapic_timer_ticks_per_ms = lapic_timer_calibrate_pit();
 
     // Register the timer interrupt handler
     isr_registerHandler(LAPIC_TIMER_VECTOR + LAPIC_IRQ_OFFSET,
@@ -143,6 +168,9 @@ void lapic_timer_init(void) {
 }
 // Add to apic.c
 void lapic_timer_handler(registers_t *regs) {
+
+    if (get_current_ticks() >= MAX_APIC_TICKS) set_ticks(0);
+
     UNUSED(regs);
     // Handle the timer interrupt
     // This could trigger your scheduler or update a time counter
