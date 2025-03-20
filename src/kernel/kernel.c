@@ -527,8 +527,9 @@ void kstart(void) {
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
     kprintf("System started: Time took: %d seconds %d ms.\n",
-            end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000,
-            lapic_get_id());
+            end_tick_after_init / PIT_TICKS, end_tick_after_init % PIT_TICKS);
+
+    limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
 
     for (;;)
         send_ipi_self(IPI_VECTOR_RESCHEDULE);
