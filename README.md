@@ -45,7 +45,8 @@ Extras:
     - 16GB RAM
     - Sapphire Radeon R9 280X
 
-    As of March 2025, only UEFI booting works (for some reason).
+    ~~As of March 2025, only UEFI booting works (for some reason).~~
+   	If you want to try the kernel with legacy booting, make sure you run `limine bios-install <your target drive>`.
 
 ### Prequisites
 There are some packages that are needed for building and running the OS, make sure to check your distro's package manager for how to install them:
