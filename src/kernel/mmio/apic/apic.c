@@ -115,6 +115,8 @@ uint32_t lapic_timer_calibrate_pit(void) {
     // Calculate ticks per ms
     uint32_t ticks_per_ms = lapic_ticks / elapsed_ticks;
 
+    debugf_debug("APIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
+    
     // Store this value for future use (can be static/global)
     return ticks_per_ms;
 }
