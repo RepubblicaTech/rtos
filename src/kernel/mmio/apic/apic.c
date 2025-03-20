@@ -142,10 +142,10 @@ uint32_t calibrate_apic_timer_tsc(void) {
 
 void lapic_timer_init(void) {
     // Calibrate the timer
-    if (tsc) {
+    if (tsc)
         lapic_timer_ticks_per_ms = calibrate_apic_timer_tsc();
-    }
-    lapic_timer_ticks_per_ms = lapic_timer_calibrate_pit();
+    else
+        lapic_timer_ticks_per_ms = lapic_timer_calibrate_pit();
 
     // Register the timer interrupt handler
     isr_registerHandler(LAPIC_TIMER_VECTOR + LAPIC_IRQ_OFFSET,
