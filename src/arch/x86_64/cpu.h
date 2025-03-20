@@ -118,6 +118,7 @@
 
 bool check_pae();
 bool check_msr();
+bool check_tsc();
 bool check_apic();
 bool check_x2apic();
 
