@@ -68,6 +68,7 @@ _ind:
 
     ret
 
+; void _io_wait(void)
 global _io_wait
 _io_wait:
 	push rdi
