@@ -221,12 +221,7 @@ debug: $(OS_CODENAME).iso
 	@gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
 
 # Remove object files and the final executable.
-.PHONY: clean clean-all
-
-clean-all: clean
-	@rm -rf $(LIBS_DIR)/limine
-	@rm -rf $(LIBS_DIR)/flanterm
-	@rm -rf $(LIBS_DIR)/nanoprintf
+.PHONY: clean
 
 clean:
 	@rm -rf $(ISO_DIR)
