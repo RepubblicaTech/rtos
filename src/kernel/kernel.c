@@ -20,6 +20,7 @@
 #include <mmio/apic/io_apic.h>
 #include <pic.h>
 #include <pit.h>
+#include <tsc.h>
 
 #include <cpu.h>
 #include <time.h>
@@ -123,6 +124,11 @@ __attribute__((
     used, section(".requests"))) static volatile struct limine_module_request
     module_request = {.id = LIMINE_MODULE_REQUEST, .revision = 0};
 
+//https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#firmware-type-feature
+__attribute__((used, 
+               section(".requests"))) static volatile struct limine_firmware_type_request
+    firmware_type_request = {.id = LIMINE_FIRMWARE_TYPE_REQUEST, .revision = 0};
+
 // next time warn me when you remove a request
 __attribute__((used,
                section(".requests"))) static volatile struct limine_smp_request
@@ -140,6 +146,8 @@ __attribute__((
         ".requests_end_marker"))) static volatile LIMINE_REQUESTS_END_MARKER;
 
 extern void _crash_test();
+
+volatile int tsc = 0;
 
 struct limine_framebuffer *framebuffer;
 struct flanterm_context *ft_ctx;
@@ -200,6 +208,29 @@ void kstart(void) {
 
     debugf_debug("Kernel built on %s\n", __DATE__);
 
+    char *FIRMWARE_TYPE;
+
+    if (firmware_type_request.response != NULL) {
+        uint64_t firmware_type = firmware_type_request.response->firmware_type;
+        if (firmware_type == LIMINE_FIRMWARE_TYPE_X86BIOS) {
+            FIRMWARE_TYPE = "X86BIOS";
+        } else if (firmware_type == LIMINE_FIRMWARE_TYPE_UEFI32) {
+            FIRMWARE_TYPE = "UEFI32";
+        } else if (firmware_type == LIMINE_FIRMWARE_TYPE_UEFI64) {
+            FIRMWARE_TYPE = "UEFI64";
+        } 
+    } else {
+        FIRMWARE_TYPE = "No firmware type found!";
+        debugf_debug("Firmware type: %s\n", FIRMWARE_TYPE);
+    }
+
+    if (firmware_type_request.response != NULL) {
+        debugf_debug("Firmware type: %s\n", FIRMWARE_TYPE);
+    } else {
+        FIRMWARE_TYPE = "No firmware type found!";
+        debugf_debug("%s\n", FIRMWARE_TYPE);
+    }
+
     debugf_debug("Current video mode is: %dx%d address: %p\n\n",
                  framebuffer->width, framebuffer->height, framebuffer->address);
 
@@ -245,6 +276,14 @@ void kstart(void) {
     kprintf_ok("Initialized PIT\n");
 
     size_t start_tick_after_pit_init = get_current_ticks();
+
+    if (check_tsc()) {
+        tsc_init();
+        tsc = 1;
+        kprintf_ok("Initialized TSC\n");
+    }
+
+    debugf_debug("TSC not supported!\n");
 
     if (memmap_request.response == NULL ||
         memmap_request.response->entry_count < 1) {
