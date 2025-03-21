@@ -18,7 +18,7 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
 - LAPIC/IOAPIC Initialization
   - [X] IRQ redirection to I/O APIC
   - [X] Interrupts work
-  - [ ] LAPIC timer init
+  - [X] LAPIC timer init
 
 - ACPI
   - [X] Get RSDP/RSDT information
