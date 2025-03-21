@@ -11,6 +11,7 @@
 
 #include <limine.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 
 // these come from the linker
@@ -47,6 +48,9 @@ typedef struct bootloader_data {
     // SMP stuff
     uint64_t cpu_count;
     LIMINE_PTR(struct limine_smp_info **) cpus;
+    bool smp_enabled; // * do not remove or tlb handler will shit itself
+
+    uint64_t boot_time; // milliseconds since boot
 } bootloader_data;
 
 struct bootloader_data *get_bootloader_data();

@@ -21,7 +21,7 @@ int liballoc_unlock() {
 }
 
 void *liballoc_alloc(size_t pages) {
-    return vma_alloc(current_vmm_ctx, (pages), true);
+    return vma_alloc(current_vmm_ctx, (pages), true, NULL);
 }
 
 int liballoc_free(void *ptr, size_t pages) {

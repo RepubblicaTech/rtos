@@ -2,6 +2,7 @@
 
 #include <isr.h>
 #include <mmio/apic/apic.h>
+#include <util/string.h>
 
 extern void ipi_handler_halt(registers_t *regs);
 extern void ipi_handler_tlb_flush(registers_t *regs);
@@ -38,4 +39,8 @@ void ipi_self(uint8_t vector) {
     // send an ipi to your own LAPIC for testing porpuses
     uint32_t icr0 = vector | (0 << 8) | (0 << 11) | (1 << 14) | (0 << 15) | (LDT_SEND_TO_US << 18);
     lapic_write_reg(LAPIC_ICR0_REG, icr0);
+}
+
+void tlb_shootdown(uint64_t virtual) {
+    ipi_broadcast(IPI_VECTOR_TLB_FLUSH);
 }

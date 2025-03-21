@@ -16,11 +16,11 @@
 #include <irq.h>
 #include <isr.h>
 
+#include <cpu.h>
 #include <mmio/apic/apic.h>
 #include <mmio/apic/io_apic.h>
 #include <pic.h>
 #include <pit.h>
-#include <cpu.h>
 #include <time.h>
 
 #include <memory/heap/liballoc.h>
@@ -29,9 +29,9 @@
 #include <memory/vma.h>
 #include <memory/vmm.h>
 
-#include <smp/smp.h>
 #include <scheduler/scheduler.h>
 #include <smp/ipi.h>
+#include <smp/smp.h>
 
 #include <acpi/acpi.h>
 #include <acpi/rsdp.h>
@@ -212,7 +212,6 @@ void kstart(void) {
     debugf_debug("\tlimine_requests_start: %p; limine_requests_end: %p\n",
                  &__limine_reqs_start, &__limine_reqs_end);
     debugf_debug("\tkernel_end: %p\n", &__kernel_end);
-
 
     gdt_init();
     kprintf_ok("Initialized GDT\n");
@@ -504,7 +503,15 @@ void kstart(void) {
 
     smp_init();
 
-    ipi_send(IPI_VECTOR_HALT, 1);
+    limine_parsed_data.smp_enabled = true;
+
+    void *test_page        = pmm_alloc_page();
+    uint64_t physical_addr = (uint64_t)VIRT_TO_PHYSICAL(test_page);
+
+    uint64_t *pml4 = kernel_pml4;
+
+    map_region_to_page(pml4, physical_addr, 0x100000, PFRAME_SIZE,
+                       PMLE_USER_READ_WRITE);
 
     // pause a small time
     for (size_t i = 0; i < 1000000; i++)
@@ -513,8 +520,9 @@ void kstart(void) {
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
     kprintf("System started: Time took: %d seconds %d ms.\n",
-            end_tick_after_init / PIT_TICKS, end_tick_after_init % 1000,
-            lapic_get_id());
+            end_tick_after_init / PIT_TICKS, end_tick_after_init % PIT_TICKS);
+
+    limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
 
     for (;;)
         ;

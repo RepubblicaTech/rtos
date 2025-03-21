@@ -93,22 +93,6 @@ void print_reg_dump(registers_t *regs) {
 }
 
 void panic_common(registers_t *regs) {
-    uint64_t cpu = lapic_get_id();
-
-    if (cpu != 0) {
-        debugf_warn(
-            "exception \"%s\" (nr. %#llx) on CPU %d @ %.16llx. error code "
-            "%#llx. halting...\n",
-            exceptions[regs->interrupt], regs->interrupt, cpu, regs->rip,
-            regs->error);
-        debugf(ANSI_COLOR_RESET);
-        asm("cli");
-        for (;;)
-            _hcf();
-    }
-
-    ipi_broadcast(IPI_VECTOR_HALT);
-
     print_reg_dump(regs);
 
     // stacktrace
@@ -170,20 +154,32 @@ void isr_handler(registers_t *regs) {
         debugf_warn("Unhandled interrupt %d on CPU %d\n", regs->interrupt,
                     lapic_get_id());
     } else {
-        uint64_t cpu = lapic_get_id();
-        if (cpu == 0) {
-            stdio_panic_init();
+        stdio_panic_init();
 
+        uint64_t cpu = lapic_get_id();
+
+        if (cpu != 0) {
+            debugf_warn(
+                "exception \"%s\" (nr. %#llx) on CPU %d @ %.16llx. error code "
+                "%#llx. halting...\n",
+                exceptions[regs->interrupt], regs->interrupt, cpu, regs->rip,
+                regs->error);
+            asm("cli");
+            for (;;)
+                _hcf();
+        } else {
+    
             fb_set_fg(PANIC_FG);
             mprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n",
-                    exceptions[regs->interrupt], regs->interrupt);
-
+                exceptions[regs->interrupt], regs->interrupt);
+    
             mprintf("\terrcode: %#llx\n", regs->error);
+            
+
+            panic_common(regs);
+
+            _hcf();
         }
-
-        panic_common(regs);
-
-        _hcf();
     }
 }
 

@@ -45,16 +45,18 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
   - [ ] Implementation
   - [ ] FS metalang
 
-- File system
+- [ ] PCIe support
+- [ ] AHCI driver
+
+- File systems
   - USTAR
     - [X] Basic initrd.img initialization
     - [X] File lookup
   - Virtual File System
     - [X] Design
-    - [ ] Implementation
+    - [X] Implementation
   - RAMFS
     - [ ] (un)loading files in safe-to-use memory
-    - [ ] Unloading files
 
   - [ ] ISO9660
 

@@ -1,4 +1,4 @@
-#include "kernel.h"
+#include "memory/vmm.h"
 #include <smp/ipi.h>
 
 #include <stdio.h>
@@ -18,7 +18,6 @@ void ipi_handler_halt(registers_t *regs) {
     debugf_warn("Processor %lu halted over IPI @ %.16llx\n", cpu, regs->rip);
     lapic_send_eoi();
 
-
     // actual halting
     asm ("cli");
     for (;;)
@@ -27,11 +26,11 @@ void ipi_handler_halt(registers_t *regs) {
 
 void ipi_handler_tlb_flush(registers_t *regs) {
     uint64_t cpu = get_cpu();
-    debugf_debug("Processor %lu TLB flushed @ %.16llx\n", cpu, regs->rip);
-    lapic_send_eoi();
 
-    asm volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" : : : "rax");
-        // ! idk how to pass only a certain address so we flush the whole thing
+    debugf_debug("Processor %lu flushed TLB @ %#llx\n", cpu, regs->rip);
+
+    asm ("mov %0, %%cr3" : : "r" (get_current_ctx()->pml4_table));
+    lapic_send_eoi();
 }
 
 void ipi_handler_reschedule(registers_t *regs) {

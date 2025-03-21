@@ -12,8 +12,11 @@
 #include <smp/ipi.h>
 #include <scheduler/scheduler.h>
 #include <kernel.h>
+#include <memory/heap/liballoc.h>
 
 #include <util/util.h>
+
+struct tlb_shootdown_event **events;
 
 extern vmm_context_t *kernel_vmm_ctx;
 
@@ -23,10 +26,13 @@ int smp_init() {
 
     register_ipi();
 
+
     if (bootloader_data->cpu_count == 1) {
         kprintf_info("SMP init: no other CPUs detected\n");
         return 0;
     }
+    
+    events = (struct tlb_shootdown_event **)kcalloc(sizeof(struct tlb_shootdown_event *) * bootloader_data->cpu_count, sizeof(struct tlb_shootdown_event));
 
     kprintf_info("SMP init: %d CPUs detected\n", bootloader_data->cpu_count);
     for (uint64_t i = 0; i < bootloader_data->cpu_count; i++) {
@@ -56,12 +62,11 @@ void mp_trampoline(struct limine_smp_info *cpu) {
     apic_init();
 
     register_ipi();
+    
+    asm("sti");
 
     debugf_ok("CPU %lu initialized and ready. APIC ID: %d\n", cpu->lapic_id,
               lapic_get_id());
-
-
-    asm("sti");
 
     for (;;)
         ;

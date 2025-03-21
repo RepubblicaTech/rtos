@@ -8,6 +8,7 @@
 */
 
 #include "paging.h"
+#include "smp/ipi.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -165,9 +166,9 @@ void map_phys_to_page(uint64_t *pml4_table, uint64_t physical, uint64_t virtual,
     uint64_t pdir_index = PDIR_INDEX(virtual);
     uint64_t ptab_index = PTAB_INDEX(virtual);
 
-    uint64_t *pdp_table  = get_create_pmlt(pml4_table, pml4_index, flags);
-    uint64_t *pdir_table = get_create_pmlt(pdp_table, pdp_index, flags);
-    uint64_t *page_table = get_create_pmlt(pdir_table, pdir_index, flags);
+    uint64_t *pdp_table  = get_create_pmlt(pml4_table, pml4_index, 0b111);
+    uint64_t *pdir_table = get_create_pmlt(pdp_table, pdp_index, 0b111);
+    uint64_t *page_table = get_create_pmlt(pdir_table, pdir_index, 0b111);
 
     page_table[ptab_index] = PG_GET_ADDR(physical) | flags;
     // debugf_debug("Page table %llp entry %llu mapped to (virt)%#llx
@@ -176,6 +177,9 @@ void map_phys_to_page(uint64_t *pml4_table, uint64_t physical, uint64_t virtual,
     // page_table[ptab_index]);
 
     _invalidate(virtual);
+    if (get_bootloader_data()->smp_enabled) {
+        tlb_shootdown(virtual);
+    }
 }
 
 void unmap_page(uint64_t *pml4_table, uint64_t virtual) {
@@ -191,6 +195,9 @@ void unmap_page(uint64_t *pml4_table, uint64_t virtual) {
     page_table[ptab_index] = 0x0;
 
     _invalidate(virtual);
+    if (get_bootloader_data()->smp_enabled) {
+        tlb_shootdown(virtual);
+    }
 }
 
 // maps a page region to its physical range

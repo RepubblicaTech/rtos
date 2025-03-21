@@ -8,7 +8,12 @@
                 "${workspaceFolder}/src/kernel/system",
                 "${workspaceFolder}/src/arch/x86_64"
             ],
-            "defines": [],
+            "defines": [
+                "FLANTERM_IN_FLANTERM",
+                "UACPI_KERNEL_INITIALIZATION",
+                "UACPI_FORMATTED_LOGGING",
+                "UACPI_BAREBONES_MODE"
+            ],
             "cStandard": "gnu11",
             "cppStandard": "gnu++17",
             "intelliSenseMode": "${default}",

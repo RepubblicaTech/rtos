@@ -36,6 +36,17 @@ Extras:
    ***NOTE***: if you installed the cross compiler from HomeBrew/MacPorts you should compile the project with `make KCC=x86_64-elf-gcc KLD=x86_64-elf-ld`
 - Arch Linux (last tested on December 2024)
 - Debian 12 on WSL2 (Windows 10 21H2 build 19044, last tested on September 2024)
+- Ubuntu on WSLW (Windows 10 22H2 build 19045, last tested on March 2025)
+
+- Tests on real hardware are made *at least* every merging to the `main` branch is made.
+    The hardware being tested on is the following:
+    - Intel Core i7-5820K (6C12T)
+    - ASUS X99-A
+    - 16GB RAM
+    - Sapphire Radeon R9 280X
+
+    ~~As of March 2025, only UEFI booting works (for some reason).~~
+   	If you want to try the kernel with legacy booting, make sure you run `limine bios-install <your target drive>`.
 
 ### Prequisites
 There are some packages that are needed for building and running the OS, make sure to check your distro's package manager for how to install them:
