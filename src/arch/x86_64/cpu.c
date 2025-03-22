@@ -18,6 +18,12 @@ bool check_apic() {
     return edx & CPUID_FEAT_EDX_APIC;
 }
 
+bool check_tsc() {
+    uint32_t edx, unused;
+    __get_cpuid(0x01, &unused, &unused, &unused, &edx);
+    return (edx & (1 << 4)) ? 1 : 0;
+}
+
 bool check_x2apic() {
     uint32_t eax, edx, unused;
     __get_cpuid(1, &eax, &unused, &unused, &edx);

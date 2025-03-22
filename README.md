@@ -42,7 +42,7 @@ There are some packages that are needed for building and running the OS, make su
 
 `nasm` - for compiling assembly files
 
-`xorriso` - for creating the ISO
+`xorriso and mkisofs` - for creating the ISO
 
 `qemu` - the emulator (you can use whatever software you like, but i have only tested with QEMU as of October 2024)
 
