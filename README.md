@@ -1,5 +1,5 @@
 # [this project doesn't have an official name yet]
- A freestading 64-bit kernel (currently in a very early development stage)
+A freestading 64-bit kernel (currently in a very early development stage)
 
 At the beginning of July 2024, after watching some videos about OSDev, I decided to start developing my own 64-bit kernel, just for the fun and also to have a more complete idea of how an OS works under the hood.
 
