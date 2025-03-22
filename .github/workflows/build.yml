@@ -22,14 +22,6 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y nasm xorriso diffutils patch
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.profile
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          brew install x86_64-elf-gcc x86_64-elf-binutils
-                
-      - name: Set up environment
-        run: |
-          echo "export PATH=\"/home/linuxbrew/.linuxbrew/bin:$PATH\"" >> $GITHUB_ENV
       
       - name: Install kernel dependencies
         run: |
@@ -37,7 +29,7 @@ jobs:
             ./libs/get_deps.sh src/kernel libs
         
       - name: Build kernel
-        run: make -j$(nproc)
+        run: make -j$(nproc) KCC=gcc KLD=ld
 
       - name: Upload kernel-v0.iso as artifact
         uses: actions/upload-artifact@v4
