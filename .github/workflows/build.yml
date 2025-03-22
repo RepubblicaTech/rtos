@@ -27,6 +27,7 @@ jobs:
         run: |
             chmod +x ./libs/get_deps.sh
             ./libs/get_deps.sh src/kernel libs
+            make -C libs/limine
         
       - name: Build kernel
         run: make -j$(nproc) KCC=gcc KLD=ld
