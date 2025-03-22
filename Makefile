@@ -87,6 +87,7 @@ override KCFLAGS += \
 	-D UACPI_BAREBONES_MODE \
 	-D UACPI_KERNEL_INITIALIZATION \
 	-D UACPI_FORMATTED_LOGGING \
+	-D CHAR_BIT=8 \
 
 # Internal C preprocessor flags that should not be changed by the user.
 override KCPPFLAGS := \
