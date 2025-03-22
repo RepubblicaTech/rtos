@@ -26,6 +26,10 @@ jobs:
           echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.profile
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           brew install x86_64-elf-gcc x86_64-elf-binutils
+                
+      - name: Set up environment
+        run: |
+          echo "export PATH=\"/home/linuxbrew/.linuxbrew/bin:$PATH\"" >> $GITHUB_ENV
       
       - name: Install kernel dependencies
         run: |
