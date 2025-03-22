@@ -7,13 +7,10 @@ void spinlock_acquire(atomic_flag *lock) {
 
     while (atomic_flag_test_and_set(lock)) {
         if (--timeout == 0) {
-            // Handle potential deadlock
-            // Options: panic, log, or return failure
             debugf_warn("Spinlock deadlock detected\n");
             spinlock_release(lock);
         }
 
-        // Optional: small delay to reduce CPU thrashing
         asm("pause");
     }
 }

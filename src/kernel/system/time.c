@@ -22,8 +22,7 @@ void timer_tick(registers_t *regs) {
 }
 
 void sched_timer_tick(registers_t *regs) {
-    _load_pml4(get_kernel_pml4());
+    UNUSED(regs);
     // debugf(".");
     set_ticks(get_current_ticks() + 1);
-    process_handler(regs);
 }

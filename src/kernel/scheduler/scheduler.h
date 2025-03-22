@@ -1,79 +1,95 @@
-/*
-        SMP-aware scheduler implementation with load balancing
-
-        (C) RepubblicaTech 2025
-*/
-
 #ifndef SCHEDULER_H
-#define SCHEDULER_H 1
+#define SCHEDULER_H
 
+#include <fs/vfs/vfs.h>
 #include <isr.h>
-#include <memory/vmm.h>
-#include <spinlock.h>
+#include <limits.h>
+#include <stdatomic.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <types.h>
 
-#define SCHED_TIME_SLICE    10
-#define SCHED_MAX_PROCESSES 2048
-#define MAX_CPUS            32
+#define SCHED_PROC_USER            0x01
+#define SCHED_PROC_KERNEL_PAGE_MAP 0x02
+#define SCHED_PROC_KERNEL_STACK    0x04
 
-#define PROC_STACK_PAGES 4
-#define PROC_STACK_SIZE  (1 * PFRAME_SIZE)
+typedef enum proc_state {
+    PROC_STATE_READY,
+    PROC_STATE_RUNNING,
+    PROC_STATE_STOPPED
+} proc_state_t;
 
-// Process states
-typedef enum {
-    PROC_STATUS_NEW,
-    PROC_STATUS_RUNNING,
-    PROC_STATUS_READY,
-    PROC_STATUS_BLOCKED,
-    PROC_STATUS_DEAD
-} process_state_t;
+typedef struct proc {
+    ppid_t ppid;
+    pid_t pid;
 
-// Process priorities
-#define PRIORITY_LOW    0
-#define PRIORITY_NORMAL 1
-#define PRIORITY_HIGH   2
-#define PRIORITY_RT     3
+    struct {
+        uid_t user;
+        gid_t group;
+    } whoami;
 
-typedef struct process_t {
-    registers_t registers_frame;
-
-    size_t pid;
-    uint8_t priority;      // Process priority (0-3)
-    uint32_t cpu_affinity; // Preferred CPU (-1 for any)
-    uint32_t assigned_cpu; // Currently assigned CPU
-
-    process_state_t state;
-    size_t time_slice;
-    size_t runtime_stats; // Track how long process has run
-
+    registers_t regs;
     uint64_t *pml4;
-} process_t;
 
-// Per-CPU scheduler data
-typedef struct cpu_scheduler_t {
-    size_t current_pid; // Currently running process index
-    process_t *processes[SCHED_MAX_PROCESSES]; // Per-CPU process array
-    size_t pid_count;    // Number of processes on this CPU
-    atomic_flag lock;    // Scheduler lock for this CPU
-    uint32_t cpu_id;     // CPU identifier
-    uint64_t idle_ticks; // Track idle time for load balancing
-} cpu_scheduler_t;
+    uint64_t time_slice;
+    int sched_flags;
 
-// Global scheduler functions
+    fd_t current_fd;
+    vnode_t fd_table[LIMIT_FD_PROC_MAX];
+
+    int errno;
+    proc_state_t state;
+
+    uint8_t current_core;
+    uint8_t preferred_core;
+    struct proc *next; // Linked list next pointer
+} proc_t;
+
+typedef struct core_scheduler {
+    uint8_t core_id;
+    proc_t *current_proc;
+    proc_t *idle_proc;
+
+    proc_t *run_queue_head;
+    proc_t *run_queue_tail;
+    size_t run_queue_size;
+
+    uint64_t context_switches;
+    uint64_t last_schedule_time;
+
+    uint32_t flags;
+    uint64_t default_time_slice;
+
+    atomic_flag lock;
+} core_scheduler_t;
+
+typedef struct scheduler_manager {
+    core_scheduler_t *core_schedulers;
+    size_t core_count;
+
+    proc_t *process_list_head; // Head of the linked list
+    size_t process_count;
+
+    pid_t next_pid;
+
+    uint64_t load_balance_interval;
+    uint64_t last_load_balance;
+
+    atomic_flag glob_lock;
+} scheduler_manager_t;
+
+extern volatile scheduler_manager_t scheduler_manager;
+
 void scheduler_init();
-void scheduler_init_cpu(uint32_t cpu_id);
-process_t *create_process(void (*entry)(), uint8_t priority);
-void destroy_process(size_t pid);
+void scheduler_init_cpu(uint8_t core);
 
-// Per-CPU scheduler functions
-process_t *get_current_process();
-void process_handler(registers_t *registers_frame);
+proc_t *scheduler_add(void *entry_point, int flags);
+void scheduler_remove(proc_t *proc);
 
-// Load balancing
-uint32_t get_least_loaded_cpu();
-void balance_load();
+proc_t *get_current_process();
+void scheduler_switch_context(proc_t *proc);
 
-// LAPIC timer handler
-void lapic_timer_tick_handler(registers_t *regs);
+void scheduler_schedule(registers_t *regs);
 
-#endif
+#endif // SCHEDULER_H

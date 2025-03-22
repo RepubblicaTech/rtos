@@ -21,7 +21,6 @@ QEMU_FLAGS = 	-m 32M \
 			 	-debugcon stdio \
 				-M q35 \
 				-smp 2 \
-
 # Nuke built-in rules and variables.
 override MAKEFLAGS += -rR --no-print-directory
 
@@ -88,6 +87,7 @@ override KCFLAGS += \
 	-D UACPI_BAREBONES_MODE \
 	-D UACPI_KERNEL_INITIALIZATION \
 	-D UACPI_FORMATTED_LOGGING \
+	-D CHAR_BIT=8 \
 
 # Internal C preprocessor flags that should not be changed by the user.
 override KCPPFLAGS := \
@@ -221,12 +221,7 @@ debug: $(OS_CODENAME).iso
 	@gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
 
 # Remove object files and the final executable.
-.PHONY: clean clean-all
-
-clean-all: clean
-	@rm -rf $(LIBS_DIR)/limine
-	@rm -rf $(LIBS_DIR)/flanterm
-	@rm -rf $(LIBS_DIR)/nanoprintf
+.PHONY: clean
 
 clean:
 	@rm -rf $(ISO_DIR)

@@ -1,4 +1,5 @@
 #include <acpi/uacpi/types.h>
+#include <uacpi/status.h>
 
 #include <kernel.h>
 

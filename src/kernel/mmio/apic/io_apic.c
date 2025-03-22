@@ -73,10 +73,10 @@ void apic_unregisterHandler(int irq) {
 
 // maps an I/O APIC IRQ to an interrupt that calls the handler if fired
 // @param irq			- The hardware interrupt that'll be fired
-// @param interrupt		- The interrupt vector that will be written to
-// the I/O APIC
+// @param interrupt		- The interrupt vector that will be written to the I/O APIC
 // @param handler		- The ISR that will be called when the interrupt
 // gets fired
+
 void ioapic_map_irq(int irq, int interrupt, irq_handler handler) {
     uint32_t redtble_lo = (0 << 16) |    // Unmask the entry
                           (0 << 11) |    // Destination mode

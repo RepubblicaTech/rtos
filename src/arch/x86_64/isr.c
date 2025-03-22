@@ -5,6 +5,7 @@
 #include "memory/paging/paging.h"
 #include "memory/pmm.h"
 #include "mmio/apic/apic.h"
+#include "smp/ipi.h"
 #include "smp/smp.h"
 #include <kernel.h>
 
@@ -92,7 +93,6 @@ void print_reg_dump(registers_t *regs) {
 }
 
 void panic_common(registers_t *regs) {
-    send_ipi_all_excluding_self(IPI_VECTOR_HALT);
     print_reg_dump(regs);
 
     // stacktrace
@@ -156,15 +156,30 @@ void isr_handler(registers_t *regs) {
     } else {
         stdio_panic_init();
 
-        fb_set_fg(PANIC_FG);
-        mprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n",
+        uint64_t cpu = lapic_get_id();
+
+        if (cpu != 0) {
+            debugf_warn(
+                "exception \"%s\" (nr. %#llx) on CPU %d @ %.16llx. error code "
+                "%#llx. halting...\n",
+                exceptions[regs->interrupt], regs->interrupt, cpu, regs->rip,
+                regs->error);
+            asm("cli");
+            for (;;)
+                _hcf();
+        } else {
+    
+            fb_set_fg(PANIC_FG);
+            mprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n",
                 exceptions[regs->interrupt], regs->interrupt);
+    
+            mprintf("\terrcode: %#llx\n", regs->error);
+            
 
-        mprintf("\terrcode: %#llx\n", regs->error);
+            panic_common(regs);
 
-        panic_common(regs);
-
-        _hcf();
+            _hcf();
+        }
     }
 }
 
