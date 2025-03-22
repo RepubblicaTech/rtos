@@ -157,6 +157,13 @@ struct bootloader_data *get_bootloader_data() {
 
 vmm_context_t *kernel_vmm_ctx;
 
+void test() {
+    VFS_WRITE("/dev/com1", "Hello world!");
+
+    for (;;)
+        ;
+}
+
 // kernel main function
 void kstart(void) {
     asm("cli");
@@ -545,14 +552,6 @@ void kstart(void) {
 
     limine_parsed_data.smp_enabled = true;
 
-    void *test_page        = pmm_alloc_page();
-    uint64_t physical_addr = (uint64_t)VIRT_TO_PHYSICAL(test_page);
-
-    uint64_t *pml4 = kernel_pml4;
-
-    map_region_to_page(pml4, physical_addr, 0x100000, PFRAME_SIZE,
-                       PMLE_USER_READ_WRITE);
-
     // pause a small time
     for (size_t i = 0; i < 1000000; i++)
         ;
@@ -562,7 +561,9 @@ void kstart(void) {
     kprintf("System started: Time took: %d seconds %d ms.\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % PIT_TICKS);
 
-    // limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
+    limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
+
+    // Fucking scheduler, someone plz fix
 
     for (;;)
         ;

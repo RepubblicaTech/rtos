@@ -56,8 +56,7 @@ isr_common:
     pop rax
 
     add rsp, 16 ; pop error code and interrupt number
-    iretq ; pops (CS, RIP, EFLAGS) and also (SS, RSP) if privilege change occurs
-
+    iretq
 
 %macro isr_err_stub 1
 global isr_stub_%+%1

@@ -1,5 +1,4 @@
 #include "spinlock.h"
-#include "smp/smp.h"
 #include "stdio.h"
 
 void spinlock_acquire(atomic_flag *lock) {

@@ -168,13 +168,12 @@ void isr_handler(registers_t *regs) {
             for (;;)
                 _hcf();
         } else {
-    
+
             fb_set_fg(PANIC_FG);
             mprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n",
-                exceptions[regs->interrupt], regs->interrupt);
-    
+                    exceptions[regs->interrupt], regs->interrupt);
+
             mprintf("\terrcode: %#llx\n", regs->error);
-            
 
             panic_common(regs);
 

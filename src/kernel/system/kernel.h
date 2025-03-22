@@ -51,6 +51,9 @@ typedef struct bootloader_data {
     bool smp_enabled; // * do not remove or tlb handler will shit itself
 
     uint64_t boot_time; // milliseconds since boot
+
+    // scheduler
+    bool scheduler_enabled;
 } bootloader_data;
 
 struct bootloader_data *get_bootloader_data();

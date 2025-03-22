@@ -21,7 +21,6 @@ typedef enum proc_state {
 } proc_state_t;
 
 typedef struct proc {
-    ppid_t ppid;
     pid_t pid;
 
     struct {
@@ -36,7 +35,7 @@ typedef struct proc {
     int sched_flags;
 
     fd_t current_fd;
-    vnode_t fd_table[LIMIT_FD_PROC_MAX];
+    vnode_t **fd_table;
 
     int errno;
     proc_state_t state;
@@ -79,7 +78,7 @@ typedef struct scheduler_manager {
     atomic_flag glob_lock;
 } scheduler_manager_t;
 
-extern volatile scheduler_manager_t scheduler_manager;
+extern scheduler_manager_t scheduler_manager;
 
 void scheduler_init();
 void scheduler_init_cpu(uint8_t core);
@@ -88,7 +87,7 @@ proc_t *scheduler_add(void *entry_point, int flags);
 void scheduler_remove(proc_t *proc);
 
 proc_t *get_current_process();
-void scheduler_switch_context(proc_t *proc);
+void scheduler_switch_context(proc_t *proc, registers_t *current_regs);
 
 void scheduler_schedule(registers_t *regs);
 

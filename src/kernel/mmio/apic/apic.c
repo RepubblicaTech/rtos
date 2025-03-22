@@ -1,3 +1,5 @@
+#include "mmio/apic/io_apic.h"
+#include "scheduler/scheduler.h"
 #include "time.h"
 #include <mmio/apic/apic.h>
 
@@ -18,7 +20,9 @@
 
 #include <mmio/mmio.h>
 
+#include <fs/vfs/vfs.h>
 #include <memory/pmm.h>
+#include <util/assert.h>
 
 static struct bootloader_data *limine_data;
 
@@ -115,8 +119,6 @@ uint32_t lapic_timer_calibrate_pit(void) {
     // Calculate ticks per ms
     uint32_t ticks_per_ms = lapic_ticks / elapsed_ticks;
 
-    debugf_debug("LAPIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
-    
     // Store this value for future use (can be static/global)
     return ticks_per_ms;
 }
@@ -127,15 +129,13 @@ uint32_t calibrate_apic_timer_tsc(void) {
 
     tsc_sleep(100000);
 
-    uint32_t end_count = lapic_read_reg(LAPIC_TIMER_CURR_CNT); 
+    uint32_t end_count = lapic_read_reg(LAPIC_TIMER_CURR_CNT);
 
     uint32_t elapsed_lapic_ticks = 0xFFFFFFFF - end_count;
 
-    uint64_t lapic_timer_frequency = (uint64_t) (elapsed_lapic_ticks * 10);
+    uint64_t lapic_timer_frequency = (uint64_t)(elapsed_lapic_ticks * 10);
 
     uint32_t ticks_per_ms = lapic_timer_frequency / 1000;
-
-    debugf_debug("LAPIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
 
     return ticks_per_ms;
 }
@@ -148,7 +148,7 @@ void lapic_timer_init(void) {
         lapic_timer_ticks_per_ms = lapic_timer_calibrate_pit();
 
     // Register the timer interrupt handler
-    isr_registerHandler(LAPIC_TIMER_VECTOR + LAPIC_IRQ_OFFSET,
+    isr_registerHandler(LAPIC_IRQ_OFFSET + LAPIC_TIMER_VECTOR,
                         lapic_timer_handler);
 
     // Configure the timer in periodic mode
@@ -168,21 +168,17 @@ void lapic_timer_init(void) {
     debugf_debug("LAPIC Timer initialized: %u ticks per ms\n",
                  lapic_timer_ticks_per_ms);
 }
-// Add to apic.c
+
 void lapic_timer_handler(registers_t *regs) {
 
-    if (get_current_ticks() >= MAX_LAPIC_TICKS) set_ticks(0);
+    if (get_current_ticks() >= MAX_LAPIC_TICKS)
+        set_ticks(0);
 
-    UNUSED(regs);
-    // Handle the timer interrupt
-    // This could trigger your scheduler or update a time counter
+    VFS_WRITE("/dev/com1", ".");
 
-    // Update system ticks (similar to your PIT handler)
     set_ticks(get_current_ticks() + 1);
 
-    // If you have per-CPU scheduling, you would handle it here
-    // process_handler(regs);
+    scheduler_schedule(regs);
 
-    // Send EOI
     lapic_send_eoi();
 }

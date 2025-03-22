@@ -72,7 +72,7 @@ void vmm_ctx_destroy(vmm_context_t *ctx) {
     // Free all VMOs and their associated physical memory
     for (virtmem_object_t *i = ctx->root_vmo; i != NULL;) {
         virtmem_object_t *next = i->next;
-        
+
         // Only free physical memory if the VMO is mapped
         if (i->flags & VMO_PRESENT) {
             uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, i->base);
@@ -80,9 +80,10 @@ void vmm_ctx_destroy(vmm_context_t *ctx) {
                 pmm_free((void *)PHYS_TO_VIRTUAL(phys), i->len);
             }
         }
-        
+
         // Free the VMO structure itself
-        pmm_free(i, ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE);
+        pmm_free(i,
+                 ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE);
         i = next;
     }
 
@@ -92,29 +93,29 @@ void vmm_ctx_destroy(vmm_context_t *ctx) {
         if (!(pml4[pml4_idx] & PMLE_PRESENT)) {
             continue;
         }
-        
+
         uint64_t *pdpt = (uint64_t *)PHYS_TO_VIRTUAL(pml4[pml4_idx] & ~0xFFF);
         for (int pdpt_idx = 0; pdpt_idx < 512; pdpt_idx++) {
             if (!(pdpt[pdpt_idx] & PMLE_PRESENT)) {
                 continue;
             }
-            
+
             uint64_t *pd = (uint64_t *)PHYS_TO_VIRTUAL(pdpt[pdpt_idx] & ~0xFFF);
             for (int pd_idx = 0; pd_idx < 512; pd_idx++) {
                 if (!(pd[pd_idx] & PMLE_PRESENT)) {
                     continue;
                 }
-                
+
                 uint64_t *pt = (uint64_t *)PHYS_TO_VIRTUAL(pd[pd_idx] & ~0xFFF);
-                
+
                 // Free the page table
                 pmm_free((void *)pt, 1);
             }
-            
+
             // Free the page directory
             pmm_free((void *)pd, 1);
         }
-        
+
         // Free the PDPT
         pmm_free((void *)pdpt, 1);
     }
