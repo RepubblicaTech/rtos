@@ -522,7 +522,7 @@ void kstart(void) {
     kprintf("System started: Time took: %d seconds %d ms.\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % PIT_TICKS);
 
-    limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
+    // limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
 
     for (;;)
         ;
