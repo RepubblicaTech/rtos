@@ -15,6 +15,7 @@
 #include <idt.h>
 #include <irq.h>
 #include <isr.h>
+#include <tsc.h>
 
 #include <cpu.h>
 #include <mmio/apic/apic.h>
@@ -108,9 +109,10 @@ __attribute__((
     used, section(".requests"))) static volatile struct limine_module_request
     module_request = {.id = LIMINE_MODULE_REQUEST, .revision = 0};
 
-//https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#firmware-type-feature
-__attribute__((used, 
-               section(".requests"))) static volatile struct limine_firmware_type_request
+// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#firmware-type-feature
+__attribute__((
+    used,
+    section(".requests"))) static volatile struct limine_firmware_type_request
     firmware_type_request = {.id = LIMINE_FIRMWARE_TYPE_REQUEST, .revision = 0};
 
 // next time warn me when you remove a request
@@ -202,7 +204,7 @@ void kstart(void) {
             FIRMWARE_TYPE = "UEFI32";
         } else if (firmware_type == LIMINE_FIRMWARE_TYPE_UEFI64) {
             FIRMWARE_TYPE = "UEFI64";
-        } 
+        }
     } else {
         FIRMWARE_TYPE = "No firmware type found!";
         debugf_debug("Firmware type: %s\n", FIRMWARE_TYPE);
@@ -265,8 +267,7 @@ void kstart(void) {
         tsc_init();
         tsc = 1;
         kprintf_ok("Initialized TSC\n");
-    }
-    else {
+    } else {
         debugf_debug("TSC not supported!\n");
     }
 
