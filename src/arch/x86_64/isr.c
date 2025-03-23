@@ -169,6 +169,7 @@ void isr_handler(registers_t *regs) {
                 _hcf();
         } else {
 
+            asm("cli");
             fb_set_fg(PANIC_FG);
             mprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n",
                     exceptions[regs->interrupt], regs->interrupt);

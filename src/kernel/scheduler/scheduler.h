@@ -42,7 +42,7 @@ typedef struct proc {
 
     uint8_t current_core;
     uint8_t preferred_core;
-    struct proc *next; // Linked list next pointer
+    struct proc *next;
 } proc_t;
 
 typedef struct core_scheduler {
@@ -64,10 +64,10 @@ typedef struct core_scheduler {
 } core_scheduler_t;
 
 typedef struct scheduler_manager {
-    core_scheduler_t *core_schedulers;
+    core_scheduler_t **core_schedulers;
     size_t core_count;
 
-    proc_t *process_list_head; // Head of the linked list
+    proc_t *process_list_head;
     size_t process_count;
 
     pid_t next_pid;
@@ -78,12 +78,12 @@ typedef struct scheduler_manager {
     atomic_flag glob_lock;
 } scheduler_manager_t;
 
-extern scheduler_manager_t scheduler_manager;
+extern scheduler_manager_t *scheduler_manager;
 
 void scheduler_init();
 void scheduler_init_cpu(uint8_t core);
 
-proc_t *scheduler_add(void *entry_point, int flags);
+proc_t *scheduler_add(void (*entry_point)(), int flags);
 void scheduler_remove(proc_t *proc);
 
 proc_t *get_current_process();
@@ -91,4 +91,6 @@ void scheduler_switch_context(proc_t *proc, registers_t *current_regs);
 
 void scheduler_schedule(registers_t *regs);
 
-#endif // SCHEDULER_H
+#define PROC_TIME_SLICE 10
+
+#endif

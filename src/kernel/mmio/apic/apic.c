@@ -174,8 +174,6 @@ void lapic_timer_handler(registers_t *regs) {
     if (get_current_ticks() >= MAX_LAPIC_TICKS)
         set_ticks(0);
 
-    VFS_WRITE("/dev/com1", ".");
-
     set_ticks(get_current_ticks() + 1);
 
     scheduler_schedule(regs);

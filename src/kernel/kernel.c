@@ -157,7 +157,7 @@ struct bootloader_data *get_bootloader_data() {
 
 vmm_context_t *kernel_vmm_ctx;
 
-void test() {
+void test_func() {
     VFS_WRITE("/dev/com1", "Hello world!");
 
     for (;;)
@@ -553,8 +553,6 @@ void kstart(void) {
     limine_parsed_data.smp_enabled = true;
 
     // pause a small time
-    for (size_t i = 0; i < 1000000; i++)
-        ;
 
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
@@ -562,8 +560,6 @@ void kstart(void) {
             end_tick_after_init / PIT_TICKS, end_tick_after_init % PIT_TICKS);
 
     limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
-
-    // Fucking scheduler, someone plz fix
 
     for (;;)
         ;

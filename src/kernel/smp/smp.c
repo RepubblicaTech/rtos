@@ -71,8 +71,7 @@ void mp_trampoline(struct limine_smp_info *cpu) {
 
     asm("sti");
 
-    debugf_ok("CPU %lu initialized and ready. APIC ID: %d\n", cpu->lapic_id,
-              lapic_get_id());
+    debugf_ok("CPU %lu initialized and ready.\n", lapic_get_id());
 
     for (;;)
         ;

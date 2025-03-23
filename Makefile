@@ -176,8 +176,9 @@ libs:
 	@./libs/get_deps.sh $(SRC_DIR)/kernel $(LIBS_DIR)
 
 # Create initrd image
-$(ISO_DIR)/initrd.img: $(wildcard $(INITRD_DIR)/*)
-	@tar -cvf $@ $(INITRD_DIR)/
+# Create initrd image
+$(ISO_DIR)/initrd.img: $(shell find $(INITRD_DIR) -type f)
+	@cd $(INITRD_DIR) && tar -cvf ../$(ISO_DIR)/initrd.img --format=ustar *
 	@echo "--> Initrd:	" $@
 
 # Link rules for the final kernel executable.

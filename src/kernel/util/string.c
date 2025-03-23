@@ -1,4 +1,5 @@
 #include "string.h"
+#include "stdio.h"
 #include <io.h>
 #include <memory/heap/liballoc.h>
 
@@ -9,6 +10,7 @@
 // They CAN be moved to a different .c file.
 
 void *memcpy(void *dest, const void *src, size_t n) {
+    // debugf("memcpy(%p, %p, %zu)\n", dest, src, n);
     uint8_t *pdest      = (uint8_t *)dest;
     const uint8_t *psrc = (const uint8_t *)src;
 
@@ -189,6 +191,19 @@ char *strchr(const char *str, int c) {
         str++;
     }
     return (c == '\0') ? (char *)str : NULL; // Handle null terminator case
+}
+
+char *strrchr(const char *s, int c) {
+    const char *last = NULL;
+
+    while (*s) {
+        if (*s == (char)c) {
+            last = s;
+        }
+        s++;
+    }
+
+    return (char *)last;
 }
 
 char *strtok_r(char *str, const char *delim, char **saveptr) {

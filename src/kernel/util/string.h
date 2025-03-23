@@ -31,6 +31,7 @@ char *strncpy(char *dest, const char *src, size_t n);
 char *strdup(const char *s);
 char *strtok(char *str, const char *delim);
 char *strchr(const char *str, int c);
+char *strrchr(const char *s, int c);
 char *strtok_r(char *str, const char *delim, char **saveptr);
 
 static const char *const memory_block_type[] = {"USABLE",
