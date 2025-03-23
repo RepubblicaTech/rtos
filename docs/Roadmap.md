@@ -64,7 +64,7 @@ A build (`.iso` file) will be released every time a Milestone is completed. The 
   - [ ] FAT32 (boot partition)
   - [ ] EXTx  (system partition)
 
-- [ ] SMP
+- [X] SMP
 
 - [ ] Microkernel environment ([Eleanore Semaphore](https://wiki.osdev.org/Eleanore_Semaphore))
 - [ ] Jump to userspace
