@@ -24,8 +24,8 @@ typedef long ssize_t;
 #define NANOPRINTF_IMPLEMENTATION
 #include <nanoprintf.h>
 
-atomic_flag STDIO_FB_LOCK;
-atomic_flag STDIO_E9_LOCK;
+lock_t STDIO_FB_LOCK;
+lock_t STDIO_E9_LOCK;
 
 uint32_t current_bg;
 uint32_t current_fg;

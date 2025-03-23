@@ -453,7 +453,7 @@ void uacpi_kernel_sleep(uacpi_u64 msec) {
 }
 
 uacpi_handle uacpi_kernel_create_mutex(void) {
-    atomic_flag *atomic = kmalloc(sizeof(atomic_flag));
+    *atomic = kmalloc(sizeof());
 
     return atomic;
 }

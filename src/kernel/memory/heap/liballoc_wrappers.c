@@ -1,3 +1,4 @@
+#include "types.h"
 #include <spinlock.h>
 #include <stddef.h>
 
@@ -8,7 +9,7 @@
 // liballoc will now work on the current VMM context loaded here
 extern vmm_context_t *current_vmm_ctx;
 
-atomic_flag ATOMIC_LIBALLOC = ATOMIC_FLAG_INIT;
+lock_t ATOMIC_LIBALLOC = LOCK_INIT;
 
 int liballoc_lock() {
     spinlock_acquire(&ATOMIC_LIBALLOC);

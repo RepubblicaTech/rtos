@@ -60,7 +60,7 @@ typedef struct core_scheduler {
     uint32_t flags;
     uint64_t default_time_slice;
 
-    atomic_flag lock;
+    lock_t lock;
 } core_scheduler_t;
 
 typedef struct scheduler_manager {
@@ -75,7 +75,7 @@ typedef struct scheduler_manager {
     uint64_t load_balance_interval;
     uint64_t last_load_balance;
 
-    atomic_flag glob_lock;
+    lock_t glob_lock;
 } scheduler_manager_t;
 
 extern scheduler_manager_t *scheduler_manager;
