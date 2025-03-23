@@ -157,13 +157,6 @@ struct bootloader_data *get_bootloader_data() {
 
 vmm_context_t *kernel_vmm_ctx;
 
-void test_func() {
-    VFS_WRITE("/dev/com1", "Hello world!");
-
-    for (;;)
-        ;
-}
-
 // kernel main function
 void kstart(void) {
     asm("cli");
@@ -562,8 +555,6 @@ void kstart(void) {
             end_tick_after_init / PIT_TICKS, end_tick_after_init % PIT_TICKS);
 
     limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
-
-    create_process(test_func, PRIORITY_NORMAL);
 
     for (;;)
         ;
