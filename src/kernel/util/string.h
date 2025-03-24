@@ -33,6 +33,7 @@ char *strtok(char *str, const char *delim);
 char *strchr(const char *str, int c);
 char *strrchr(const char *s, int c);
 char *strtok_r(char *str, const char *delim, char **saveptr);
+void strcpy(char dest[], const char source[]);
 
 static const char *const memory_block_type[] = {"USABLE",
                                                 "RESERVED",

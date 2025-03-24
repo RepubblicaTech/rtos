@@ -11,6 +11,8 @@
 #include <flanterm/flanterm.h>
 #include <flanterm/flanterm_private.h>
 
+#include <ahci/ahci.h>
+
 #include <gdt.h>
 #include <idt.h>
 #include <irq.h>
