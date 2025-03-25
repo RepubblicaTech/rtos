@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 extern uint64_t _get_tsc();
-void tsc_tick_handler(registers_t *regs);
+void tsc_tick_handler(void *ctx);
 void tsc_sleep(uint64_t microseconds);
 uint64_t get_cpu_freq_msr();
 

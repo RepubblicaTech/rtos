@@ -233,11 +233,13 @@ void scheduler_switch_context(proc_t *proc, registers_t *current_regs) {
     _load_pml4(proc->pml4);
 }
 
-void scheduler_schedule(registers_t *regs) {
+void scheduler_schedule(void *ctx) {
     asm("cli");
     _load_pml4(get_kernel_pml4());
 
     core_scheduler_t *sched = scheduler_manager->core_schedulers[get_cpu()];
+
+    registers_t *regs = ctx;
 
     if (sched->current_proc) {
         memcpy(&sched->current_proc->regs, regs, sizeof(registers_t));

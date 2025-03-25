@@ -45,7 +45,9 @@ void ioapic_reg_write(uint8_t reg, uint32_t value) {
 
 irq_handler apic_irq_handlers[IOREDTBL_ENTRIES];
 
-void apic_irq_handler(registers_t *regs) {
+void apic_irq_handler(void *ctx) {
+    registers_t *regs = ctx;
+
     int apic_irq = regs->interrupt - IOAPIC_IRQ_OFFSET;
 
     uint64_t apic_isr = lapic_read_reg(LAPIC_INSERVICE_REG);
@@ -73,7 +75,8 @@ void apic_unregisterHandler(int irq) {
 
 // maps an I/O APIC IRQ to an interrupt that calls the handler if fired
 // @param irq			- The hardware interrupt that'll be fired
-// @param interrupt		- The interrupt vector that will be written to the I/O APIC
+// @param interrupt		- The interrupt vector that will be written to
+// the I/O APIC
 // @param handler		- The ISR that will be called when the interrupt
 // gets fired
 

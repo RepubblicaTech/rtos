@@ -89,7 +89,7 @@ void scheduler_remove(proc_t *proc);
 proc_t *get_current_process();
 void scheduler_switch_context(proc_t *proc, registers_t *current_regs);
 
-void scheduler_schedule(registers_t *regs);
+void scheduler_schedule(void *ctx);
 
 #define PROC_TIME_SLICE 10
 

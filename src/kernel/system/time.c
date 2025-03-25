@@ -15,14 +15,14 @@ void set_ticks(uint64_t new_ticks) {
     ticks = new_ticks;
 }
 
-void timer_tick(registers_t *regs) {
-    UNUSED(regs);
+void timer_tick(void *ctx) {
+    UNUSED(ctx);
     // debugf(".");
     set_ticks(get_current_ticks() + 1);
 }
 
-void sched_timer_tick(registers_t *regs) {
-    UNUSED(regs);
+void sched_timer_tick(void *ctx) {
+    UNUSED(ctx);
     // debugf(".");
     set_ticks(get_current_ticks() + 1);
 }

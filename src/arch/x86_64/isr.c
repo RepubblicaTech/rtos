@@ -58,8 +58,10 @@ void isr_init() {
     idt_gate_disable(0x80);
 }
 
-void print_reg_dump(registers_t *regs) {
+void print_reg_dump(void *ctx) {
     debugf(ANSI_COLOR_RED);
+
+    registers_t *regs = ctx;
 
     mprintf("\nRegister dump:\n\n");
 
@@ -92,7 +94,9 @@ void print_reg_dump(registers_t *regs) {
             regs->rsi);
 }
 
-void panic_common(registers_t *regs) {
+void panic_common(void *ctx) {
+    registers_t *regs = ctx;
+
     print_reg_dump(regs);
 
     // stacktrace
@@ -121,9 +125,9 @@ void panic_common(registers_t *regs) {
         // If this is in the higher-half kernel space, convert to physical
         // address
         uint64_t phys_addr = 0;
-        if (return_addr >= 0xffff800000000000) {
+        if (return_addr >= bootloader_data->kernel_base_virtual) {
             // Using HHDM offset from limine bootloader
-            phys_addr = return_addr - bootloader_data->hhdm_offset;
+            phys_addr = return_addr - bootloader_data->kernel_base_virtual;
             mprintf("Frame %d: [%p] func addr: %#llx (phys: %#llx)\n", frame,
                     rbp, approx_func_addr, phys_addr);
         } else {
@@ -146,7 +150,8 @@ void panic_common(registers_t *regs) {
         _hcf();
 }
 
-void isr_handler(registers_t *regs) {
+void isr_handler(void *ctx) {
+    registers_t *regs = ctx;
 
     if (isr_handlers[regs->interrupt] != NULL) {
         isr_handlers[regs->interrupt](regs);

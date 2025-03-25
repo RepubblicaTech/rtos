@@ -11,7 +11,8 @@ volatile uint64_t tsc_ticks = 0;
 
 uint64_t cpu_frequency_hz1 = 0;
 
-void tsc_tick_handler(registers_t *regs) {
+void tsc_tick_handler(void *ctx) {
+    registers_t *regs = ctx;
     UNUSED(regs);
 
     static uint64_t last_tsc = 0;

@@ -77,9 +77,11 @@ unrelated to ordinary paging.
         Simply gives information about a page fault error code
         (C) RepubblicaTech 2024
 */
-void pf_handler(registers_t *regs) {
+void pf_handler(void *ctx) {
     stdio_panic_init();
     rsod_init();
+
+    registers_t *regs = ctx;
 
     uint64_t pf_error_code = (uint64_t)regs->error;
 
