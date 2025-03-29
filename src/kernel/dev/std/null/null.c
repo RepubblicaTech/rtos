@@ -6,6 +6,7 @@ void dev_null_init() {
     dev->type  = DEVICE_TYPE_CHAR;
     dev->read  = dev_null_read;
     dev->write = dev_null_write;
+    dev->ioctl = dev_null_ioctl;
     dev->data  = "null-dev;no-wrt";
     register_device(dev);
 }
@@ -25,5 +26,12 @@ int dev_null_write(struct device *dev, const void *buffer, size_t size,
     (void)offset;
     (void)buffer;
     (void)size;
+    return 0;
+}
+
+int dev_null_ioctl(struct device *dev, int request, void *arg) {
+    (void)dev;
+    (void)request;
+    (void)arg;
     return 0;
 }

@@ -216,7 +216,8 @@ run: $(OS_CODENAME).iso
 run-wsl: $(OS_CODENAME).iso
 	@qemu-system-x86_64.exe \
 		$(QEMU_FLAGS) \
-		-cdrom $<
+		-cdrom $< \
+		-accel whpx
 
 
 debug: $(OS_CODENAME).iso

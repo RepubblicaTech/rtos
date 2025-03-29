@@ -52,6 +52,14 @@ int dev_lpt1_write(struct device *dev, const void *buffer, size_t size,
     return 0;
 }
 
+int dev_lpt1_ioctl(struct device *dev, int request, void *arg) {
+    // used for "configuring" the device
+    (void)dev;
+    (void)request;
+    (void)arg;
+    return 0;
+}
+
 void dev_parallel_init() {
     _outb(CONTROL_PORT, CONTROL_INIT);
 
@@ -75,6 +83,7 @@ void dev_parallel_init() {
     lpt1->type  = DEVICE_TYPE_CHAR;
     lpt1->read  = dev_lpt1_read;
     lpt1->write = dev_lpt1_write;
+    lpt1->ioctl = dev_lpt1_ioctl;
     lpt1->data  = lpt1_info;
 
     register_device(lpt1);

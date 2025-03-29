@@ -38,6 +38,7 @@ uint8_t lpt1_read();
 int dev_lpt1_read(struct device *dev, void *buffer, size_t size, size_t offset);
 int dev_lpt1_write(struct device *dev, const void *buffer, size_t size,
                    size_t offset);
+int dev_lpt1_ioctl(struct device *dev, int request, void *arg);
 
 void dev_parallel_init();
 

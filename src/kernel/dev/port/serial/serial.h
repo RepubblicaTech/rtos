@@ -12,6 +12,7 @@
 int com1_write(struct device *dev, const void *buffer, size_t size,
                size_t offset);
 int com1_read(struct device *dev, void *buffer, size_t size, size_t offset);
+int com1_ioctl(struct device *dev, int request, void *arg);
 
 void serial_init(int port);
 

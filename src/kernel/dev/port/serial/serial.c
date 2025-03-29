@@ -67,6 +67,15 @@ char serial_read(int port) {
     return _inb(port);
 }
 
+int com1_ioctl(struct device *dev, int request, void *arg) {
+    (void)dev;
+    (void)request;
+    (void)arg;
+
+    // Implement IOCTL commands here if needed
+    return 0;
+}
+
 void dev_serial_init() {
     serial_init(COM1);
 
@@ -74,6 +83,7 @@ void dev_serial_init() {
     memcpy(dev->name, "com1", DEVICE_NAME_MAX);
     dev->write = com1_write;
     dev->read  = com1_read;
+    dev->ioctl = com1_ioctl;
     dev->type  = DEVICE_TYPE_CHAR;
     dev->data  = "com1;38400baud;8n1;irq;fifo;works";
 

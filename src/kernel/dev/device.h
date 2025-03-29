@@ -18,6 +18,7 @@ typedef struct device {
     int (*read)(struct device *dev, void *buffer, size_t size, size_t offset);
     int (*write)(struct device *dev, const void *buffer, size_t size,
                  size_t offset);
+    int (*ioctl)(struct device *dev, int request, void *arg);
     void *data;
 } device_t;
 
