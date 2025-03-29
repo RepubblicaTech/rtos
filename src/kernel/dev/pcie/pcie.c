@@ -1,11 +1,5 @@
 #include "pcie.h"
-#include "fs/ustar/ustar.h"
-#include "io.h"
-#include "memory/heap/liballoc.h"
 #include "stdio.h"
-
-#define PCI_CONFIG_ADDRESS 0xCF8
-#define PCI_CONFIG_DATA    0xCFC
 
 pci_device_t *pci_devices_head = NULL;
 
@@ -87,10 +81,11 @@ uint32_t pci_config_read(uint8_t bus, uint8_t device, uint8_t function,
     return _inl(PCI_CONFIG_DATA);
 }
 
-void pci_add_device(uint8_t bus, uint8_t device, uint8_t function) {
+pci_device_t *pci_add_device(uint8_t bus, uint8_t device, uint8_t function,
+                             ustar_file_tree_t *pci_ids) {
     uint32_t vendor_device = pci_config_read(bus, device, function, 0);
     if ((vendor_device & 0xFFFF) == 0xFFFF)
-        return;
+        return NULL;
 
     pci_device_t *new_dev = (pci_device_t *)kmalloc(sizeof(pci_device_t));
     new_dev->bus          = bus;
@@ -103,69 +98,63 @@ void pci_add_device(uint8_t bus, uint8_t device, uint8_t function) {
     new_dev->subclass     = (class_info >> 16) & 0xFF;
     new_dev->prog_if      = (class_info >> 8) & 0xFF;
     new_dev->header_type  = pci_config_read(bus, device, function, 0x0C) & 0xFF;
-    new_dev->next         = pci_devices_head;
-    pci_devices_head      = new_dev;
+    pci_lookup_vendor_device(new_dev, pci_ids->found_files[0]->start,
+                             pci_ids->found_files[0]->size);
+
+    // read BARs
+    for (int i = 0; i < 6; i++) {
+        uint32_t bar = pci_config_read(bus, device, function, 0x10 + (i * 4));
+        if (bar == 0)
+            break;
+        if ((bar & 0x1) == 0) {
+            // Memory mapped I/O
+            new_dev->bar[i] = bar & ~0xF;
+            new_dev->type   = PCI_TYPE_MMIO;
+        } else {
+            // I/O mapped
+            new_dev->bar[i] = bar & ~0x3;
+            new_dev->type   = PCI_TYPE_PIO;
+        }
+    }
+    // read IRQ line and pin
+    uint8_t irq_line =
+        pci_config_read(bus, device, function, 0x3C); // Read the interrupt line
+    uint8_t irq_pin =
+        pci_config_read(bus, device, function, 0x3D); // Read the interrupt pin
+
+    new_dev->irq_line = irq_line; // Directly assign the interrupt line
+    new_dev->irq_pin  = irq_pin;  // Directly assign the interrupt pin
+
+    kprintf("IRQ Pin: %d\n", new_dev->irq_pin);
+
+    new_dev->next    = pci_devices_head;
+    pci_devices_head = new_dev;
+    return new_dev;
 }
 
-void pci_scan() {
+void pci_scan(ustar_file_tree_t *pci_ids) {
     for (uint16_t bus = 0; bus < 256; bus++) {
         for (uint8_t device = 0; device < 32; device++) {
             for (uint8_t function = 0; function < 8; function++) {
-                pci_add_device(bus, device, function);
+                pci_add_device(bus, device, function, pci_ids);
             }
         }
     }
 }
 
-void pci_print_devices(ustar_file_tree_t *pci_ids) {
-    if (!pci_devices_head) {
-        kprintf("No PCI devices found.\n");
+void pci_lookup_vendor_device(pci_device_t *dev, const char *pci_ids,
+                              size_t length) {
+    size_t i                          = 0;
+    char vendor_name[MAX_VENDOR_NAME] = "Unknown Vendor";
+    char device_name[MAX_DEVICE_NAME] = "Unknown Device";
+    int found_vendor                  = 0;
+
+    // make vendor 1234 say Virtual and device 1111 Emulated Display Controller
+    if (dev->vendor_id == 0x1234 && dev->device_id == 0x1111) {
+        strcpy(vendor_name, "Virtual");
+        strcpy(device_name, "Emulated Display Controller");
         return;
     }
-    pci_device_t *dev = pci_devices_head;
-    while (dev) {
-        kprintf("PCI Device: Bus %u, Device %u, Function %u\n", dev->bus,
-                dev->device, dev->function);
-
-        {
-            pci_vendor_specific_t info = get_pci_device_info(
-                pci_ids->found_files[0]->start, pci_ids->found_files[0]->size,
-                dev->vendor_id, dev->device_id);
-            if (info.vendor[0] != '\0') {
-                kprintf("  Vendor: %s (0x%04X)\n  Device: %s (0x%04X)\n",
-                        info.vendor, dev->vendor_id, info.device,
-                        dev->device_id);
-            } else {
-                kprintf("  Vendor: Unknown (0x%04X)\n  Device: Unknown "
-                        "(0x%04X)\n",
-                        dev->vendor_id, dev->device_id);
-            }
-        }
-        kprintf("  Class: %s (0x%02X)\n  Subclass: %s (0x%02X)\n  Prog IF: "
-                "0x%02X\n",
-                pci_get_class_name(dev->class_code), dev->class_code,
-                pci_get_subclass_name(dev->class_code, dev->subclass),
-                dev->subclass, dev->prog_if);
-        dev = dev->next;
-    }
-}
-
-void pci_free_list() {
-    while (pci_devices_head) {
-        pci_device_t *temp = pci_devices_head;
-        pci_devices_head   = pci_devices_head->next;
-        kfree(temp);
-    }
-}
-
-pci_vendor_specific_t get_pci_device_info(const char *pci_ids, size_t length,
-                                          uint16_t vendor_id,
-                                          uint16_t device_id) {
-    pci_vendor_specific_t info = {"Unknown Vendor", "Unknown Device"};
-
-    size_t i                          = 0;
-    char vendor_name[MAX_VENDOR_NAME] = "";
-    int found_vendor                  = 0;
 
     while (i < length) {
         if (pci_ids[i] == '#') {
@@ -174,8 +163,7 @@ pci_vendor_specific_t get_pci_device_info(const char *pci_ids, size_t length,
             i++;
             continue;
         }
-
-        if (pci_ids[i] != '\t') { // Vendor line
+        if (pci_ids[i] != '\t') {
             uint16_t v_id = 0;
             size_t j      = 0;
             while (i < length && pci_ids[i] != ' ' && j < 4) {
@@ -187,22 +175,17 @@ pci_vendor_specific_t get_pci_device_info(const char *pci_ids, size_t length,
             }
             while (i < length && pci_ids[i] == ' ')
                 i++;
-
             size_t k = 0;
             while (i < length && pci_ids[i] != '\n' &&
                    k < MAX_VENDOR_NAME - 1) {
                 vendor_name[k++] = pci_ids[i++];
             }
             vendor_name[k] = '\0';
-
-            if (v_id == vendor_id) {
-                for (size_t m = 0; m < MAX_VENDOR_NAME; m++) {
-                    info.vendor[m] = vendor_name[m];
-                }
+            if (v_id == dev->vendor_id) {
                 found_vendor = 1;
             }
-        } else if (found_vendor) { // Device line (indented)
-            i++;                   // Skip tab
+        } else if (found_vendor) {
+            i++;
             uint16_t d_id = 0;
             size_t j      = 0;
             while (i < length && pci_ids[i] != ' ' && j < 4) {
@@ -214,27 +197,83 @@ pci_vendor_specific_t get_pci_device_info(const char *pci_ids, size_t length,
             }
             while (i < length && pci_ids[i] == ' ')
                 i++;
-
-            char device_name[MAX_DEVICE_NAME];
             size_t k = 0;
             while (i < length && pci_ids[i] != '\n' &&
                    k < MAX_DEVICE_NAME - 1) {
                 device_name[k++] = pci_ids[i++];
             }
             device_name[k] = '\0';
-
-            if (d_id == device_id) {
-                for (size_t m = 0; m < MAX_DEVICE_NAME; m++) {
-                    info.device[m] = device_name[m];
-                }
+            if (d_id == dev->device_id) {
                 break;
             }
         }
-
         while (i < length && pci_ids[i] != '\n')
             i++;
         i++;
     }
+    strcpy(dev->vendor_str, vendor_name);
+    strcpy(dev->device_str, device_name);
+}
 
-    return info;
+void pci_print_info(uint8_t bus, uint8_t device, uint8_t function) {
+    pci_device_t *dev = pci_devices_head;
+    while (dev) {
+        if (dev->bus == bus && dev->device == device &&
+            dev->function == function) {
+            kprintf("PCI Device: %s %s (%04x:%04x)\n", dev->vendor_str,
+                    dev->device_str, dev->vendor_id, dev->device_id);
+            return;
+        }
+        dev = dev->next;
+    }
+    kprintf("PCI Device not found.\n");
+}
+
+void pci_print_list() {
+    pci_device_t *dev = pci_devices_head;
+    while (dev) {
+        debugf("PCI Device: Bus %d, Device %d, Function %d\n", dev->bus,
+               dev->device, dev->function);
+        debugf("  %s %s (%04x:%04x)\n", dev->vendor_str, dev->device_str,
+               dev->vendor_id, dev->device_id);
+        debugf("  %s; %s (Class: 0x%02x, Sub-Class: 0x%02x)\n",
+               pci_get_class_name(dev->class_code),
+               pci_get_subclass_name(dev->class_code, dev->subclass),
+               dev->class_code, dev->subclass);
+        debugf("  %s\n",
+               dev->header_type == 0 ? "Single Function" : "Multi-Function");
+        debugf("  %s\n", dev->prog_if == 0 ? "No Programming Interface"
+                                           : "Programming Interface");
+        debugf("  %s\n", dev->type == PCI_TYPE_MMIO ? "MMIO" : "PIO");
+
+        switch (dev->irq_pin) {
+        case 1:
+            debugf("  IRQ INTA\n");
+            break;
+        case 2:
+            debugf("  IRQ INTB\n");
+            break;
+        case 3:
+            debugf("  IRQ INTC\n");
+            break;
+        case 4:
+            debugf("  IRQ INTD\n");
+            break;
+        default:
+            debugf("  No IRQ (%d)\n", dev->irq_pin);
+            break;
+        }
+
+        if (dev->irq_pin != 0 && dev->irq_pin <= 4) {
+            debugf("  IRQ %d\n", dev->irq_line);
+        }
+
+        debugf("  BAR0: 0x%08x\n", dev->bar[0]);
+        debugf("  BAR1: 0x%08x\n", dev->bar[1]);
+        debugf("  BAR2: 0x%08x\n", dev->bar[2]);
+        debugf("  BAR3: 0x%08x\n", dev->bar[3]);
+        debugf("  BAR4: 0x%08x\n", dev->bar[4]);
+        debugf("  BAR5: 0x%08x\n", dev->bar[5]);
+        dev = dev->next;
+    }
 }

@@ -550,8 +550,8 @@ void kstart(void) {
 
     ustar_file_tree_t *pci_ids = file_lookup(initramfs_disk, "pci.ids");
 
-    pci_scan();
-    pci_print_devices(pci_ids);
+    pci_scan(pci_ids);
+    pci_print_list();
 
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
