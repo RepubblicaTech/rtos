@@ -1,5 +1,6 @@
 #include "pcie.h"
 #include "stdio.h"
+#include <util/string.h>
 
 pci_device_t *pci_devices_head = NULL;
 
@@ -149,10 +150,20 @@ void pci_lookup_vendor_device(pci_device_t *dev, const char *pci_ids,
     char device_name[MAX_DEVICE_NAME] = "Unknown Device";
     int found_vendor                  = 0;
 
-    // make vendor 1234 say Virtual and device 1111 Emulated Display Controller
-    if (dev->vendor_id == 0x1234 && dev->device_id == 0x1111) {
-        strcpy(vendor_name, "Virtual");
-        strcpy(device_name, "Emulated Display Controller");
+    if (dev->vendor_id == 0x1234) {
+        memcpy(vendor_name, "QEMU", MAX_VENDOR_NAME);
+        if (dev->device_id == 0x1111) {
+            memcpy(device_name, "Emulated VGA Display Controller",
+                   MAX_DEVICE_NAME);
+        } else if (dev->device_id == 0x0001) {
+            memcpy(device_name, "Virtio Block Device", MAX_DEVICE_NAME);
+        } else if (dev->device_id == 0x0002) {
+            memcpy(device_name, "Virtio Network Device", MAX_DEVICE_NAME);
+        }
+
+        strcpy(dev->vendor_str, vendor_name);
+        strcpy(dev->device_str, device_name);
+
         return;
     }
 
