@@ -1,8 +1,11 @@
+#include "uacpi/kernel_api.h"
+
 #include <acpi/uacpi/types.h>
 #include <uacpi/status.h>
 
 #include <kernel.h>
 
+#include <isr.h>
 #include <pit.h>
 
 #include <memory/heap/liballoc.h>
@@ -19,7 +22,10 @@
 
 #include <dev/pcie/pcie.h>
 
+#include <semaphore.h>
 #include <spinlock.h>
+
+#include <cpu.h>
 
 // --- fun fact: `uacpi_phys_addr` is uint64_t btw ---
 
@@ -185,10 +191,10 @@ uacpi_status uacpi_kernel_pci_device_open(uacpi_pci_address address,
     return UACPI_STATUS_OK;
 }
 
-void uacpi_kernel_pci_device_close(uacpi_handle *handle) {
+void uacpi_kernel_pci_device_close(uacpi_handle handle) {
     assert(handle);
 
-    handle[0] = NULL;
+    handle = NULL;
 }
 
 uacpi_status uacpi_kernel_pci_read_impl(uacpi_handle addr,
@@ -217,34 +223,34 @@ uacpi_status uacpi_kernel_pci_read8(uacpi_handle device, uacpi_size offset,
                                     uacpi_u8 *value) {
     uacpi_pci_address *pci_dev = (uacpi_pci_address *)PHYS_TO_VIRTUAL(device);
 
-    void *pci_addr =
-        (((pci_dev->bus << 8) + (pci_dev->device << 3) + pci_dev->function)
-         << 12) +
-        offset;
+    void *pci_addr = (void *)((((pci_dev->bus << 8) + (pci_dev->device << 3) +
+                                pci_dev->function)
+                               << 12) +
+                              offset);
 
-    return uacpi_kernel_pci_read_impl(pci_addr, *(uacpi_size *)value, 1);
+    return uacpi_kernel_pci_read_impl(pci_addr, value, 1);
 }
 uacpi_status uacpi_kernel_pci_read16(uacpi_handle device, uacpi_size offset,
                                      uacpi_u16 *value) {
     uacpi_pci_address *pci_dev = (uacpi_pci_address *)PHYS_TO_VIRTUAL(device);
 
-    void *pci_addr =
-        (((pci_dev->bus << 8) + (pci_dev->device << 3) + pci_dev->function)
-         << 12) +
-        offset;
+    void *pci_addr = (void *)((((pci_dev->bus << 8) + (pci_dev->device << 3) +
+                                pci_dev->function)
+                               << 12) +
+                              offset);
 
-    return uacpi_kernel_pci_read_impl(pci_addr, *(uacpi_size *)value, 2);
+    return uacpi_kernel_pci_read_impl(pci_addr, value, 2);
 }
 uacpi_status uacpi_kernel_pci_read32(uacpi_handle device, uacpi_size offset,
                                      uacpi_u32 *value) {
     uacpi_pci_address *pci_dev = (uacpi_pci_address *)PHYS_TO_VIRTUAL(device);
 
-    void *pci_addr =
-        (((pci_dev->bus << 8) + (pci_dev->device << 3) + pci_dev->function)
-         << 12) +
-        offset;
+    void *pci_addr = (void *)((((pci_dev->bus << 8) + (pci_dev->device << 3) +
+                                pci_dev->function)
+                               << 12) +
+                              offset);
 
-    return uacpi_kernel_pci_read_impl(pci_addr, *(uacpi_size *)value, 4);
+    return uacpi_kernel_pci_read_impl(pci_addr, value, 4);
 }
 
 uacpi_status uacpi_kernel_pci_write_impl(uacpi_handle addr, uacpi_size value,
@@ -272,10 +278,10 @@ uacpi_status uacpi_kernel_pci_write8(uacpi_handle device, uacpi_size offset,
                                      uacpi_u8 value) {
     uacpi_pci_address *pci_dev = (uacpi_pci_address *)PHYS_TO_VIRTUAL(device);
 
-    void *pci_addr =
-        (((pci_dev->bus << 8) + (pci_dev->device << 3) + pci_dev->function)
-         << 12) +
-        offset;
+    void *pci_addr = (void *)((((pci_dev->bus << 8) + (pci_dev->device << 3) +
+                                pci_dev->function)
+                               << 12) +
+                              offset);
 
     return uacpi_kernel_pci_write_impl(pci_addr, (uacpi_size)value, 1);
 }
@@ -284,10 +290,10 @@ uacpi_status uacpi_kernel_pci_write16(uacpi_handle device, uacpi_size offset,
                                       uacpi_u16 value) {
     uacpi_pci_address *pci_dev = (uacpi_pci_address *)PHYS_TO_VIRTUAL(device);
 
-    void *pci_addr =
-        (((pci_dev->bus << 8) + (pci_dev->device << 3) + pci_dev->function)
-         << 12) +
-        offset;
+    void *pci_addr = (void *)((((pci_dev->bus << 8) + (pci_dev->device << 3) +
+                                pci_dev->function)
+                               << 12) +
+                              offset);
 
     return uacpi_kernel_pci_write_impl(pci_addr, (uacpi_size)value, 2);
 }
@@ -296,10 +302,10 @@ uacpi_status uacpi_kernel_pci_write32(uacpi_handle device, uacpi_size offset,
                                       uacpi_u32 value) {
     uacpi_pci_address *pci_dev = (uacpi_pci_address *)PHYS_TO_VIRTUAL(device);
 
-    void *pci_addr =
-        (((pci_dev->bus << 8) + (pci_dev->device << 3) + pci_dev->function)
-         << 12) +
-        offset;
+    void *pci_addr = (void *)((((pci_dev->bus << 8) + (pci_dev->device << 3) +
+                                pci_dev->function)
+                               << 12) +
+                              offset);
 
     return uacpi_kernel_pci_write_impl(pci_addr, (uacpi_size)value, 2);
 }
@@ -315,6 +321,9 @@ uacpi_status uacpi_kernel_io_map(uacpi_io_addr base, uacpi_size len,
     io_t *io = kmalloc(sizeof(io_t));
     if (!io)
         return UACPI_STATUS_OUT_OF_MEMORY;
+
+    io->base       = (uint16_t)base;
+    io->max_offset = (uint16_t)len;
 
     ((io_t **)out_handle)[0] = io;
 
@@ -338,7 +347,7 @@ uacpi_status uacpi_kernel_io_read8(uacpi_handle range, uacpi_size offset,
     if (!range)
         return UACPI_STATUS_NOT_FOUND;
 
-    uacpi_u16 port = (uacpi_u16)range->base + (uacpi_u16)offset;
+    uacpi_u16 port = (uacpi_u16)io->base + (uacpi_u16)offset;
     out_value[0]   = _inb(port);
 
     return UACPI_STATUS_OK;
@@ -350,7 +359,7 @@ uacpi_status uacpi_kernel_io_read16(uacpi_handle range, uacpi_size offset,
     if (!range)
         return UACPI_STATUS_NOT_FOUND;
 
-    uacpi_u16 port = (uacpi_u16)range->base + (uacpi_u16)offset;
+    uacpi_u16 port = (uacpi_u16)io->base + (uacpi_u16)offset;
     out_value[0]   = _inw(port);
 
     return UACPI_STATUS_OK;
@@ -362,7 +371,7 @@ uacpi_status uacpi_kernel_io_read32(uacpi_handle range, uacpi_size offset,
     if (!io)
         return UACPI_STATUS_NOT_FOUND;
 
-    uacpi_u16 port = (uacpi_u16)range->base + (uacpi_u16)offset;
+    uacpi_u16 port = (uacpi_u16)io->base + (uacpi_u16)offset;
     out_value[0]   = _ind(port);
 
     return UACPI_STATUS_OK;
@@ -374,7 +383,7 @@ uacpi_status uacpi_kernel_io_write8(uacpi_handle range, uacpi_size offset,
     if (!io)
         return UACPI_STATUS_NOT_FOUND;
 
-    uacpi_u16 port = (uacpi_u16)range->base + (uacpi_u16)offset;
+    uacpi_u16 port = (uacpi_u16)io->base + (uacpi_u16)offset;
     _outb(port, in_value);
 
     return UACPI_STATUS_OK;
@@ -386,7 +395,7 @@ uacpi_status uacpi_kernel_io_write16(uacpi_handle range, uacpi_size offset,
     if (!io)
         return UACPI_STATUS_NOT_FOUND;
 
-    uacpi_u16 port = (uacpi_u16)range->base + (uacpi_u16)offset;
+    uacpi_u16 port = (uacpi_u16)io->base + (uacpi_u16)offset;
     _outw(port, in_value);
 
     return UACPI_STATUS_OK;
@@ -398,7 +407,7 @@ uacpi_status uacpi_kernel_io_write32(uacpi_handle range, uacpi_size offset,
     if (!io)
         return UACPI_STATUS_NOT_FOUND;
 
-    uacpi_u16 port = (uacpi_u16)range->base + (uacpi_u16)offset;
+    uacpi_u16 port = (uacpi_u16)io->base + (uacpi_u16)offset;
     _outd(port, in_value);
 
     return UACPI_STATUS_OK;
@@ -453,13 +462,190 @@ void uacpi_kernel_sleep(uacpi_u64 msec) {
 }
 
 uacpi_handle uacpi_kernel_create_mutex(void) {
-    *atomic = kmalloc(sizeof());
+    lock_t *atomic = kmalloc(sizeof(lock_t));
 
     return atomic;
 }
 
 void uacpi_kernel_free_mutex(uacpi_handle atomic) {
+    if (!atomic)
+        return;
+
     kfree(atomic);
+}
+
+uacpi_handle uacpi_kernel_create_event(void) {
+    semaphore_t *semaphore = kmalloc(sizeof(semaphore_t));
+
+    return (uacpi_handle)semaphore;
+}
+void uacpi_kernel_free_event(uacpi_handle semaphore) {
+    if (!semaphore)
+        return;
+
+    kfree(semaphore);
+}
+
+uacpi_thread_id uacpi_kernel_get_thread_id(void) {
+    return NULL;
+}
+
+uacpi_status uacpi_kernel_acquire_mutex(uacpi_handle spinlock,
+                                        uacpi_u16 timeout) {
+
+    switch (timeout) {
+    case 0x0:
+        if (!atomic_flag_test_and_set(spinlock))
+            return UACPI_STATUS_DENIED;
+
+        break;
+
+    case 0x0001 ... 0xFFFE:
+        uint64_t t = timeout;
+        while (atomic_flag_test_and_set(spinlock)) {
+            if (--t == 0) {
+                // Handle potential deadlock
+                // Options: panic, log, or return failure
+                uacpi_kernel_log(UACPI_LOG_WARN,
+                                 "Spinlock deadlock detected\n");
+                return UACPI_STATUS_TIMEOUT;
+            }
+
+            // Optional: small delay to reduce CPU thrashing
+            asm("pause");
+        }
+        break;
+
+    case 0xFFFF:
+        spinlock_acquire(spinlock);
+        break;
+
+    default:
+        return UACPI_STATUS_INVALID_ARGUMENT;
+    }
+
+    return UACPI_STATUS_OK;
+}
+
+void uacpi_kernel_release_mutex(uacpi_handle spinlock) {
+    spinlock_release(spinlock);
+}
+
+uacpi_bool uacpi_kernel_wait_for_event(uacpi_handle semaphore,
+                                       uacpi_u16 timeout) {
+    switch (timeout) {
+    case 0xFFFF:
+        while (timeout > 0) {
+            asm("pause");
+        }
+        break;
+
+    case 0x0001 ... 0xFFFE:
+        while (--timeout > 0) {
+            asm("pause");
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    atomic_flag_test_and_set_explicit(&((semaphore_t *)semaphore)->lock, true);
+
+    return UACPI_TRUE;
+}
+
+void uacpi_kernel_signal_event(uacpi_handle semaphore) {
+    atomic_flag_test_and_set_explicit(&((semaphore_t *)semaphore)->lock, true);
+}
+
+void uacpi_kernel_reset_event(uacpi_handle semaphore) {
+    atomic_flag_test_and_set_explicit(&((semaphore_t *)semaphore)->lock, false);
+}
+
+uacpi_status
+uacpi_kernel_handle_firmware_request(uacpi_firmware_request *fw_req) {
+    switch (fw_req->type) {
+    case UACPI_FIRMWARE_REQUEST_TYPE_BREAKPOINT:
+        uacpi_kernel_log(UACPI_LOG_INFO,
+                         "Uhmmm everything's OK, just a silly breakpoint :3\n");
+        break;
+
+    case UACPI_FIRMWARE_REQUEST_TYPE_FATAL:
+        uacpi_kernel_log(UACPI_LOG_ERROR,
+                         "Oh no fatal exception happened: \n\ttype: %hhu "
+                         "\n\tcode: %u \n\t arg: %lu",
+                         fw_req->fatal.type, fw_req->fatal.code,
+                         fw_req->fatal.arg);
+        return UACPI_STATUS_INTERNAL_ERROR;
+
+    default:
+        break;
+    }
+
+    return UACPI_STATUS_OK;
+}
+
+uacpi_status uacpi_kernel_install_interrupt_handler(
+    uacpi_u32 irq, uacpi_interrupt_handler handler, uacpi_handle ctx,
+    uacpi_handle *out_irq_handle) {
+    UNUSED(irq);
+    UNUSED(handler);
+    UNUSED(ctx);
+    UNUSED(out_irq_handle);
+
+    return UACPI_STATUS_UNIMPLEMENTED;
+}
+
+uacpi_status
+uacpi_kernel_uninstall_interrupt_handler(uacpi_interrupt_handler handler,
+                                         uacpi_handle irq_handle) {
+    UNUSED(handler);
+    UNUSED(irq_handle);
+
+    return UACPI_STATUS_UNIMPLEMENTED;
+}
+
+uacpi_handle uacpi_kernel_create_spinlock(void) {
+    lock_t *atomic = kmalloc(sizeof(lock_t));
+
+    return atomic;
+}
+
+void uacpi_kernel_free_spinlock(uacpi_handle atomic) {
+    if (!atomic)
+        return;
+
+    kfree(atomic);
+}
+
+uacpi_cpu_flags uacpi_kernel_lock_spinlock(uacpi_handle lock) {
+
+    uacpi_cpu_flags flags_before = (uacpi_cpu_flags)_get_cpu_flags();
+
+    spinlock_acquire(lock);
+
+    return flags_before;
+}
+void uacpi_kernel_unlock_spinlock(uacpi_handle lock,
+                                  uacpi_cpu_flags flags_to_set) {
+    spinlock_release(lock);
+
+    _set_cpu_flags(flags_to_set);
+}
+
+uacpi_status uacpi_kernel_schedule_work(uacpi_work_type work_type,
+                                        uacpi_work_handler work_handler,
+                                        uacpi_handle ctx) {
+    UNUSED(work_type);
+    UNUSED(work_handler);
+    UNUSED(ctx);
+
+    return UACPI_STATUS_UNIMPLEMENTED;
+}
+
+uacpi_status uacpi_kernel_wait_for_work_completion(void) {
+    return UACPI_STATUS_UNIMPLEMENTED;
 }
 
 #endif // ifndef UACPI_BAREBONES_MODE
