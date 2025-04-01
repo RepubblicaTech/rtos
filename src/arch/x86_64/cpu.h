@@ -129,6 +129,10 @@ extern uint64_t _cpu_get_msr(uint32_t msr);
 // sets a MSR to the given value
 extern void _cpu_set_msr(uint32_t msr, uint64_t value);
 
+// returns the value of RFLAGS register
+uint64_t _get_cpu_flags();
+void _set_cpu_flags(uint64_t flags); // uhmmm apparently uACPI wants this :/
+
 void cpu_reg_write(uint32_t *reg, uint32_t value);
 uint32_t cpu_reg_read(uint32_t *reg);
 
