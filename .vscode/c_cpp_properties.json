@@ -11,8 +11,7 @@
             "defines": [
                 "FLANTERM_IN_FLANTERM",
                 "UACPI_KERNEL_INITIALIZATION",
-                "UACPI_FORMATTED_LOGGING",
-                "UACPI_BAREBONES_MODE"
+                "UACPI_FORMATTED_LOGGING"
             ],
             "cStandard": "gnu11",
             "cppStandard": "gnu++17",
