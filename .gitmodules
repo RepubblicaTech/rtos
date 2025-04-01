@@ -14,3 +14,7 @@
 [submodule "libs/uacpi"]
 	path = libs/uacpi
 	url = https://github.com/uACPI/uACPI.git
+
+[submodule "libs/flanterm"]
+	path = libs/flanterm
+	url = https://codeberg.org/mintsuki/flanterm.git
