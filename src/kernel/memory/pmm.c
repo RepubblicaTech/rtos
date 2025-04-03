@@ -16,6 +16,10 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#include <spinlock.h>
+
+lock_t PMM_LOCK;
+
 int usable_entry_count;
 
 extern struct limine_memmap_response *memmap_response;
@@ -24,7 +28,6 @@ extern void _hcf();
 freelist_node *fl_head;
 
 void pmm_init() {
-
     // array of nodes (used only on initialization)
     freelist_node *fl_nodes[limine_parsed_data.usable_entry_count];
 
@@ -92,6 +95,7 @@ freelist_node *fl_update_nodes() {
     for (freelist_node *i = fl_head; i != NULL;
          i                = i->next, usable_entry_count++)
         ;
+
     return fl_head;
 }
 
@@ -112,11 +116,8 @@ void *pmm_alloc_page() {
         debugf_debug("Looking for available memory at address %p\n", cur_node);
 #endif
 
-        // if the requested size fits in the freelist region...
-        if (cur_node->length >= PFRAME_SIZE) {
-            // we have found a block
-            break; // quit from the loop since we found a block
-        }
+        if (cur_node->length >= PFRAME_SIZE)
+            break;
 
 // if not, go to the next block
 #ifdef PMM_DEBUG
@@ -137,17 +138,14 @@ void *pmm_alloc_page() {
 
     ptr = (void *)(cur_node);
 
-    // if memory gets allocated from the entry head, we should change it
-    if (cur_node == fl_head) {
-        // if there is no more space in that entry, we'll move the head to the
-        // next free entry
-        if ((cur_node->length - PFRAME_SIZE) <= 0) {
-            fl_head = fl_head->next;
-        } else { // there's still some memory left
-            fl_head = (freelist_node *)((uint64_t)fl_head + PFRAME_SIZE);
-            fl_head->length = cur_node->length - (uint64_t)PFRAME_SIZE;
-            fl_head->next   = cur_node->next;
-        }
+    if (cur_node->length - PFRAME_SIZE <= 0) {
+        fl_head = fl_head->next;
+    } else {
+        // we'll "increment" that node
+        freelist_node *new_node = (ptr + PFRAME_SIZE);
+        new_node->length        = (cur_node->length - PFRAME_SIZE);
+        new_node->next          = cur_node->next;
+        fl_head                 = new_node;
     }
 
     fl_update_nodes();
@@ -178,80 +176,20 @@ void pmm_free(void *ptr, size_t pages) {
     pmm_frees++;
 #ifdef PMM_DEBUG
     debugf_debug("--- Deallocation n.%d ---\n", pmm_frees);
+
+    debugf_debug("deallocating address range %p-%p\n\n", ptr,
+                 ptr + (pages * PFRAME_SIZE));
 #endif
 
-    size_t s_fl_head, s_fl_ptr;
+    freelist_node *fl_deallocated = (freelist_node *)PHYS_TO_VIRTUAL(ptr);
+    fl_deallocated->length        = PFRAME_SIZE * pages;
+    fl_deallocated->next          = NULL;
 
-    // the entry will point to the virtual address of the deallocated
-    // pointer
-    freelist_node *fl_ptr = (freelist_node *)(PHYS_TO_VIRTUAL(ptr));
-    fl_ptr->length        = PFRAME_SIZE * (pages > 0 ? pages : 1);
+    // add the node to end of list
 
-    s_fl_head = (size_t)fl_head;
-    s_fl_ptr  = (size_t)fl_ptr;
+    freelist_node *fl_last = NULL;
+    for (fl_last = fl_head; fl_last->next != NULL; fl_last = fl_last->next)
+        ;
 
-#ifdef PMM_DEBUG
-    debugf_debug("deallocating pointer %p\n\n", fl_ptr);
-    debugf_debug("pointer %p is now a freelist entry\n", fl_ptr);
-    debugf_debug("head is at location %p\n", fl_head);
-
-#endif
-
-    // ---------------------- //
-    // --| POSSIBLE CASES |-- //
-    // ---------------------- //
-
-    // 1. the pointer comes before the head
-    if (s_fl_head > s_fl_ptr) {
-        fl_ptr->next = fl_head;
-        // the head becomes the pointer
-        fl_head      = fl_ptr;
-
-#ifdef PMM_DEBUG
-        debugf_debug("%p is the new head\n", fl_head);
-#endif
-
-        return; // deallocation is done
-    }
-
-    // 2. the pointer is somewhere in between two entries
-
-    // we should cycle through all the entries
-    for (freelist_node *fl_entry = fl_head; fl_entry != NULL;
-         fl_entry                = fl_entry->next) {
-
-        size_t s_fl_entry      = (size_t)fl_entry;
-        size_t s_fl_entry_next = (size_t)fl_entry->next;
-
-        // is the entry < pointer AND entry->next > pointer?
-        if (s_fl_entry < s_fl_ptr && s_fl_entry_next > s_fl_ptr) {
-            // entry->next becomes pointer->next
-            fl_ptr->next = fl_entry->next;
-
-            // entry->next becomes the pointer
-            fl_entry->next = fl_ptr;
-
-#ifdef PMM_DEBUG
-            debugf_debug("%p now points to %p\n", fl_entry, fl_entry->next);
-#endif
-
-            return; // deallocation is done
-        }
-    }
-
-    // 3. the pointer comes after all the entries
-    freelist_node *fl_en;
-    for (fl_en = fl_head; fl_en->next != NULL; fl_en = fl_en->next)
-        if (s_fl_ptr > (size_t)fl_en) {
-            fl_en->next = fl_ptr;
-
-            // just in case, the entry after it will be NULL'd
-            fl_en->next->next = NULL;
-
-#ifdef PMM_DEBUG
-            debugf_debug("%p is at the end of the free list\n", fl_ptr);
-#endif
-
-            return; // deallocation is done
-        }
+    fl_last->next = fl_deallocated;
 }

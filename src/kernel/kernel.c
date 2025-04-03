@@ -38,7 +38,6 @@
 #include <smp/smp.h>
 
 #include <acpi/acpi.h>
-#include <acpi/rsdp.h>
 
 #include <fs/ustar/ustar.h>
 #include <fs/vfs/devfs/devfs.h>
@@ -326,17 +325,6 @@ void kstart(void) {
     pmm_init();
     kprintf_ok("Initialized PMM\n");
 
-    if (rsdp_request.response == NULL) {
-        kprintf_panic("Couldn't get RSDP address!\n");
-        _hcf();
-    }
-    rsdp_response                         = rsdp_request.response;
-    limine_parsed_data.rsdp_table_address = (uint64_t *)rsdp_response->address;
-    debugf_debug("Address of RSDP: %p\n",
-                 limine_parsed_data.rsdp_table_address);
-    acpi_init();
-    kprintf_ok("ACPI tables parsing done\n");
-
     if (paging_mode_request.response == NULL) {
         kprintf_panic("We've got no paging!\n");
         _hcf();
@@ -390,11 +378,33 @@ void kstart(void) {
     debugf_ok("Malloc test complete: Time taken: %dms\n",
               malloc_test_end_timestamp);
 
+    if (rsdp_request.response == NULL) {
+        kprintf_panic("Couldn't get RSDP address!\n");
+        _hcf();
+    }
+    rsdp_response                         = rsdp_request.response;
+    limine_parsed_data.rsdp_table_address = (uint64_t *)rsdp_response->address;
+    debugf_debug("Address of RSDP: %p\n",
+                 limine_parsed_data.rsdp_table_address);
+    /// acpi_init();    we'll use
+    if (uacpi_init() == 0) {
+        kprintf_ok("uACPI initialized successfully\n");
+    } else {
+        kprintf_warn("Some errors occured during uACPI initialization\n");
+    }
+
+    _hcf();
+    for (;;) {
+        asm("hlt");
+    }
+
     if (check_apic()) {
         asm("cli");
         debugf_debug("APIC device is supported\n");
-        apic_init();
-        ioapic_init();
+
+        // --- TODO: use uACPI for the tables
+        // apic_init();
+        // ioapic_init();
         apic_registerHandler(0, timer_tick);
 
         kprintf_ok("APIC init done\n");
@@ -402,39 +412,6 @@ void kstart(void) {
     } else {
         debugf_debug("APIC is not supported. Going on with legacy PIC\n");
     }
-
-    sdt_pointer *rsdp = get_rsdp();
-
-    kprintf("--- ACPI INFO ---\n");
-    kprintf("Type: %s (Revision %s)\n", rsdp->revision > 0 ? "XSDP" : "RSDP",
-            rsdp->revision > 0 ? "2.0 - 6.1" : "1.0");
-    kprintf("%s address: 0x%.16llx\n", rsdp->revision > 0 ? "XSDP" : "RSDP",
-            limine_parsed_data.rsdp_table_address);
-    kprintf("%s address: 0x%.16llx\n", rsdp->revision > 0 ? "XSDT" : "RSDT",
-            rsdp->revision > 0 ? rsdp->p_xsdt_address : rsdp->p_rsdt_address);
-
-    kprintf("Signature: %.8s\n", rsdp->signature);
-    kprintf("Checksum: %hhu\n", rsdp->checksum);
-
-    kprintf("OEM ID: %.6s\n", rsdp->oem_id);
-    kprintf("Revision: %s\n\n", rsdp->revision > 0 ? "2.0 - 6.1" : "1.0");
-
-    if (rsdp->revision > 0) {
-        XSDT *xsdt = (XSDT *)get_root_sdt();
-        kprintf("XSDT Length: %lu\n", rsdp->length);
-        kprintf("XSDT Extended checksum: %hhu\n", rsdp->extended_checksum);
-        kprintf("XSDT OEM ID: %.6s\n", xsdt->header.oem_id);
-        kprintf("XSDT Signature: %.4s\n", xsdt->header.signature);
-        kprintf("XSDT Creator ID: 0x%llx\n", xsdt->header.creator_id);
-    } else {
-        RSDT *rsdt = (RSDT *)get_root_sdt();
-        kprintf("RSDT OEM ID: %.6s\n", rsdt->header.oem_id);
-        kprintf("RSDT Signature: %.4s\n", rsdt->header.signature);
-        kprintf("RSDT Creator ID: 0x%llx\n", rsdt->header.creator_id);
-    }
-    kprintf("--- ACPI INFO END ---\n\n");
-
-    kprintf("--- SYSTEM INFO ---\n");
 
     {
         char *cpu_name = kmalloc(49);

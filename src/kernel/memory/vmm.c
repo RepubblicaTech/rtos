@@ -1,16 +1,16 @@
 #include "vmm.h"
-#include "acpi/acpi.h"
 #include "paging/paging.h"
 #include "pmm.h"
 
 #include <stdint.h>
+#include <stdio.h>
+
+#include <spinlock.h>
 
 #include <util/string.h>
 #include <util/util.h>
 
 #include <kernel.h>
-
-#include <stdio.h>
 
 #include <cpu.h>
 
@@ -35,6 +35,7 @@ void vmo_dump(virtmem_object_t *vmo) {
 }
 
 virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
+
     virtmem_object_t *vmo = (virtmem_object_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(
         ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE));
 
@@ -49,6 +50,7 @@ virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
 }
 
 vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags) {
+
     vmm_context_t *ctx = (vmm_context_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(
         ROUND_UP(sizeof(vmm_context_t), PFRAME_SIZE) / PFRAME_SIZE));
 
@@ -57,12 +59,13 @@ vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags) {
     }
 
     ctx->pml4_table = pml4;
-    ctx->root_vmo   = vmo_init(0, 1, flags);
+    ctx->root_vmo   = vmo_init(0x1000, 1, flags);
 
     return ctx;
 }
 
 void vmm_ctx_destroy(vmm_context_t *ctx) {
+
     if (VIRT_TO_PHYSICAL(ctx->pml4_table) == (uint64_t)cpu_get_cr(3)) {
         kprintf_warn("Attempted to destroy a pagemap that's currently in use. "
                      "Skipping\n");

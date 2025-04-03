@@ -44,23 +44,26 @@ uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rsdp_address) {
 }
 
 void *uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len) {
-    uint64_t aligned  = ROUND_DOWN(addr, PFRAME_SIZE);
-    size_t offset     = (size_t)(addr - aligned);
-    size_t actual_len = len + offset;
+    uint64_t aligned = ROUND_DOWN(addr, PFRAME_SIZE);
+    size_t offset    = (size_t)(addr - aligned);
 
-    void *virt = vma_alloc(get_current_ctx(), actual_len, true, (void *)addr);
+    size_t actual_len = len + offset; // this is BYTES!!!
+    size_t pages      = ROUND_UP(actual_len, PFRAME_SIZE) / PFRAME_SIZE;
+
+    void *virt = vma_alloc(get_current_ctx(), pages, true, (void *)aligned);
 
     // re-align the pointer to original addr offset
+
     virt += offset;
 
     return virt;
 }
 
 void uacpi_kernel_unmap(void *addr, uacpi_size len) {
-    uint64_t aligned  = ROUND_DOWN((uint64_t)addr, PFRAME_SIZE);
-    size_t actual_len = len + (size_t)((uint64_t)addr - aligned);
+    uint64_t aligned = ROUND_DOWN((uint64_t)addr, PFRAME_SIZE);
+    UNUSED(len);
 
-    unmap_region(_get_pml4(), aligned, actual_len);
+    vma_free(get_current_ctx(), (void *)aligned, true);
 }
 
 #ifndef UACPI_FORMATTED_LOGGING
@@ -116,26 +119,26 @@ void uacpi_kernel_log(uacpi_log_level log_level, const uacpi_char *fmt, ...) {
 
     switch (log_level) {
     case UACPI_LOG_DEBUG:
-        debugf(ANSI_COLOR_GRAY "[ uacpi::DEBUG ] %s", fmt);
+        debugf(ANSI_COLOR_GRAY "[ uacpi::DEBUG ] %s", buffer);
         break;
     case UACPI_LOG_TRACE:
-        debugf(ANSI_COLOR_GRAY "[ uacpi::TRACE ] %s", fmt);
+        debugf(ANSI_COLOR_GRAY "[ uacpi::TRACE ] %s", buffer);
         break;
 
     case UACPI_LOG_INFO:
         debugf(ANSI_COLOR_GRAY);
         fb_set_fg(INFO_FG);
-        mprintf("[ uacpi::INFO ] %s", fmt);
+        mprintf("[ uacpi::INFO ] %s", buffer);
         break;
     case UACPI_LOG_WARN:
         fb_set_fg(WARNING_FG);
         debugf(ANSI_COLOR_ORANGE);
-        mprintf("[ uacpi::WARNING ] %s", fmt);
+        mprintf("[ uacpi::WARNING ] %s", buffer);
         break;
     case UACPI_LOG_ERROR:
         fb_set_fg(PANIC_FG);
         debugf(ANSI_COLOR_RED);
-        mprintf("[ uacpi::CRITICAL ] %s", fmt);
+        mprintf("[ uacpi::CRITICAL ] %s", buffer);
 
     default:
         break;

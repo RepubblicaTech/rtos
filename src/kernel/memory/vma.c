@@ -8,12 +8,15 @@
 #include "util/string.h"
 #include "util/util.h"
 
+#include <spinlock.h>
+
 // @param map_allocation Tells the allocator if the found region needs to be
 // mapped
 // @param phys optional parameter, maps the newly allocated virtual address to
 // such physical address
 void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
                 void *phys) {
+
     void *ptr = NULL;
 
     virtmem_object_t *cur_vmo = ctx->root_vmo;
@@ -25,7 +28,7 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
         vmo_dump(cur_vmo);
 #endif
 
-        if ((cur_vmo->len >= pages) && (cur_vmo->flags & ~(VMO_ALLOCATED))) {
+        if ((cur_vmo->len >= pages) && (BIT_GET(cur_vmo->flags, 8) == 0)) {
 
 #ifdef VMM_DEBUG
             debugf_debug("Well, we've got enough memory :D\n");
@@ -75,10 +78,12 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
 #ifdef VMM_DEBUG
     debugf_debug("Returning pointer %p\n", ptr);
 #endif
+
     return ptr;
 }
 
 void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
+
 #ifdef VMM_DEBUG
     debugf_debug("Deallocating pointer %p\n", ptr);
 #endif
@@ -106,26 +111,10 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
 
     FLAG_UNSET(cur_vmo->flags, VMO_ALLOCATED);
 
-    // we'll remove the VMO from the list
-
-    // find the physical address of the VMO
-    uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
-    pmm_free((void *)PHYS_TO_VIRTUAL(phys), cur_vmo->len);
-
-    virtmem_object_t *prev_vmo, *next_vmo;
-    prev_vmo = cur_vmo->prev;
-    next_vmo = cur_vmo->next;
-    // delete the VMO from the list
-
-    if (prev_vmo != NULL)
-        prev_vmo->next = next_vmo;
-    if (next_vmo != NULL)
-        next_vmo->prev = prev_vmo;
-
     if (unmap_allocation) {
-        pmm_free((void *)PHYS_TO_VIRTUAL(
-                     pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base)),
-                 cur_vmo->len);
+        // find the physical address of the VMO
+        uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
+        pmm_free((void *)phys, cur_vmo->len);
         unmap_region(ctx->pml4_table, cur_vmo->base,
                      (cur_vmo->len * PFRAME_SIZE));
     } else {
@@ -133,7 +122,4 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
         debugf_debug("We don't have to unmap\n");
 #endif
     }
-
-    pmm_free(cur_vmo,
-             ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE);
 }

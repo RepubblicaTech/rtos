@@ -30,6 +30,11 @@ extern volatile int tsc;
 
 uint32_t lapic_timer_ticks_per_ms = 0;
 
+bool lapic_status = false;
+bool is_lapic_enabled() {
+    return lapic_status;
+}
+
 // write data to a LAPIC register
 // by
 // https://github.com/Tix3Dev/apoptOS/blob/370fd34a6d3c87a9d1a16d1a2ec072bd1836ba6c/src/kernel/hardware/apic/apic.c
@@ -62,11 +67,12 @@ uint64_t apic_get_base() {
 }
 
 void apic_init() {
+    /*
     limine_data = get_bootloader_data();
 
     mmio_device mm_lapic = find_mmio(MMIO_LAPIC_SIG);
     debugf_debug("MMIO device \"%s\" base:%#llx size:%#llx\n", mm_lapic.name,
-                 mm_lapic.base, mm_lapic.size);
+    mm_lapic.base, mm_lapic.size);
     limine_data->p_lapic_base = mm_lapic.base;
     debugf_debug("LAPIC base address: %#llx\n", mm_lapic.base);
 
@@ -77,10 +83,10 @@ void apic_init() {
     lapic_write_reg(LAPIC_TASKPR_REG, 0);
     lapic_write_reg(LAPIC_DEST_FMT_REG, 0xFFFFFFFF);
     debugf_debug("LAPIC is globally enabled and MSR is now %#llx\n",
-                 _cpu_get_msr(0x1b));
+    _cpu_get_msr(0x1b));
     lapic_write_reg(LAPIC_SPURIOUS_REG, 0x1ff);
     debugf_debug("LAPIC_SPURIOUS_REG: %#lx\n",
-                 lapic_read_reg(LAPIC_SPURIOUS_REG));
+    lapic_read_reg(LAPIC_SPURIOUS_REG));
 
     lapic_write_reg(LAPIC_LINT0_REG, 0xfe);
     lapic_write_reg(LAPIC_LINT1_REG, 0xfe);
@@ -91,6 +97,9 @@ void apic_init() {
     lapic_write_reg(LAPIC_TIMER_REG, 0xfe);
 
     debugf_debug("LAPIC ID: %#hhx\n", lapic_get_id());
+
+    lapic_status = true;
+    */
 }
 
 uint32_t lapic_timer_calibrate_pit(void) {

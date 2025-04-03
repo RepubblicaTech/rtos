@@ -98,7 +98,8 @@
         "types.h": "c",
         "smp.h": "c",
         "uacpi.h": "c",
-        "kernel_api.h": "c"
+        "kernel_api.h": "c",
+        "config.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,

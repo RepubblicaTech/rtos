@@ -74,6 +74,7 @@ override KCFLAGS += \
 	-fno-stack-protector \
 	-fno-stack-check \
 	-fno-lto \
+	-fPIE \
 	-fno-PIC \
 	-m64 \
 	-march=x86-64 \
@@ -88,6 +89,9 @@ override KCFLAGS += \
 	-D UACPI_FORMATTED_LOGGING \
 	-D CHAR_BIT=8 \
 	-D SCHED_DEBUG \
+	# -D PMM_DEBUG \
+	# -D VMM_DEBUG \
+	# -D LIBALLOC_DEBUG \
 
 # Internal C preprocessor flags that should not be changed by the user.
 override KCPPFLAGS := \

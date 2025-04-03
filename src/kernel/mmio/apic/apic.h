@@ -2,6 +2,8 @@
 #define APIC_H 1
 
 #include <isr.h>
+
+#include <stdbool.h>
 #include <stdint.h>
 
 // LAPIC memory-mapped registers
@@ -53,6 +55,8 @@
 #define LDT_ALL_LAPICS_NOT_US 0b11
 
 #define MMIO_LAPIC_SIG "LAPIC"
+
+bool is_lapic_enabled();
 
 void lapic_write_reg(uint32_t reg, uint32_t data);
 uint32_t lapic_read_reg(uint32_t reg);

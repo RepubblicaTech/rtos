@@ -153,37 +153,28 @@ void panic_common(void *ctx) {
 void isr_handler(void *ctx) {
     registers_t *regs = ctx;
 
+    uint64_t cpu = 0;
+    if (is_lapic_enabled())
+        cpu = lapic_get_id();
+
     if (isr_handlers[regs->interrupt] != NULL) {
         isr_handlers[regs->interrupt](regs);
     } else if (regs->interrupt >= 32) {
-        debugf_warn("Unhandled interrupt %d on CPU %d\n", regs->interrupt,
+        debugf_warn("Unhandled interrupt %d on CPU %hhu\n", regs->interrupt,
                     lapic_get_id());
     } else {
         stdio_panic_init();
+        fb_set_fg(PANIC_FG);
 
-        uint64_t cpu = lapic_get_id();
+        mprintf("KERNEL PANIC! \"%s\" (Exception n. %d) on CPU %hhu\n",
+                exceptions[regs->interrupt], regs->interrupt, cpu);
+        mprintf("\terrcode: %#llx\n", regs->error);
 
-        if (cpu != 0) {
-            debugf_warn(
-                "exception \"%s\" (nr. %#llx) on CPU %d @ %.16llx. error code "
-                "%#llx. halting...\n",
-                exceptions[regs->interrupt], regs->interrupt, cpu, regs->rip,
-                regs->error);
-            asm("cli");
-            for (;;)
-                _hcf();
-        } else {
+        panic_common(regs);
 
-            asm("cli");
-            fb_set_fg(PANIC_FG);
-            mprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n",
-                    exceptions[regs->interrupt], regs->interrupt);
-
-            mprintf("\terrcode: %#llx\n", regs->error);
-
-            panic_common(regs);
-
-            _hcf();
+        _hcf();
+        for (;;) {
+            asm("hlt");
         }
     }
 }
