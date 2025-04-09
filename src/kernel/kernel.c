@@ -192,7 +192,7 @@ void kstart(void) {
     }
     clearscreen();
 
-    kprintf("Welcome to RTOS!\n");
+    kprintf("Welcome to purpleK2!\n");
 
     debugf_debug("Kernel built on %s\n", __DATE__);
 
