@@ -74,6 +74,10 @@ void *PREFIX(malloc)(size_t size) {
         if (is_magic_available && can_size_fit)
             break;
 
+#ifdef HEAP_DEBUG
+        heap_debug("%p(%#zx) is not %#lx\n", cur, cur->len, HEAPMAGIC_AVAIL);
+#endif
+
         // here: either it's already allocated or it doesn't fit
         if (!cur->next) {
             // we do this IF there's no ->next

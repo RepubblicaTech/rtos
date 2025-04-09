@@ -16,7 +16,7 @@
 #define HEAPMAGIC_UNAV  0xDEADD00D // DEAD DOOD
 
 #define HEAPVER_MAJOR 0
-#define HEAPVER_MINOR 1
+#define HEAPVER_MINOR 2
 
 typedef struct heapmem_node_t {
     uint32_t magic;
