@@ -390,12 +390,14 @@ void kstart(void) {
     if (uacpi_init() == 0) {
         kprintf_ok("uACPI initialized successfully\n");
     } else {
-        kprintf_warn("Some errors occured during uACPI initialization\n");
-    }
+        kprintf_panic("Some errors occured during uACPI initialization.");
+        debugf_panic(
+            "Some errors occured during uACPI initialization. Halting...\n");
 
-    _hcf();
-    for (;;) {
-        asm("hlt");
+        _hcf();
+        for (;;) {
+            asm("hlt");
+        }
     }
 
     if (check_apic()) {
