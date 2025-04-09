@@ -36,8 +36,9 @@ void vmo_dump(virtmem_object_t *vmo) {
 
 virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
 
-    virtmem_object_t *vmo = (virtmem_object_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(
-        ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE));
+    size_t vmosize_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
+    virtmem_object_t *vmo  = (virtmem_object_t *)PHYS_TO_VIRTUAL(
+        pmm_alloc_pages(vmosize_aligned / PFRAME_SIZE));
 
     vmo->base  = base;
     vmo->len   = length;
@@ -51,8 +52,9 @@ virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
 
 vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags) {
 
-    vmm_context_t *ctx = (vmm_context_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(
-        ROUND_UP(sizeof(vmm_context_t), PFRAME_SIZE) / PFRAME_SIZE));
+    size_t vmcsize_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
+    vmm_context_t *ctx     = (vmm_context_t *)PHYS_TO_VIRTUAL(
+        pmm_alloc_pages(vmcsize_aligned / PFRAME_SIZE));
 
     if (pml4 == NULL) {
         pml4 = (uint64_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
@@ -125,7 +127,8 @@ void vmm_ctx_destroy(vmm_context_t *ctx) {
 
     // Free the PML4 table and the context
     pmm_free(ctx->pml4_table, 1);
-    pmm_free(ctx, ROUND_UP(sizeof(vmm_context_t), PFRAME_SIZE) / PFRAME_SIZE);
+    size_t vmcsize_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
+    pmm_free(ctx, vmcsize_aligned / PFRAME_SIZE);
 
     ctx->pml4_table = NULL;
 }
@@ -163,8 +166,9 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
         return src_vmo; // we are not going to split it
     }
 
-    new_vmo = vmo_init(src_vmo->base + (uint64_t)(len * PFRAME_SIZE),
-                       src_vmo->len - len, src_vmo->flags);
+    size_t offset = (uint64_t)(len * PFRAME_SIZE);
+    new_vmo =
+        vmo_init(src_vmo->base + offset, src_vmo->len - len, src_vmo->flags);
     /*
     src_vmo		  new_vmo
     [     [                        ]
@@ -173,7 +177,7 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
 
 #ifdef VMM_DEBUG
     debugf_debug("VMO %p has been split at (virt)%#llx\n", src_vmo,
-                 src_vmo->base + (uint64_t)(len * PFRAME_SIZE));
+                 src_vmo->base + offset);
 #endif
 
     src_vmo->len = len;
