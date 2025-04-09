@@ -27,7 +27,7 @@
 #include <pit.h>
 #include <time.h>
 
-#include <memory/heap/liballoc.h>
+#include <memory/heap/heap.h>
 #include <memory/paging/paging.h>
 #include <memory/pmm.h>
 #include <memory/vma.h>

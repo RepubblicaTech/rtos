@@ -99,7 +99,13 @@
         "smp.h": "c",
         "uacpi.h": "c",
         "kernel_api.h": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "pcie.h": "c",
+        "heap.h": "c",
+        "e9.h": "c",
+        "initrd.h": "c",
+        "beap.h": "c",
+        "device.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,

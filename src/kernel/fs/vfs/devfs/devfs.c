@@ -3,7 +3,7 @@
 #include "fs/vfs/vfs.h"
 #include "stdio.h"
 #include "util/assert.h"
-#include <memory/heap/liballoc.h>
+#include <memory/heap/heap.h>
 
 mount_t *devfs_root = NULL;
 

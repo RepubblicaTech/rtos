@@ -3,7 +3,7 @@
 
 #include <../arch/x86_64/io.h>
 #include <dev/device.h>
-#include <memory/heap/liballoc.h>
+#include <memory/heap/heap.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <util/string.h>

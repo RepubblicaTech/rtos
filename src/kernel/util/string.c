@@ -1,7 +1,7 @@
 #include "string.h"
 #include "stdio.h"
 #include <io.h>
-#include <memory/heap/liballoc.h>
+#include <memory/heap/heap.h>
 
 // GCC and Clang reserve the right to generate calls to the following
 // 4 functions even if they are not directly called.
@@ -270,18 +270,15 @@ char *strtok_r(char *str, const char *delim, char **saveptr) {
     return token_start;
 }
 
-void strcpy(char dest[], const char source[])
-{
+void strcpy(char dest[], const char source[]) {
     int i = 0;
-    while (1)
-    {
+    while (1) {
         dest[i] = source[i];
 
-        if (dest[i] == '\0')
-        {
+        if (dest[i] == '\0') {
             break;
         }
 
         i++;
-    } 
+    }
 }

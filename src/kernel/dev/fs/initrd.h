@@ -2,7 +2,7 @@
 #define DEV_INITRD_H
 
 #include <dev/device.h>
-#include <memory/heap/liballoc.h>
+#include <memory/heap/heap.h>
 #include <stddef.h>
 #include <util/string.h>
 

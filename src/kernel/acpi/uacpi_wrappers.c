@@ -8,7 +8,7 @@
 #include <isr.h>
 #include <pit.h>
 
-#include <memory/heap/liballoc.h>
+#include <memory/heap/heap.h>
 #include <memory/paging/paging.h>
 #include <memory/vma.h>
 
@@ -50,7 +50,7 @@ void *uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len) {
     size_t actual_len = len + offset; // this is BYTES!!!
     size_t pages      = ROUND_UP(actual_len, PFRAME_SIZE) / PFRAME_SIZE;
 
-    void *virt = vma_alloc(get_current_ctx(), pages, true, (void *)aligned);
+    void *virt = vma_alloc(get_current_ctx(), pages, (void *)aligned);
 
     // re-align the pointer to original addr offset
 
@@ -63,7 +63,7 @@ void uacpi_kernel_unmap(void *addr, uacpi_size len) {
     uint64_t aligned = ROUND_DOWN((uint64_t)addr, PFRAME_SIZE);
     UNUSED(len);
 
-    vma_free(get_current_ctx(), (void *)aligned, true);
+    vma_free(get_current_ctx(), (void *)aligned);
 }
 
 #ifndef UACPI_FORMATTED_LOGGING

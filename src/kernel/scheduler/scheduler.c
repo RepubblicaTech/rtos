@@ -1,17 +1,21 @@
-#include "fs/vfs/vfs.h"
-#include "gdt.h"
-#include "isr.h"
-#include "kernel.h"
-#include "memory/heap/liballoc.h"
-#include "memory/vmm.h"
-#include "mmio/apic/apic.h"
-#include "smp/smp.h"
-#include "spinlock.h"
-#include "stdio.h"
-#include <fs/vfs/vfs.h>
-#include <memory/paging/paging.h>
-#include <scheduler/scheduler.h>
+#include "scheduler.h"
+
 #include <stdatomic.h>
+#include <stdio.h>
+
+#include <fs/vfs/vfs.h>
+#include <gdt.h>
+#include <isr.h>
+#include <kernel.h>
+#include <spinlock.h>
+
+#include <memory/heap/heap.h>
+#include <memory/paging/paging.h>
+#include <memory/vmm.h>
+
+#include <mmio/apic/apic.h>
+
+#include <smp/smp.h>
 #include <util/assert.h>
 #include <util/string.h>
 

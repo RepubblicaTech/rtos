@@ -1,6 +1,6 @@
 #include "ustar.h"
 
-#include <memory/heap/liballoc.h>
+#include <memory/heap/heap.h>
 
 #include <util/string.h>
 #include <util/util.h>

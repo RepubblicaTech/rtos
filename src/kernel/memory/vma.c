@@ -10,12 +10,9 @@
 
 #include <spinlock.h>
 
-// @param map_allocation Tells the allocator if the found region needs to be
-// mapped
 // @param phys optional parameter, maps the newly allocated virtual address to
 // such physical address
-void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
-                void *phys) {
+void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
 
     void *ptr = NULL;
 
@@ -41,11 +38,11 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
                      "allocated. Skipping...\n");
 #endif
         if (cur_vmo->next == NULL) {
-            new_vmo =
-                vmo_init(cur_vmo->base + (uint64_t)(cur_vmo->len * PFRAME_SIZE),
-                         pages, cur_vmo->flags & ~(VMO_ALLOCATED));
-            cur_vmo->next = new_vmo;
-            new_vmo->prev = cur_vmo;
+            uint64_t offset = (uint64_t)(cur_vmo->len * PFRAME_SIZE);
+            new_vmo         = vmo_init(cur_vmo->base + offset, pages,
+                                       cur_vmo->flags & ~(VMO_ALLOCATED));
+            cur_vmo->next   = new_vmo;
+            new_vmo->prev   = cur_vmo;
 #ifdef VMM_DEBUG
             debugf_debug("VMO %p created successfully. Proceeding to next "
                          "iteration\n",
@@ -64,16 +61,10 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
     FLAG_SET(cur_vmo->flags, VMO_ALLOCATED);
     ptr = (void *)(cur_vmo->base);
 
-    if (map_allocation) {
-        void *phys_to_map = phys != NULL ? phys : pmm_alloc_pages(pages);
-        map_region_to_page(ctx->pml4_table, (uint64_t)phys_to_map,
-                           (uint64_t)ptr, (uint64_t)(pages * PFRAME_SIZE),
-                           vmo_to_page_flags(cur_vmo->flags));
-    } else {
-#ifdef VMM_DEBUG
-        debugf_debug("No need to map the region\n");
-#endif
-    }
+    void *phys_to_map = phys != NULL ? phys : pmm_alloc_pages(pages);
+    map_region_to_page(ctx->pml4_table, (uint64_t)phys_to_map, (uint64_t)ptr,
+                       (uint64_t)(pages * PFRAME_SIZE),
+                       vmo_to_page_flags(cur_vmo->flags));
 
 #ifdef VMM_DEBUG
     debugf_debug("Returning pointer %p\n", ptr);
@@ -82,7 +73,7 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
     return ptr;
 }
 
-void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
+void vma_free(vmm_context_t *ctx, void *ptr) {
 
 #ifdef VMM_DEBUG
     debugf_debug("Deallocating pointer %p\n", ptr);
@@ -111,15 +102,8 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
 
     FLAG_UNSET(cur_vmo->flags, VMO_ALLOCATED);
 
-    if (unmap_allocation) {
-        // find the physical address of the VMO
-        uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
-        pmm_free((void *)phys, cur_vmo->len);
-        unmap_region(ctx->pml4_table, cur_vmo->base,
-                     (cur_vmo->len * PFRAME_SIZE));
-    } else {
-#ifdef VMM_DEBUG
-        debugf_debug("We don't have to unmap\n");
-#endif
-    }
+    // find the physical address of the VMO
+    uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
+    pmm_free((void *)phys, cur_vmo->len);
+    unmap_region(ctx->pml4_table, cur_vmo->base, (cur_vmo->len * PFRAME_SIZE));
 }
