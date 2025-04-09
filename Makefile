@@ -126,7 +126,6 @@ override HEADER_DEPS := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.d) $(ASFILES:.S=
 .PHONY: all limine_build toolchain libs
 
 all: $(OS_CODENAME).iso
-	set -e
 
 # Define the ISO image file as an explicit target with dependencies
 $(OS_CODENAME).iso: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/$(KERNEL) $(ISO_DIR)/initrd.img $(ISO_DIR)/EFI/BOOT/BOOTX64.EFI
