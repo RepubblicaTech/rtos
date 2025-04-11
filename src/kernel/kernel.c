@@ -27,7 +27,7 @@
 #include <pit.h>
 #include <time.h>
 
-#include <memory/heap/heap.h>
+#include <memory/heap/beap.h>
 #include <memory/paging/paging.h>
 #include <memory/pmm.h>
 #include <memory/vma.h>
@@ -67,7 +67,7 @@
     --- DON'T EVEN DARE TO PUT THIS ANYWHERE ELSE OTHER THAN HERE. ---
 */
 __attribute__((used,
-               section(".requests"))) static volatile LIMINE_BASE_REVISION(2);
+               section(".requests"))) static volatile LIMINE_BASE_REVISION(3);
 
 // The Limine requests can be placed anywhere, but it is important that
 // the compiler does not optimise them away, so, usually, they should

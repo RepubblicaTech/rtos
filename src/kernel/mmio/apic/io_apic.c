@@ -14,7 +14,7 @@
 
 #include <io.h>
 
-#include <memory/heap/heap.h>
+#include <memory/heap/beap.h>
 #include <memory/pmm.h>
 
 mmio_device *mmios;

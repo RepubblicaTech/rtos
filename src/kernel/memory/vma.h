@@ -1,7 +1,7 @@
 #ifndef VMA_H
 #define VMA_H 1
 
-#include "memory/vmm.h"
+#include <memory/vmm.h>
 
 #include <stdbool.h>
 #include <stdint.h>

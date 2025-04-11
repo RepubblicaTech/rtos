@@ -1,6 +1,6 @@
 #include "pcie.h"
 #include "stdio.h"
-#include <memory/heap/heap.h>
+#include <memory/heap/beap.h>
 #include <util/string.h>
 
 pci_device_t *pci_devices_head = NULL;

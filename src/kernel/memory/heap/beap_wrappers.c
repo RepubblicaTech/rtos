@@ -1,4 +1,4 @@
-#include "heap.h"
+#include "beap.h"
 
 #include <spinlock.h>
 
@@ -7,16 +7,20 @@
 #include <memory/vma.h>
 #include <memory/vmm.h>
 
+#include <util/util.h>
+
 unsigned long long page_size = 0x1000; // 4KiB pages
 
 void *heap_alloc(size_t size, size_t *size_out) {
     size_t aligned = ROUND_UP(size, page_size);
-    size_out[0]    = aligned;
+    if (size_out)
+        size_out[0] = aligned;
 
     return vma_alloc(get_current_ctx(), aligned / page_size, NULL);
 }
 
-void heap_dealloc(void *ptr) {
+void heap_dealloc(void *ptr, size_t pages) {
+    UNUSED(pages);
     vma_free(get_current_ctx(), ptr);
 }
 

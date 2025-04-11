@@ -3,7 +3,7 @@
 
 #include <../arch/x86_64/io.h>
 #include <dev/device.h>
-#include <memory/heap/heap.h>
+#include <memory/heap/beap.h>
 #include <stddef.h>
 #include <util/string.h>
 

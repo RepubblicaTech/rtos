@@ -10,6 +10,7 @@ LIBS_DIR=$2
 declare -a libs=("limine"
                  "flanterm"
 				 "nanoprintf"
+                 "beap"
                  "uacpi"
                  )
 
@@ -92,6 +93,10 @@ copy_if_exists $LIBS_DIR/flanterm/backends/fb.c $KERNEL_DIR/flanterm/backends
 
 # custom font for flanterm
 copy_if_exists $LIBS_DIR/patches/font.h $KERNEL_DIR/flanterm/backends
+
+# beap
+copy_if_exists $LIBS_DIR/beap/beap/beap.h $KERNEL_DIR/memory/heap
+copy_if_exists $LIBS_DIR/beap/beap/beap.c $KERNEL_DIR/memory/heap
 
 patch -su $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch >/dev/null 2>&1
 

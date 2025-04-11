@@ -18,3 +18,7 @@
 [submodule "libs/flanterm"]
 	path = libs/flanterm
 	url = https://codeberg.org/mintsuki/flanterm.git
+[submodule "libs/beap"]
+	path = libs/beap
+	url = https://github.com/purpleK2/beap.git
+	branch = reset

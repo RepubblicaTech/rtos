@@ -3,7 +3,7 @@
 
 #include <fs/ustar/ustar.h>
 #include <io.h>
-#include <memory/heap/heap.h>
+#include <memory/heap/beap.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>

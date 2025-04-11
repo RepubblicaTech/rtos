@@ -9,7 +9,7 @@
 #include <kernel.h>
 #include <spinlock.h>
 
-#include <memory/heap/heap.h>
+#include <memory/heap/beap.h>
 #include <memory/paging/paging.h>
 #include <memory/vmm.h>
 
