@@ -1,6 +1,9 @@
-# [this project doesn't have an official name yet]
+# purpleK2
 
-A freestanding 64-Bit kernel using the Limine Bootloader
+A freestanding 64-Bit kernel
+<image src="assets/banner.png" width=700>
+
+<br>
 
 > [!IMPORTANT]  
 > This Kernel is not ready for use yet.
