@@ -98,7 +98,7 @@ copy_if_exists $LIBS_DIR/patches/font.h $KERNEL_DIR/flanterm/backends
 copy_if_exists $LIBS_DIR/beap/beap/beap.h $KERNEL_DIR/memory/heap
 copy_if_exists $LIBS_DIR/beap/beap/beap.c $KERNEL_DIR/memory/heap
 
-patch -su $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch >/dev/null 2>&1
+patch -u $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch >/dev/null 2>&1
 
 # copy uACPI
 # NOTE: very wacky, must make it better
