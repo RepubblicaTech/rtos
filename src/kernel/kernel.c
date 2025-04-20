@@ -377,6 +377,7 @@ void kstart(void) {
     malloc_test_end_timestamp        -= malloc_test_start_timestamp;
     debugf_ok("Malloc test complete: Time taken: %dms\n",
               malloc_test_end_timestamp);
+    kprintf_ok("Heap init done\n");
 
     if (rsdp_request.response == NULL) {
         kprintf_panic("Couldn't get RSDP address!\n");
