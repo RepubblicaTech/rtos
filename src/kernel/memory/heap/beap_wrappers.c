@@ -11,7 +11,7 @@
 
 unsigned long long page_size = 0x1000; // 4KiB pages
 
-void *heap_alloc(size_t size, size_t *size_out) {
+void *beap_alloc(size_t size, size_t *size_out) {
     size_t aligned = ROUND_UP(size, page_size);
     if (size_out)
         size_out[0] = aligned;
@@ -19,24 +19,24 @@ void *heap_alloc(size_t size, size_t *size_out) {
     return vma_alloc(get_current_ctx(), aligned / page_size, NULL);
 }
 
-void heap_dealloc(void *ptr, size_t pages) {
+void beap_dealloc(void *ptr, size_t pages) {
     UNUSED(pages);
-    vma_free(get_current_ctx(), ptr);
+    vma_free(get_current_ctx(), ptr, true);
 }
 
-lock_t HEAP_LOCK;
+lock_t BEAP_LOCK;
 
-void heap_lock() {
-    spinlock_acquire(&HEAP_LOCK);
+void beap_lock() {
+    spinlock_acquire(&BEAP_LOCK);
 }
 
-void heap_unlock() {
-    spinlock_release(&HEAP_LOCK);
+void beap_unlock() {
+    spinlock_release(&BEAP_LOCK);
 }
 
 // prints debug info if (HEAP_DEBUG is defined)
 #ifdef HEAP_DEBUG
-void heap_debug(const char *fmt, ...) {
+void beap_debug(const char *fmt, ...) {
     char buffer[1024];
     va_list args;
 
