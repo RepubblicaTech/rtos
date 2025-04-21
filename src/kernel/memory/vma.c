@@ -73,7 +73,9 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
     return ptr;
 }
 
-void vma_free(vmm_context_t *ctx, void *ptr) {
+// @param free do you want to give back the physical address of `ptr` back to
+// the PMM? (this will zero out that region on next allocation)
+void vma_free(vmm_context_t *ctx, void *ptr, bool free) {
 
 #ifdef VMM_DEBUG
     debugf_debug("Deallocating pointer %p\n", ptr);
@@ -104,6 +106,25 @@ void vma_free(vmm_context_t *ctx, void *ptr) {
 
     // find the physical address of the VMO
     uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
-    pmm_free((void *)phys, cur_vmo->len);
+    if (free)
+        pmm_free((void *)phys, cur_vmo->len);
     unmap_region(ctx->pml4_table, cur_vmo->base, (cur_vmo->len * PFRAME_SIZE));
+
+    virtmem_object_t *to_dealloc = cur_vmo;
+    virtmem_object_t *d_next     = to_dealloc->next;
+    virtmem_object_t *d_prev     = to_dealloc->prev;
+
+    if (cur_vmo == ctx->root_vmo) {
+        ctx->root_vmo       = ctx->root_vmo->next;
+        ctx->root_vmo->prev = NULL;
+    } else {
+        cur_vmo = d_next;
+        if (d_next)
+            d_next->prev = d_prev;
+        if (d_prev)
+            d_prev->next = d_next;
+    }
+
+    size_t vmo_size_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
+    pmm_free(to_dealloc, vmo_size_aligned / PFRAME_SIZE);
 }
