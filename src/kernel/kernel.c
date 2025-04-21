@@ -389,7 +389,7 @@ void kstart(void) {
                  limine_parsed_data.rsdp_table_address);
     /// acpi_init();    we'll use
     if (uacpi_init() == 0) {
-        kprintf_ok("uACPI initialized successfully\n");
+        kprintf_ok("uACPI initialized successfully!!\n");
     } else {
         kprintf_panic("Some errors occured during uACPI initialization.");
         debugf_panic(
