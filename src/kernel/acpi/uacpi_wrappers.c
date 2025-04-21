@@ -63,7 +63,7 @@ void uacpi_kernel_unmap(void *addr, uacpi_size len) {
     uint64_t aligned = ROUND_DOWN((uint64_t)addr, PFRAME_SIZE);
     UNUSED(len);
 
-    vma_free(get_current_ctx(), (void *)aligned);
+    vma_free(get_current_ctx(), (void *)aligned, false);
 }
 
 #ifndef UACPI_FORMATTED_LOGGING

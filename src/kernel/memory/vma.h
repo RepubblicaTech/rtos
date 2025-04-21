@@ -7,6 +7,6 @@
 #include <stdint.h>
 
 void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys);
-void vma_free(vmm_context_t *ctx, void *ptr);
+void vma_free(vmm_context_t *ctx, void *ptr, bool free);
 
 #endif
