@@ -18,10 +18,13 @@
 int madt_init() {
     struct acpi_madt *madt = kmalloc(sizeof(struct acpi_madt));
 
-    /* uacpi_status ret = uacpi_table_find_by_signature(ACPI_MADT_SIGNATURE,
-    madt); if (uacpi_likely_error(ret)) { debugf_warn("Couldn't find MADT
-    table!"); return -1;
-    } */
+    /* --- TODOs ---
+
+    1. Get the table
+    2. Get required info for L/IO-APIC (ISOs, base address(es), etc.)
+    3. MAKE SURE TO free()
+
+    */
 
     return 0;
 }
