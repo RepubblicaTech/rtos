@@ -162,13 +162,13 @@ uint64_t page_to_vmo_flags(uint64_t pg_flags) {
 virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
     virtmem_object_t *new_vmo;
 
-    if (src_vmo->len - len <= 0) {
+    if ((src_vmo->len * PFRAME_SIZE) - len <= 0) {
         return src_vmo; // we are not going to split it
     }
 
     size_t offset = (uint64_t)(len * PFRAME_SIZE);
-    new_vmo =
-        vmo_init(src_vmo->base + offset, src_vmo->len - len, src_vmo->flags);
+    new_vmo       = vmo_init(src_vmo->base + offset,
+                             (src_vmo->len * PFRAME_SIZE) - len, src_vmo->flags);
     /*
     src_vmo		  new_vmo
     [     [                        ]
