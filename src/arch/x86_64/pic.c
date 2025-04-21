@@ -135,7 +135,9 @@ uint16_t pic_get_isr(void) {
     return __pic_get_irq_reg(PIC_READ_ISR);
 }
 
-void pic_irq_handler(registers_t *regs) {
+void pic_irq_handler(void *ctx) {
+    registers_t *regs = ctx;
+
     int irq = regs->interrupt - PIC_REMAP_OFFSET;
 
     uint8_t pic_isr = pic_get_isr();

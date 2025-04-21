@@ -1,3 +1,5 @@
+#include "mmio/apic/io_apic.h"
+#include "scheduler/scheduler.h"
 #include "time.h"
 #include <mmio/apic/apic.h>
 
@@ -18,13 +20,20 @@
 
 #include <mmio/mmio.h>
 
+#include <fs/vfs/vfs.h>
 #include <memory/pmm.h>
+#include <util/assert.h>
 
 static struct bootloader_data *limine_data;
 
 extern volatile int tsc;
 
 uint32_t lapic_timer_ticks_per_ms = 0;
+
+bool lapic_status = false;
+bool is_lapic_enabled() {
+    return lapic_status;
+}
 
 // write data to a LAPIC register
 // by
@@ -58,11 +67,12 @@ uint64_t apic_get_base() {
 }
 
 void apic_init() {
+    /*
     limine_data = get_bootloader_data();
 
     mmio_device mm_lapic = find_mmio(MMIO_LAPIC_SIG);
     debugf_debug("MMIO device \"%s\" base:%#llx size:%#llx\n", mm_lapic.name,
-                 mm_lapic.base, mm_lapic.size);
+    mm_lapic.base, mm_lapic.size);
     limine_data->p_lapic_base = mm_lapic.base;
     debugf_debug("LAPIC base address: %#llx\n", mm_lapic.base);
 
@@ -73,10 +83,10 @@ void apic_init() {
     lapic_write_reg(LAPIC_TASKPR_REG, 0);
     lapic_write_reg(LAPIC_DEST_FMT_REG, 0xFFFFFFFF);
     debugf_debug("LAPIC is globally enabled and MSR is now %#llx\n",
-                 _cpu_get_msr(0x1b));
+    _cpu_get_msr(0x1b));
     lapic_write_reg(LAPIC_SPURIOUS_REG, 0x1ff);
     debugf_debug("LAPIC_SPURIOUS_REG: %#lx\n",
-                 lapic_read_reg(LAPIC_SPURIOUS_REG));
+    lapic_read_reg(LAPIC_SPURIOUS_REG));
 
     lapic_write_reg(LAPIC_LINT0_REG, 0xfe);
     lapic_write_reg(LAPIC_LINT1_REG, 0xfe);
@@ -87,6 +97,9 @@ void apic_init() {
     lapic_write_reg(LAPIC_TIMER_REG, 0xfe);
 
     debugf_debug("LAPIC ID: %#hhx\n", lapic_get_id());
+
+    lapic_status = true;
+    */
 }
 
 uint32_t lapic_timer_calibrate_pit(void) {
@@ -115,8 +128,6 @@ uint32_t lapic_timer_calibrate_pit(void) {
     // Calculate ticks per ms
     uint32_t ticks_per_ms = lapic_ticks / elapsed_ticks;
 
-    debugf_debug("LAPIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
-    
     // Store this value for future use (can be static/global)
     return ticks_per_ms;
 }
@@ -127,15 +138,13 @@ uint32_t calibrate_apic_timer_tsc(void) {
 
     tsc_sleep(100000);
 
-    uint32_t end_count = lapic_read_reg(LAPIC_TIMER_CURR_CNT); 
+    uint32_t end_count = lapic_read_reg(LAPIC_TIMER_CURR_CNT);
 
     uint32_t elapsed_lapic_ticks = 0xFFFFFFFF - end_count;
 
-    uint64_t lapic_timer_frequency = (uint64_t) (elapsed_lapic_ticks * 10);
+    uint64_t lapic_timer_frequency = (uint64_t)(elapsed_lapic_ticks * 10);
 
     uint32_t ticks_per_ms = lapic_timer_frequency / 1000;
-
-    debugf_debug("LAPIC Timer Frequency: %d ticks/ms\n", ticks_per_ms);
 
     return ticks_per_ms;
 }
@@ -148,7 +157,7 @@ void lapic_timer_init(void) {
         lapic_timer_ticks_per_ms = lapic_timer_calibrate_pit();
 
     // Register the timer interrupt handler
-    isr_registerHandler(LAPIC_TIMER_VECTOR + LAPIC_IRQ_OFFSET,
+    isr_registerHandler(LAPIC_IRQ_OFFSET + LAPIC_TIMER_VECTOR,
                         lapic_timer_handler);
 
     // Configure the timer in periodic mode
@@ -168,21 +177,15 @@ void lapic_timer_init(void) {
     debugf_debug("LAPIC Timer initialized: %u ticks per ms\n",
                  lapic_timer_ticks_per_ms);
 }
-// Add to apic.c
-void lapic_timer_handler(registers_t *regs) {
 
-    if (get_current_ticks() >= MAX_LAPIC_TICKS) set_ticks(0);
+void lapic_timer_handler(void *ctx) {
 
-    UNUSED(regs);
-    // Handle the timer interrupt
-    // This could trigger your scheduler or update a time counter
+    if (get_current_ticks() >= MAX_LAPIC_TICKS)
+        set_ticks(0);
 
-    // Update system ticks (similar to your PIT handler)
     set_ticks(get_current_ticks() + 1);
 
-    // If you have per-CPU scheduling, you would handle it here
-    // process_handler(regs);
+    scheduler_schedule((registers_t *)ctx);
 
-    // Send EOI
     lapic_send_eoi();
 }

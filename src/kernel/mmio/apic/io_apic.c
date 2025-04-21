@@ -14,11 +14,10 @@
 
 #include <io.h>
 
-#include <memory/heap/liballoc.h>
+#include <memory/heap/beap.h>
 #include <memory/pmm.h>
 
 mmio_device *mmios;
-madt_ioapic *io_apic;
 
 static struct bootloader_data *limine_data;
 
@@ -45,7 +44,9 @@ void ioapic_reg_write(uint8_t reg, uint32_t value) {
 
 irq_handler apic_irq_handlers[IOREDTBL_ENTRIES];
 
-void apic_irq_handler(registers_t *regs) {
+void apic_irq_handler(void *ctx) {
+    registers_t *regs = ctx;
+
     int apic_irq = regs->interrupt - IOAPIC_IRQ_OFFSET;
 
     uint64_t apic_isr = lapic_read_reg(LAPIC_INSERVICE_REG);
@@ -73,7 +74,8 @@ void apic_unregisterHandler(int irq) {
 
 // maps an I/O APIC IRQ to an interrupt that calls the handler if fired
 // @param irq			- The hardware interrupt that'll be fired
-// @param interrupt		- The interrupt vector that will be written to the I/O APIC
+// @param interrupt		- The interrupt vector that will be written to
+// the I/O APIC
 // @param handler		- The ISR that will be called when the interrupt
 // gets fired
 
@@ -91,6 +93,7 @@ void ioapic_map_irq(int irq, int interrupt, irq_handler handler) {
 }
 
 void ioapic_init() {
+    /*
     limine_data = get_bootloader_data();
 
     mmio_device mmio_ioapic    = find_mmio(MMIO_APIC_SIG);
@@ -101,7 +104,7 @@ void ioapic_init() {
     debugf_debug("Redirection entries: %#hhu\n", ioapic_redir_entries);
 
     uint64_t *ioredtbl =
-        (uint64_t *)kmalloc(sizeof(uint64_t) * ioapic_redir_entries);
+    (uint64_t *)kmalloc(sizeof(uint64_t) * ioapic_redir_entries);
     int redir = 0;
     for (int i = 0x10; i < 0x3f; i += 2) {
         ioredtbl[redir] = ioapic_reg_read(i) | (ioapic_reg_read(i + 1) << 31);
@@ -111,37 +114,30 @@ void ioapic_init() {
     // now that we got the redirection entries, we should now get all IRQ
     // overrides
     madt_ioapic_int_override **ioapic_int_override =
-        (madt_ioapic_int_override **)kmalloc(
-            sizeof(madt_ioapic_int_override *) * ioapic_redir_entries);
-    int iso_entry = 0;
-    madt *madt_h  = get_madt();
-    // 18/12/2024: Let' read and save all redirection entries :)
-    for (size_t offset = 0x2c; offset < madt_h->header.length;) {
-        madt_record *record = (madt_record *)((uint8_t *)madt_h + offset);
-        if (record->entry_type == MADT_ENTRY_IOAPIC_INT_OVERRIDE) {
-            ioapic_int_override[iso_entry] = (madt_ioapic_int_override *)record;
-            iso_entry++;
-        }
-        offset += record->entry_length;
-    }
-    ioapic_redtbl = ioredtbl;
-    for (int i = 0; i < iso_entry; i++) {
-        debugf_debug("Interrupt override n.%d\n", i);
-        debugf_debug("\tI/O APIC IRQ: %lu\n",
-                     ioapic_int_override[i]->ioapic_irq);
-        debugf_debug("\tLegacy PIC IRQ: %hhu\n",
-                     ioapic_int_override[i]->legacy_irq_source);
-        ioapic_map_irq(ioapic_int_override[i]->ioapic_irq,
-                       IOAPIC_IRQ_OFFSET +
-                           ioapic_int_override[i]->legacy_irq_source,
-                       apic_irq_handler);
-    }
+    (madt_ioapic_int_override **)kmalloc(
+        sizeof(madt_ioapic_int_override *) * ioapic_redir_entries);
+        int iso_entry = 0;
+        // 18/12/2024: Let' read and save all redirection entries :)
 
-    for (int i = 1; i < ioapic_redir_entries; i++) {
-        // to map the other normal interrupts, we'll just check if it's masked
-        // or not
-        if (ioapic_reg_read(0x10 + (2 * i)) & (1 << 16)) {
-            ioapic_map_irq(i, i + IOAPIC_IRQ_OFFSET, apic_irq_handler);
+        for (int i = 0; i < iso_entry; i++) {
+            debugf_debug("Interrupt override n.%d\n", i);
+            debugf_debug("\tI/O APIC IRQ: %lu\n",
+            ioapic_int_override[i]->ioapic_irq);
+            debugf_debug("\tLegacy PIC IRQ: %hhu\n",
+            ioapic_int_override[i]->legacy_irq_source);
+            ioapic_map_irq(ioapic_int_override[i]->ioapic_irq,
+            IOAPIC_IRQ_OFFSET +
+            ioapic_int_override[i]->legacy_irq_source,
+            apic_irq_handler);
         }
-    }
+
+        for (int i = 1; i < ioapic_redir_entries; i++) {
+            // to map the other normal interrupts, we'll just check if it's
+    masked
+            // or not
+            if (ioapic_reg_read(0x10 + (2 * i)) & (1 << 16)) {
+                ioapic_map_irq(i, i + IOAPIC_IRQ_OFFSET, apic_irq_handler);
+            }
+        }
+        */
 }

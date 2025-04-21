@@ -1,6 +1,8 @@
 #ifndef VFS_H
 #define VFS_H
 
+#include "types.h"
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -34,9 +36,10 @@ typedef struct vnode {
 
     vnode_ops_t *ops;
     uint32_t flags; // some flags ored together
+
+    lock_t lock;
 } vnode_t;
 
-// TODO: Support mounts in mounts
 typedef struct mount {
     vnode_t *root;      // Root vnode of the filesystem
     struct mount *next; // Next mount point

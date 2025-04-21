@@ -3,7 +3,7 @@
 
 #include <../arch/x86_64/io.h>
 #include <dev/device.h>
-#include <memory/heap/liballoc.h>
+#include <memory/heap/beap.h>
 #include <stddef.h>
 #include <util/string.h>
 
@@ -12,6 +12,7 @@
 int com1_write(struct device *dev, const void *buffer, size_t size,
                size_t offset);
 int com1_read(struct device *dev, void *buffer, size_t size, size_t offset);
+int com1_ioctl(struct device *dev, int request, void *arg);
 
 void serial_init(int port);
 

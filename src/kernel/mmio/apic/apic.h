@@ -2,6 +2,8 @@
 #define APIC_H 1
 
 #include <isr.h>
+
+#include <stdbool.h>
 #include <stdint.h>
 
 // LAPIC memory-mapped registers
@@ -15,7 +17,7 @@
 #define LAPIC_LOCAL_DEST_REG 0x0D0
 #define LAPIC_DEST_FMT_REG   0x0E0
 #define LAPIC_SPURIOUS_REG   0x0F0
-#define MAX_LAPIC_TICKS  0xFFFFFFFFFFFFFFFF
+#define MAX_LAPIC_TICKS      0xFFFFFFFFFFFFFFFF
 
 #define LAPIC_INSERVICE_REG 0x100
 #define LAPIC_INT_REQ_REG   0x200
@@ -54,6 +56,8 @@
 
 #define MMIO_LAPIC_SIG "LAPIC"
 
+bool is_lapic_enabled();
+
 void lapic_write_reg(uint32_t reg, uint32_t data);
 uint32_t lapic_read_reg(uint32_t reg);
 
@@ -68,7 +72,7 @@ extern uint64_t _apic_global_enable();
 
 uint32_t lapic_timer_calibrate(void);
 void lapic_timer_init(void);
-void lapic_timer_handler(registers_t *regs);
+void lapic_timer_handler(void *ctx);
 extern uint32_t lapic_timer_ticks_per_ms;
 
 #endif

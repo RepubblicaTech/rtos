@@ -64,7 +64,7 @@ toolchain/x86_64-elf
 src/kernel/system/limine.*
 src/kernel/system/nanoprintf.*
 src/kernel/flanterm
-src/kernel/memory/heap/liballoc.*
+src/kernel/memory/heap/beap.*
 src/kernel/acpi/uacpi
 
 # ISO files

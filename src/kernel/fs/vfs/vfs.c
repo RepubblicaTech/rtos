@@ -1,6 +1,6 @@
 #include "vfs.h"
 
-#include <memory/heap/liballoc.h>
+#include <memory/heap/beap.h>
 #include <stdio.h>
 #include <util/assert.h>
 #include <util/string.h>

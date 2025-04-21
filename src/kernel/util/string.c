@@ -1,6 +1,7 @@
 #include "string.h"
+#include "stdio.h"
 #include <io.h>
-#include <memory/heap/liballoc.h>
+#include <memory/heap/beap.h>
 
 // GCC and Clang reserve the right to generate calls to the following
 // 4 functions even if they are not directly called.
@@ -9,6 +10,7 @@
 // They CAN be moved to a different .c file.
 
 void *memcpy(void *dest, const void *src, size_t n) {
+    // debugf("memcpy(%p, %p, %zu)\n", dest, src, n);
     uint8_t *pdest      = (uint8_t *)dest;
     const uint8_t *psrc = (const uint8_t *)src;
 
@@ -191,6 +193,19 @@ char *strchr(const char *str, int c) {
     return (c == '\0') ? (char *)str : NULL; // Handle null terminator case
 }
 
+char *strrchr(const char *s, int c) {
+    const char *last = NULL;
+
+    while (*s) {
+        if (*s == (char)c) {
+            last = s;
+        }
+        s++;
+    }
+
+    return (char *)last;
+}
+
 char *strtok_r(char *str, const char *delim, char **saveptr) {
     char *token_start;
 
@@ -253,4 +268,17 @@ char *strtok_r(char *str, const char *delim, char **saveptr) {
     // End of string reached
     *saveptr = str;
     return token_start;
+}
+
+void strcpy(char dest[], const char source[]) {
+    int i = 0;
+    while (1) {
+        dest[i] = source[i];
+
+        if (dest[i] == '\0') {
+            break;
+        }
+
+        i++;
+    }
 }

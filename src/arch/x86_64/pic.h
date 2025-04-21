@@ -55,7 +55,7 @@ typedef enum {
     PIC_ICW4_SFNM          = 0x10
 } pic_icw4;
 
-void pic_irq_handler(registers_t *regs);
+void pic_irq_handler(void *ctx);
 
 void pic_sendEOI(uint8_t irq);
 void pic_config(int offset1, int offset2);

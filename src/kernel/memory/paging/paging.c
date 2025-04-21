@@ -18,8 +18,6 @@
 #include <util/string.h>
 #include <util/util.h>
 
-#include <mmio/mmio.h>
-
 #include <kernel.h>
 #include <limine.h>
 
@@ -77,9 +75,11 @@ unrelated to ordinary paging.
         Simply gives information about a page fault error code
         (C) RepubblicaTech 2024
 */
-void pf_handler(registers_t *regs) {
+void pf_handler(void *ctx) {
     stdio_panic_init();
     rsod_init();
+
+    registers_t *regs = ctx;
 
     uint64_t pf_error_code = (uint64_t)regs->error;
 
@@ -114,7 +114,13 @@ void pf_handler(registers_t *regs) {
  ********************/
 
 uint64_t *get_pmlt(uint64_t *pml_table, uint64_t pml_index) {
-    return (uint64_t *)(PHYS_TO_VIRTUAL(PG_GET_ADDR(pml_table[pml_index])));
+    uint64_t page_entry       = pml_table[pml_index];
+    uint64_t actual_page_addr = PG_GET_ADDR(page_entry);
+    if (!actual_page_addr) {
+        debugf_warn("Page entry address returned NULL!\n");
+    }
+
+    return (uint64_t *)(PHYS_TO_VIRTUAL(actual_page_addr));
 }
 
 uint64_t *get_create_pmlt(uint64_t *pml_table, uint64_t pmlt_index,
@@ -205,10 +211,11 @@ void map_region_to_page(uint64_t *pml4_table, uint64_t physical_start,
                         uint64_t virtual_start, uint64_t len, uint64_t flags) {
 
     uint64_t pages = ROUND_UP(len, PFRAME_SIZE) / PFRAME_SIZE;
-
+#ifdef VMM_DEBUG
     debugf_debug("Mapping address range (phys)%#llx-%#llx (virt)%#llx-%#llx\n",
                  physical_start, physical_start + len, virtual_start,
                  virtual_start + len);
+#endif
 
     for (uint64_t i = 0; i < pages; i++) {
         uint64_t phys = physical_start + (i * PFRAME_SIZE);
@@ -220,10 +227,10 @@ void map_region_to_page(uint64_t *pml4_table, uint64_t physical_start,
 void unmap_region(uint64_t *pml4_table, uint64_t virtual_start, uint64_t len) {
 
     uint64_t pages = ROUND_UP(len, PFRAME_SIZE) / PFRAME_SIZE;
-
+#ifdef VMM_DEBUG
     debugf_debug("Unmapping address range (virt)%#llx-%#llx\n", virtual_start,
                  virtual_start + len);
-
+#endif
     for (uint64_t i = 0; i < pages; i++) {
         uint64_t virt = virtual_start + (i * PFRAME_SIZE);
         unmap_page(pml4_table, virt);
@@ -326,29 +333,10 @@ void paging_init(uint64_t *kernel_pml4) {
         struct limine_memmap_entry *memmap_entry = memmap_response->entries[i];
 
         // we won't identity map
-        // map_region_to_page(kernel_pml4, memmap_entry->base,
-        // memmap_entry->base,
-        //                    memmap_entry->length, PMLE_USER_READ_WRITE);
+
         map_region_to_page(kernel_pml4, memmap_entry->base,
                            PHYS_TO_VIRTUAL(memmap_entry->base),
                            memmap_entry->length, PMLE_KERNEL_READ_WRITE);
-    }
-
-    //
-    //	--- Mapping devices ---
-    //
-    mmio_device *mmio_devs = get_mmio_devices();
-    for (int i = 0; i < MMIO_MAX_DEVICES; i++) {
-        if (mmio_devs[i].base != 0x0) {
-            kprintf_info("Mapping device \"%s\"\n", mmio_devs[i].name);
-            map_region_to_page(kernel_pml4, mmio_devs[i].base,
-                               PHYS_TO_VIRTUAL(mmio_devs[i].base),
-                               mmio_devs[i].size,
-                               PMLE_KERNEL_READ_WRITE | PMLE_NOT_EXECUTABLE);
-            // map_region_to_page(kernel_pml4, mmio_devs[i].base,
-            //                    mmio_devs[i].base, mmio_devs[i].size,
-            //                    PMLE_KERNEL_READ_WRITE | PMLE_NOT_EXECUTABLE);
-        }
     }
 
     kprintf_info("All mappings done.\n");

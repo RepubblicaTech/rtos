@@ -1,6 +1,6 @@
 #include "device.h"
 
-#include <memory/heap/liballoc.h>
+#include <memory/heap/beap.h>
 #include <stdio.h>
 #include <util/string.h>
 

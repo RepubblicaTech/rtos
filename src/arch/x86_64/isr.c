@@ -58,8 +58,10 @@ void isr_init() {
     idt_gate_disable(0x80);
 }
 
-void print_reg_dump(registers_t *regs) {
+void print_reg_dump(void *ctx) {
     debugf(ANSI_COLOR_RED);
+
+    registers_t *regs = ctx;
 
     mprintf("\nRegister dump:\n\n");
 
@@ -92,7 +94,9 @@ void print_reg_dump(registers_t *regs) {
             regs->rsi);
 }
 
-void panic_common(registers_t *regs) {
+void panic_common(void *ctx) {
+    registers_t *regs = ctx;
+
     print_reg_dump(regs);
 
     // stacktrace
@@ -121,9 +125,9 @@ void panic_common(registers_t *regs) {
         // If this is in the higher-half kernel space, convert to physical
         // address
         uint64_t phys_addr = 0;
-        if (return_addr >= 0xffff800000000000) {
+        if (return_addr >= bootloader_data->kernel_base_virtual) {
             // Using HHDM offset from limine bootloader
-            phys_addr = return_addr - bootloader_data->hhdm_offset;
+            phys_addr = return_addr - bootloader_data->kernel_base_virtual;
             mprintf("Frame %d: [%p] func addr: %#llx (phys: %#llx)\n", frame,
                     rbp, approx_func_addr, phys_addr);
         } else {
@@ -146,39 +150,31 @@ void panic_common(registers_t *regs) {
         _hcf();
 }
 
-void isr_handler(registers_t *regs) {
+void isr_handler(void *ctx) {
+    registers_t *regs = ctx;
+
+    uint64_t cpu = 0;
+    if (is_lapic_enabled())
+        cpu = lapic_get_id();
 
     if (isr_handlers[regs->interrupt] != NULL) {
         isr_handlers[regs->interrupt](regs);
     } else if (regs->interrupt >= 32) {
-        debugf_warn("Unhandled interrupt %d on CPU %d\n", regs->interrupt,
+        debugf_warn("Unhandled interrupt %d on CPU %hhu\n", regs->interrupt,
                     lapic_get_id());
     } else {
         stdio_panic_init();
+        fb_set_fg(PANIC_FG);
 
-        uint64_t cpu = lapic_get_id();
+        mprintf("KERNEL PANIC! \"%s\" (Exception n. %d) on CPU %hhu\n",
+                exceptions[regs->interrupt], regs->interrupt, cpu);
+        mprintf("\terrcode: %#llx\n", regs->error);
 
-        if (cpu != 0) {
-            debugf_warn(
-                "exception \"%s\" (nr. %#llx) on CPU %d @ %.16llx. error code "
-                "%#llx. halting...\n",
-                exceptions[regs->interrupt], regs->interrupt, cpu, regs->rip,
-                regs->error);
-            asm("cli");
-            for (;;)
-                _hcf();
-        } else {
-    
-            fb_set_fg(PANIC_FG);
-            mprintf("KERNEL PANIC! \"%s\" (Exception n. %d)\n",
-                exceptions[regs->interrupt], regs->interrupt);
-    
-            mprintf("\terrcode: %#llx\n", regs->error);
-            
+        panic_common(regs);
 
-            panic_common(regs);
-
-            _hcf();
+        _hcf();
+        for (;;) {
+            asm("hlt");
         }
     }
 }

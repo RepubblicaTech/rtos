@@ -1,16 +1,16 @@
 #include "vmm.h"
-#include "acpi/acpi.h"
 #include "paging/paging.h"
 #include "pmm.h"
 
 #include <stdint.h>
+#include <stdio.h>
+
+#include <spinlock.h>
 
 #include <util/string.h>
 #include <util/util.h>
 
 #include <kernel.h>
-
-#include <stdio.h>
 
 #include <cpu.h>
 
@@ -35,8 +35,10 @@ void vmo_dump(virtmem_object_t *vmo) {
 }
 
 virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
-    virtmem_object_t *vmo = (virtmem_object_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(
-        ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE));
+
+    size_t vmosize_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
+    virtmem_object_t *vmo  = (virtmem_object_t *)PHYS_TO_VIRTUAL(
+        pmm_alloc_pages(vmosize_aligned / PFRAME_SIZE));
 
     vmo->base  = base;
     vmo->len   = length;
@@ -49,20 +51,23 @@ virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
 }
 
 vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags) {
-    vmm_context_t *ctx = (vmm_context_t *)PHYS_TO_VIRTUAL(pmm_alloc_pages(
-        ROUND_UP(sizeof(vmm_context_t), PFRAME_SIZE) / PFRAME_SIZE));
+
+    size_t vmcsize_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
+    vmm_context_t *ctx     = (vmm_context_t *)PHYS_TO_VIRTUAL(
+        pmm_alloc_pages(vmcsize_aligned / PFRAME_SIZE));
 
     if (pml4 == NULL) {
         pml4 = (uint64_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
     }
 
     ctx->pml4_table = pml4;
-    ctx->root_vmo   = vmo_init(0, 1, flags);
+    ctx->root_vmo   = vmo_init(0x1000, 1, flags);
 
     return ctx;
 }
 
 void vmm_ctx_destroy(vmm_context_t *ctx) {
+
     if (VIRT_TO_PHYSICAL(ctx->pml4_table) == (uint64_t)cpu_get_cr(3)) {
         kprintf_warn("Attempted to destroy a pagemap that's currently in use. "
                      "Skipping\n");
@@ -72,7 +77,7 @@ void vmm_ctx_destroy(vmm_context_t *ctx) {
     // Free all VMOs and their associated physical memory
     for (virtmem_object_t *i = ctx->root_vmo; i != NULL;) {
         virtmem_object_t *next = i->next;
-        
+
         // Only free physical memory if the VMO is mapped
         if (i->flags & VMO_PRESENT) {
             uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, i->base);
@@ -80,9 +85,10 @@ void vmm_ctx_destroy(vmm_context_t *ctx) {
                 pmm_free((void *)PHYS_TO_VIRTUAL(phys), i->len);
             }
         }
-        
+
         // Free the VMO structure itself
-        pmm_free(i, ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE);
+        pmm_free(i,
+                 ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE);
         i = next;
     }
 
@@ -92,36 +98,37 @@ void vmm_ctx_destroy(vmm_context_t *ctx) {
         if (!(pml4[pml4_idx] & PMLE_PRESENT)) {
             continue;
         }
-        
+
         uint64_t *pdpt = (uint64_t *)PHYS_TO_VIRTUAL(pml4[pml4_idx] & ~0xFFF);
         for (int pdpt_idx = 0; pdpt_idx < 512; pdpt_idx++) {
             if (!(pdpt[pdpt_idx] & PMLE_PRESENT)) {
                 continue;
             }
-            
+
             uint64_t *pd = (uint64_t *)PHYS_TO_VIRTUAL(pdpt[pdpt_idx] & ~0xFFF);
             for (int pd_idx = 0; pd_idx < 512; pd_idx++) {
                 if (!(pd[pd_idx] & PMLE_PRESENT)) {
                     continue;
                 }
-                
+
                 uint64_t *pt = (uint64_t *)PHYS_TO_VIRTUAL(pd[pd_idx] & ~0xFFF);
-                
+
                 // Free the page table
                 pmm_free((void *)pt, 1);
             }
-            
+
             // Free the page directory
             pmm_free((void *)pd, 1);
         }
-        
+
         // Free the PDPT
         pmm_free((void *)pdpt, 1);
     }
 
     // Free the PML4 table and the context
     pmm_free(ctx->pml4_table, 1);
-    pmm_free(ctx, ROUND_UP(sizeof(vmm_context_t), PFRAME_SIZE) / PFRAME_SIZE);
+    size_t vmcsize_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
+    pmm_free(ctx, vmcsize_aligned / PFRAME_SIZE);
 
     ctx->pml4_table = NULL;
 }
@@ -155,12 +162,13 @@ uint64_t page_to_vmo_flags(uint64_t pg_flags) {
 virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
     virtmem_object_t *new_vmo;
 
-    if (src_vmo->len - len <= 0) {
+    if ((src_vmo->len * PFRAME_SIZE) - len <= 0) {
         return src_vmo; // we are not going to split it
     }
 
-    new_vmo = vmo_init(src_vmo->base + (uint64_t)(len * PFRAME_SIZE),
-                       src_vmo->len - len, src_vmo->flags);
+    size_t offset = (uint64_t)(len * PFRAME_SIZE);
+    new_vmo       = vmo_init(src_vmo->base + offset,
+                             (src_vmo->len * PFRAME_SIZE) - len, src_vmo->flags);
     /*
     src_vmo		  new_vmo
     [     [                        ]
@@ -169,7 +177,7 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
 
 #ifdef VMM_DEBUG
     debugf_debug("VMO %p has been split at (virt)%#llx\n", src_vmo,
-                 src_vmo->base + (uint64_t)(len * PFRAME_SIZE));
+                 src_vmo->base + offset);
 #endif
 
     src_vmo->len = len;

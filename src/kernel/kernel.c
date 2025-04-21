@@ -1,3 +1,4 @@
+#include "dev/pcie/pcie.h"
 #include <kernel.h>
 
 #include <limine.h>
@@ -11,10 +12,13 @@
 #include <flanterm/flanterm.h>
 #include <flanterm/flanterm_private.h>
 
+#include <ahci/ahci.h>
+
 #include <gdt.h>
 #include <idt.h>
 #include <irq.h>
 #include <isr.h>
+#include <tsc.h>
 
 #include <cpu.h>
 #include <mmio/apic/apic.h>
@@ -23,7 +27,7 @@
 #include <pit.h>
 #include <time.h>
 
-#include <memory/heap/liballoc.h>
+#include <memory/heap/beap.h>
 #include <memory/paging/paging.h>
 #include <memory/pmm.h>
 #include <memory/vma.h>
@@ -34,7 +38,6 @@
 #include <smp/smp.h>
 
 #include <acpi/acpi.h>
-#include <acpi/rsdp.h>
 
 #include <fs/ustar/ustar.h>
 #include <fs/vfs/devfs/devfs.h>
@@ -64,7 +67,7 @@
     --- DON'T EVEN DARE TO PUT THIS ANYWHERE ELSE OTHER THAN HERE. ---
 */
 __attribute__((used,
-               section(".requests"))) static volatile LIMINE_BASE_REVISION(2);
+               section(".requests"))) static volatile LIMINE_BASE_REVISION(3);
 
 // The Limine requests can be placed anywhere, but it is important that
 // the compiler does not optimise them away, so, usually, they should
@@ -108,9 +111,10 @@ __attribute__((
     used, section(".requests"))) static volatile struct limine_module_request
     module_request = {.id = LIMINE_MODULE_REQUEST, .revision = 0};
 
-//https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#firmware-type-feature
-__attribute__((used, 
-               section(".requests"))) static volatile struct limine_firmware_type_request
+// https://github.com/limine-bootloader/limine/blob/v8.x/PROTOCOL.md#firmware-type-feature
+__attribute__((
+    used,
+    section(".requests"))) static volatile struct limine_firmware_type_request
     firmware_type_request = {.id = LIMINE_FIRMWARE_TYPE_REQUEST, .revision = 0};
 
 // next time warn me when you remove a request
@@ -188,7 +192,7 @@ void kstart(void) {
     }
     clearscreen();
 
-    kprintf("Welcome to RTOS!\n");
+    kprintf("Welcome to purpleK2!\n");
 
     debugf_debug("Kernel built on %s\n", __DATE__);
 
@@ -202,7 +206,7 @@ void kstart(void) {
             FIRMWARE_TYPE = "UEFI32";
         } else if (firmware_type == LIMINE_FIRMWARE_TYPE_UEFI64) {
             FIRMWARE_TYPE = "UEFI64";
-        } 
+        }
     } else {
         FIRMWARE_TYPE = "No firmware type found!";
         debugf_debug("Firmware type: %s\n", FIRMWARE_TYPE);
@@ -265,8 +269,7 @@ void kstart(void) {
         tsc_init();
         tsc = 1;
         kprintf_ok("Initialized TSC\n");
-    }
-    else {
+    } else {
         debugf_debug("TSC not supported!\n");
     }
 
@@ -322,17 +325,6 @@ void kstart(void) {
     pmm_init();
     kprintf_ok("Initialized PMM\n");
 
-    if (rsdp_request.response == NULL) {
-        kprintf_panic("Couldn't get RSDP address!\n");
-        _hcf();
-    }
-    rsdp_response                         = rsdp_request.response;
-    limine_parsed_data.rsdp_table_address = (uint64_t *)rsdp_response->address;
-    debugf_debug("Address of RSDP: %p\n",
-                 limine_parsed_data.rsdp_table_address);
-    acpi_init();
-    kprintf_ok("ACPI tables parsing done\n");
-
     if (paging_mode_request.response == NULL) {
         kprintf_panic("We've got no paging!\n");
         _hcf();
@@ -385,12 +377,37 @@ void kstart(void) {
     malloc_test_end_timestamp        -= malloc_test_start_timestamp;
     debugf_ok("Malloc test complete: Time taken: %dms\n",
               malloc_test_end_timestamp);
+    kprintf_ok("Heap init done\n");
+
+    if (rsdp_request.response == NULL) {
+        kprintf_panic("Couldn't get RSDP address!\n");
+        _hcf();
+    }
+    rsdp_response                         = rsdp_request.response;
+    limine_parsed_data.rsdp_table_address = (uint64_t *)rsdp_response->address;
+    debugf_debug("Address of RSDP: %p\n",
+                 limine_parsed_data.rsdp_table_address);
+    /// acpi_init();    we'll use
+    if (uacpi_init() == 0) {
+        kprintf_ok("uACPI initialized successfully!!\n");
+    } else {
+        kprintf_panic("Some errors occured during uACPI initialization.");
+        debugf_panic(
+            "Some errors occured during uACPI initialization. Halting...\n");
+
+        _hcf();
+        for (;;) {
+            asm("hlt");
+        }
+    }
 
     if (check_apic()) {
         asm("cli");
         debugf_debug("APIC device is supported\n");
-        apic_init();
-        ioapic_init();
+
+        // --- TODO: use uACPI for the tables
+        // apic_init();
+        // ioapic_init();
         apic_registerHandler(0, timer_tick);
 
         kprintf_ok("APIC init done\n");
@@ -398,39 +415,6 @@ void kstart(void) {
     } else {
         debugf_debug("APIC is not supported. Going on with legacy PIC\n");
     }
-
-    sdt_pointer *rsdp = get_rsdp();
-
-    kprintf("--- ACPI INFO ---\n");
-    kprintf("Type: %s (Revision %s)\n", rsdp->revision > 0 ? "XSDP" : "RSDP",
-            rsdp->revision > 0 ? "2.0 - 6.1" : "1.0");
-    kprintf("%s address: 0x%.16llx\n", rsdp->revision > 0 ? "XSDP" : "RSDP",
-            limine_parsed_data.rsdp_table_address);
-    kprintf("%s address: 0x%.16llx\n", rsdp->revision > 0 ? "XSDT" : "RSDT",
-            rsdp->revision > 0 ? rsdp->p_xsdt_address : rsdp->p_rsdt_address);
-
-    kprintf("Signature: %.8s\n", rsdp->signature);
-    kprintf("Checksum: %hhu\n", rsdp->checksum);
-
-    kprintf("OEM ID: %.6s\n", rsdp->oem_id);
-    kprintf("Revision: %s\n\n", rsdp->revision > 0 ? "2.0 - 6.1" : "1.0");
-
-    if (rsdp->revision > 0) {
-        XSDT *xsdt = (XSDT *)get_root_sdt();
-        kprintf("XSDT Length: %lu\n", rsdp->length);
-        kprintf("XSDT Extended checksum: %hhu\n", rsdp->extended_checksum);
-        kprintf("XSDT OEM ID: %.6s\n", xsdt->header.oem_id);
-        kprintf("XSDT Signature: %.4s\n", xsdt->header.signature);
-        kprintf("XSDT Creator ID: 0x%llx\n", xsdt->header.creator_id);
-    } else {
-        RSDT *rsdt = (RSDT *)get_root_sdt();
-        kprintf("RSDT OEM ID: %.6s\n", rsdt->header.oem_id);
-        kprintf("RSDT Signature: %.4s\n", rsdt->header.signature);
-        kprintf("RSDT Creator ID: 0x%llx\n", rsdt->header.creator_id);
-    }
-    kprintf("--- ACPI INFO END ---\n\n");
-
-    kprintf("--- SYSTEM INFO ---\n");
 
     {
         char *cpu_name = kmalloc(49);
@@ -544,24 +528,17 @@ void kstart(void) {
 
     limine_parsed_data.smp_enabled = true;
 
-    void *test_page        = pmm_alloc_page();
-    uint64_t physical_addr = (uint64_t)VIRT_TO_PHYSICAL(test_page);
+    ustar_file_tree_t *pci_ids = file_lookup(initramfs_disk, "pci.ids");
 
-    uint64_t *pml4 = kernel_pml4;
-
-    map_region_to_page(pml4, physical_addr, 0x100000, PFRAME_SIZE,
-                       PMLE_USER_READ_WRITE);
-
-    // pause a small time
-    for (size_t i = 0; i < 1000000; i++)
-        ;
+    pci_scan(pci_ids);
+    pci_print_list();
 
     size_t end_tick_after_init  = get_current_ticks();
     end_tick_after_init        -= start_tick_after_pit_init;
     kprintf("System started: Time took: %d seconds %d ms.\n",
             end_tick_after_init / PIT_TICKS, end_tick_after_init % PIT_TICKS);
 
-    // limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
+    limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
 
     for (;;)
         ;

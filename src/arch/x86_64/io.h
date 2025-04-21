@@ -14,4 +14,7 @@ extern uint32_t _ind(uint16_t port);
 
 extern void _io_wait(void);
 
+extern void _outl(uint16_t port, uint32_t val);
+extern uint32_t _inl(uint16_t port);
+
 #endif

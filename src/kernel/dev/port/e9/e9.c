@@ -6,6 +6,7 @@ void dev_e9_init() {
     dev->type  = DEVICE_TYPE_CHAR;
     dev->read  = dev_e9_read;
     dev->write = dev_e9_write;
+    dev->ioctl = dev_e9_ioctl;
     dev->data  = "e9-dbg";
     register_device(dev);
 }
@@ -28,5 +29,12 @@ int dev_e9_write(struct device *dev, const void *buffer, size_t size,
         _outb(PORT, ((char *)buffer)[i]);
     }
 
+    return 0;
+}
+
+int dev_e9_ioctl(struct device *dev, int request, void *arg) {
+    (void)dev;
+    (void)request;
+    (void)arg;
     return 0;
 }

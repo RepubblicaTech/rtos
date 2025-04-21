@@ -5,7 +5,7 @@
 
 #include "isr.h"
 
-typedef void (*irq_handler)(registers_t *regs);
+typedef void (*irq_handler)(void *ctx);
 
 void irq_registerHandler(int irq, irq_handler handler);
 

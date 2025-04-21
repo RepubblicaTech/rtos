@@ -10,7 +10,7 @@ LIBS_DIR=$2
 declare -a libs=("limine"
                  "flanterm"
 				 "nanoprintf"
-				 "liballoc"
+                 "beap"
                  "uacpi"
                  )
 
@@ -83,9 +83,6 @@ done
 copy_if_exists $LIBS_DIR/limine/limine.h $KERNEL_DIR/system/limine.h
 copy_if_exists $LIBS_DIR/nanoprintf/nanoprintf.h $KERNEL_DIR/system/nanoprintf.h
 
-copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.h $KERNEL_DIR/memory/heap/liballoc.h
-copy_if_exists $LIBS_DIR/liballoc/liballoc_1_1.c $KERNEL_DIR/memory/heap/liballoc.c
-
 # copy flanterm headers
 copy_if_exists $LIBS_DIR/flanterm/flanterm_private.h $KERNEL_DIR/flanterm
 copy_if_exists $LIBS_DIR/flanterm/flanterm.h $KERNEL_DIR/flanterm
@@ -97,9 +94,11 @@ copy_if_exists $LIBS_DIR/flanterm/backends/fb.c $KERNEL_DIR/flanterm/backends
 # custom font for flanterm
 copy_if_exists $LIBS_DIR/patches/font.h $KERNEL_DIR/flanterm/backends
 
-patch -su $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch >/dev/null 2>&1
-patch -su $KERNEL_DIR/memory/heap/liballoc.h -i $LIBS_DIR/patches/liballoc.h.patch >/dev/null 2>&1
-patch -su $KERNEL_DIR/memory/heap/liballoc.c -i $LIBS_DIR/patches/liballoc.c.patch >/dev/null 2>&1
+# beap
+copy_if_exists $LIBS_DIR/beap/beap/beap.h $KERNEL_DIR/memory/heap
+copy_if_exists $LIBS_DIR/beap/beap/beap.c $KERNEL_DIR/memory/heap
+
+patch -u $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch >/dev/null 2>&1
 
 # copy uACPI
 # NOTE: very wacky, must make it better

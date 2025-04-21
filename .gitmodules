@@ -3,18 +3,19 @@
 	url = https://github.com/limine-bootloader/limine.git
 	branch = v9.x-binary
     
-[submodule "libs/flanterm"]
-	path = libs/flanterm
-	url = https://github.com/mintsuki/flanterm.git
-
 [submodule "libs/nanoprintf"]
 	path = libs/nanoprintf
 	url = https://github.com/charlesnicholson/nanoprintf.git
 	
-[submodule "libs/liballoc"]
-	path = libs/liballoc
-	url = https://github.com/blanham/liballoc.git
-    
 [submodule "libs/uacpi"]
 	path = libs/uacpi
 	url = https://github.com/uACPI/uACPI.git
+
+[submodule "libs/flanterm"]
+	path = libs/flanterm
+	url = https://codeberg.org/mintsuki/flanterm.git
+
+[submodule "libs/beap"]
+	path = libs/beap
+	url = https://github.com/purpleK2/beap.git
+	branch = reset

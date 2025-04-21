@@ -21,7 +21,6 @@ typedef enum proc_state {
 } proc_state_t;
 
 typedef struct proc {
-    ppid_t ppid;
     pid_t pid;
 
     struct {
@@ -36,14 +35,14 @@ typedef struct proc {
     int sched_flags;
 
     fd_t current_fd;
-    vnode_t fd_table[LIMIT_FD_PROC_MAX];
+    vnode_t **fd_table;
 
     int errno;
     proc_state_t state;
 
     uint8_t current_core;
     uint8_t preferred_core;
-    struct proc *next; // Linked list next pointer
+    struct proc *next;
 } proc_t;
 
 typedef struct core_scheduler {
@@ -61,14 +60,14 @@ typedef struct core_scheduler {
     uint32_t flags;
     uint64_t default_time_slice;
 
-    atomic_flag lock;
+    lock_t lock;
 } core_scheduler_t;
 
 typedef struct scheduler_manager {
-    core_scheduler_t *core_schedulers;
+    core_scheduler_t **core_schedulers;
     size_t core_count;
 
-    proc_t *process_list_head; // Head of the linked list
+    proc_t *process_list_head;
     size_t process_count;
 
     pid_t next_pid;
@@ -76,20 +75,22 @@ typedef struct scheduler_manager {
     uint64_t load_balance_interval;
     uint64_t last_load_balance;
 
-    atomic_flag glob_lock;
+    lock_t glob_lock;
 } scheduler_manager_t;
 
-extern volatile scheduler_manager_t scheduler_manager;
+extern scheduler_manager_t *scheduler_manager;
 
 void scheduler_init();
 void scheduler_init_cpu(uint8_t core);
 
-proc_t *scheduler_add(void *entry_point, int flags);
+proc_t *scheduler_add(void (*entry_point)(), int flags);
 void scheduler_remove(proc_t *proc);
 
 proc_t *get_current_process();
-void scheduler_switch_context(proc_t *proc);
+void scheduler_switch_context(proc_t *proc, registers_t *current_regs);
 
-void scheduler_schedule(registers_t *regs);
+void scheduler_schedule(void *ctx);
 
-#endif // SCHEDULER_H
+#define PROC_TIME_SLICE 10
+
+#endif

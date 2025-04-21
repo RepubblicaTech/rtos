@@ -43,3 +43,22 @@ _cpu_set_msr:
     wrmsr
 
     ret
+
+; uint64_t _get_cpu_flags()
+global _get_cpu_flags
+_get_cpu_flags:
+    xor rax, rax
+
+    pushfq   ; this pushes the RFLAGS (QWORD)
+    pop rax  ; put it in rax
+
+    ret
+
+; void _set_cpu_flags(uint64_t flags)
+global _set_cpu_flags
+_set_cpu_flags:
+    push rdi    ; flags
+
+    popfq       ; put them into RFLAGS :)
+
+    ret

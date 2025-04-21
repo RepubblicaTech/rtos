@@ -1,8 +1,8 @@
 #include "spinlock.h"
-#include "smp/smp.h"
 #include "stdio.h"
+#include "types.h"
 
-void spinlock_acquire(atomic_flag *lock) {
+void spinlock_acquire(lock_t *lock) {
     unsigned int timeout = 1000000;
 
     while (atomic_flag_test_and_set(lock)) {
@@ -15,6 +15,6 @@ void spinlock_acquire(atomic_flag *lock) {
     }
 }
 
-void spinlock_release(atomic_flag *lock) {
+void spinlock_release(lock_t *lock) {
     atomic_flag_clear(lock);
 }

@@ -8,12 +8,12 @@
 #include "util/string.h"
 #include "util/util.h"
 
-// @param map_allocation Tells the allocator if the found region needs to be
-// mapped
+#include <spinlock.h>
+
 // @param phys optional parameter, maps the newly allocated virtual address to
 // such physical address
-void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
-                void *phys) {
+void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
+
     void *ptr = NULL;
 
     virtmem_object_t *cur_vmo = ctx->root_vmo;
@@ -25,7 +25,7 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
         vmo_dump(cur_vmo);
 #endif
 
-        if ((cur_vmo->len >= pages) && (cur_vmo->flags & ~(VMO_ALLOCATED))) {
+        if ((cur_vmo->len >= pages) && (BIT_GET(cur_vmo->flags, 8) == 0)) {
 
 #ifdef VMM_DEBUG
             debugf_debug("Well, we've got enough memory :D\n");
@@ -38,11 +38,11 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
                      "allocated. Skipping...\n");
 #endif
         if (cur_vmo->next == NULL) {
-            new_vmo =
-                vmo_init(cur_vmo->base + (uint64_t)(cur_vmo->len * PFRAME_SIZE),
-                         pages, cur_vmo->flags & ~(VMO_ALLOCATED));
-            cur_vmo->next = new_vmo;
-            new_vmo->prev = cur_vmo;
+            uint64_t offset = (uint64_t)(cur_vmo->len * PFRAME_SIZE);
+            new_vmo         = vmo_init(cur_vmo->base + offset, pages,
+                                       cur_vmo->flags & ~(VMO_ALLOCATED));
+            cur_vmo->next   = new_vmo;
+            new_vmo->prev   = cur_vmo;
 #ifdef VMM_DEBUG
             debugf_debug("VMO %p created successfully. Proceeding to next "
                          "iteration\n",
@@ -61,24 +61,22 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, bool map_allocation,
     FLAG_SET(cur_vmo->flags, VMO_ALLOCATED);
     ptr = (void *)(cur_vmo->base);
 
-    if (map_allocation) {
-        void *phys_to_map = phys != NULL ? phys : pmm_alloc_pages(pages);
-        map_region_to_page(ctx->pml4_table, (uint64_t)phys_to_map,
-                           (uint64_t)ptr, (uint64_t)(pages * PFRAME_SIZE),
-                           vmo_to_page_flags(cur_vmo->flags));
-    } else {
-#ifdef VMM_DEBUG
-        debugf_debug("No need to map the region\n");
-#endif
-    }
+    void *phys_to_map = phys != NULL ? phys : pmm_alloc_pages(pages);
+    map_region_to_page(ctx->pml4_table, (uint64_t)phys_to_map, (uint64_t)ptr,
+                       (uint64_t)(pages * PFRAME_SIZE),
+                       vmo_to_page_flags(cur_vmo->flags));
 
 #ifdef VMM_DEBUG
     debugf_debug("Returning pointer %p\n", ptr);
 #endif
+
     return ptr;
 }
 
-void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
+// @param free do you want to give back the physical address of `ptr` back to
+// the PMM? (this will zero out that region on next allocation)
+void vma_free(vmm_context_t *ctx, void *ptr, bool free) {
+
 #ifdef VMM_DEBUG
     debugf_debug("Deallocating pointer %p\n", ptr);
 #endif
@@ -106,34 +104,27 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool unmap_allocation) {
 
     FLAG_UNSET(cur_vmo->flags, VMO_ALLOCATED);
 
-    // we'll remove the VMO from the list
-
     // find the physical address of the VMO
     uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
-    pmm_free((void *)PHYS_TO_VIRTUAL(phys), cur_vmo->len);
+    if (free)
+        pmm_free((void *)phys, cur_vmo->len);
+    unmap_region(ctx->pml4_table, cur_vmo->base, (cur_vmo->len * PFRAME_SIZE));
 
-    virtmem_object_t *prev_vmo, *next_vmo;
-    prev_vmo = cur_vmo->prev;
-    next_vmo = cur_vmo->next;
-    // delete the VMO from the list
+    virtmem_object_t *to_dealloc = cur_vmo;
+    virtmem_object_t *d_next     = to_dealloc->next;
+    virtmem_object_t *d_prev     = to_dealloc->prev;
 
-    if (prev_vmo != NULL)
-        prev_vmo->next = next_vmo;
-    if (next_vmo != NULL)
-        next_vmo->prev = prev_vmo;
-
-    if (unmap_allocation) {
-        pmm_free((void *)PHYS_TO_VIRTUAL(
-                     pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base)),
-                 cur_vmo->len);
-        unmap_region(ctx->pml4_table, cur_vmo->base,
-                     (cur_vmo->len * PFRAME_SIZE));
+    if (cur_vmo == ctx->root_vmo) {
+        ctx->root_vmo       = ctx->root_vmo->next;
+        ctx->root_vmo->prev = NULL;
     } else {
-#ifdef VMM_DEBUG
-        debugf_debug("We don't have to unmap\n");
-#endif
+        cur_vmo = d_next;
+        if (d_next)
+            d_next->prev = d_prev;
+        if (d_prev)
+            d_prev->next = d_next;
     }
 
-    pmm_free(cur_vmo,
-             ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE) / PFRAME_SIZE);
+    size_t vmo_size_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
+    pmm_free(to_dealloc, vmo_size_aligned / PFRAME_SIZE);
 }

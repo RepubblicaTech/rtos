@@ -3,21 +3,17 @@
 #include "fs/vfs/vfs.h"
 #include "stdio.h"
 #include "util/assert.h"
-#include <memory/heap/liballoc.h>
+#include <memory/heap/beap.h>
 
 mount_t *devfs_root = NULL;
 
 int devfs_read(vnode_t *vnode, void *buf, size_t size, size_t offset) {
-    debugf_debug("devfs recived read request for device: '%s'\n",
-                 vfs_get_full_path(vnode));
     device_t *dev = (device_t *)vnode->data;
     dev->read(dev, buf, size, offset);
     return 0;
 }
 
 int devfs_write(vnode_t *vnode, const void *buf, size_t size, size_t offset) {
-    debugf_debug("devfs recived write request for device: '%s'\n",
-                 vfs_get_full_path(vnode));
     device_t *dev = (device_t *)vnode->data;
     dev->write(dev, buf, size, offset);
     return 0;

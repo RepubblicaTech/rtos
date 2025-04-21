@@ -1,5 +1,3 @@
-.SILENT:
-
 TARGET_BASE=x86_64
 TARGET=$(TARGET_BASE)-elf
 TOOLCHAIN_PREFIX=$(abspath toolchain/$(TARGET))
@@ -21,6 +19,7 @@ QEMU_FLAGS = 	-m 32M \
 			 	-debugcon stdio \
 				-M q35 \
 				-smp 2 \
+
 # Nuke built-in rules and variables.
 override MAKEFLAGS += -rR --no-print-directory
 
@@ -74,6 +73,7 @@ override KCFLAGS += \
 	-fno-stack-protector \
 	-fno-stack-check \
 	-fno-lto \
+	-fPIE \
 	-fno-PIC \
 	-m64 \
 	-march=x86-64 \
@@ -84,10 +84,13 @@ override KCFLAGS += \
 	-mno-red-zone \
 	-mcmodel=kernel \
 	-D FLANTERM_IN_FLANTERM \
-	-D UACPI_BAREBONES_MODE \
 	-D UACPI_KERNEL_INITIALIZATION \
 	-D UACPI_FORMATTED_LOGGING \
 	-D CHAR_BIT=8 \
+	-D SCHED_DEBUG \
+	-D BEAP_PAGE=4096 \
+	# -D VMM_DEBUG \
+	# -D PMM_DEBUG
 
 # Internal C preprocessor flags that should not be changed by the user.
 override KCPPFLAGS := \
@@ -126,63 +129,64 @@ override HEADER_DEPS := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.d) $(ASFILES:.S=
 all: $(OS_CODENAME).iso
 
 # Define the ISO image file as an explicit target with dependencies
-$(OS_CODENAME).iso: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/$(KERNEL) $(ISO_DIR)/initrd.img
+$(OS_CODENAME).iso: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/$(KERNEL) $(ISO_DIR)/initrd.img $(ISO_DIR)/EFI/BOOT/BOOTX64.EFI
 	@# Create the bootable ISO.
 	xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot boot/limine/limine-uefi-cd.bin \
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
-		$(ISO_DIR) -o $(OS_CODENAME).iso > /dev/null 2>&1
+		$(ISO_DIR) -o $(OS_CODENAME).iso
 
 	@# Install Limine stage 1 and 2 for legacy BIOS boot.
-	@./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso > /dev/null 2>&1
+	./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso
 	@echo "--> ISO:	" $@
 
 # Copy kernel to ISO directory
 $(ISO_DIR)/$(KERNEL): $(BUILD_DIR)/$(KERNEL)
-	@cp -v $< $@
+	cp -v $< $@
 
 # Copy Limine bootloader files
 $(ISO_DIR)/boot/limine/limine-bios-cd.bin: $(LIBS_DIR)/limine/limine-bios-cd.bin
-	@mkdir -p $(ISO_DIR)/boot/limine
-	@cp -v $(SRC_DIR)/limine.conf $(LIBS_DIR)/limine/limine-bios.sys $< $(ISO_DIR)/boot/limine/
+	mkdir -p $(ISO_DIR)/boot/limine
+	cp -v $(SRC_DIR)/limine.conf $(LIBS_DIR)/limine/limine-bios.sys $< $(ISO_DIR)/boot/limine/
 
 $(ISO_DIR)/boot/limine/limine-uefi-cd.bin: $(LIBS_DIR)/limine/limine-uefi-cd.bin
-	@mkdir -p $(ISO_DIR)/boot/limine
-	@cp -v $< $(ISO_DIR)/boot/limine/
+	mkdir -p $(ISO_DIR)/boot/limine
+	cp -v $< $(ISO_DIR)/boot/limine/
 
 $(ISO_DIR)/EFI/BOOT/BOOTX64.EFI: $(LIBS_DIR)/limine/BOOTX64.EFI
-	@mkdir -p $(ISO_DIR)/EFI/BOOT
-	@cp -v $< $@
+	mkdir -p $(ISO_DIR)/EFI/BOOT
+	cp -v $< $@
 
 $(ISO_DIR)/EFI/BOOT/BOOTIA32.EFI: $(LIBS_DIR)/limine/BOOTIA32.EFI
-	@mkdir -p $(ISO_DIR)/EFI/BOOT
-	@cp -v $< $@
+	mkdir -p $(ISO_DIR)/EFI/BOOT
+	cp -v $< $@
 
 # Setup bootloader files
 bootloader-files: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/EFI/BOOT/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/BOOTIA32.EFI
 
 limine_build: $(LIBS_DIR)/limine/limine
 	@# Build "limine" utility
-	@make -C $(LIBS_DIR)/limine
+	make -C $(LIBS_DIR)/limine
 
 $(LIBS_DIR)/limine/limine:
-	@$(MAKE) libs
+	$(MAKE) libs
 
 # Get required libraries
 libs:
-	@chmod +x $(LIBS_DIR)/get_deps.sh
-	@./libs/get_deps.sh $(SRC_DIR)/kernel $(LIBS_DIR)
+	chmod +x $(LIBS_DIR)/get_deps.sh
+	./libs/get_deps.sh $(SRC_DIR)/kernel $(LIBS_DIR)
 
 # Create initrd image
-$(ISO_DIR)/initrd.img: $(wildcard $(INITRD_DIR)/*)
-	@tar -cvf $@ $(INITRD_DIR)/
+# Create initrd image
+$(ISO_DIR)/initrd.img: $(shell find $(INITRD_DIR) -type f)
+	cd $(INITRD_DIR) && tar -cvf ../$(ISO_DIR)/initrd.img --format=ustar *
 	@echo "--> Initrd:	" $@
 
 # Link rules for the final kernel executable.
 $(BUILD_DIR)/$(KERNEL): $(SRC_DIR)/linker.ld $(OBJ)
-	@mkdir -p "$$(dirname $@)"
-	@$(KLD) $(OBJ) $(KLDFLAGS) -o $@
+	mkdir -p "$$(dirname $@)"
+	$(KLD) $(OBJ) $(KLDFLAGS) -o $@
 	@echo "--> Built:	" $@
 
 # Include header dependencies.
@@ -190,39 +194,40 @@ $(BUILD_DIR)/$(KERNEL): $(SRC_DIR)/linker.ld $(OBJ)
 
 # Compilation rules for *.c files.
 $(OBJS_DIR)/%.c.o: $(SRC_DIR)/%.c
-	@mkdir -p "$$(dirname $@)"
-	@$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
+	mkdir -p "$$(dirname $@)"
+	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
 	@echo "--> Compiled:	" $<
 
 # Compilation rules for *.S files.
 $(OBJS_DIR)/%.S.o: $(SRC_DIR)/%.S
-	@mkdir -p "$$(dirname $@)"
-	@$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
-	@echo "--> Compiled:	" $<
+	mkdir -p "$$(dirname $@)"
+	$(KCC) $(KCFLAGS) $(KCPPFLAGS) -c $< -o $@
+	@echo "--> Assembled:	" $<
 
 # Compilation rules for *.asm (nasm) files.
 $(OBJS_DIR)/%.asm.o: $(SRC_DIR)/%.asm
-	@mkdir -p "$$(dirname $@)"
-	@nasm $(KNASMFLAGS) $< -o $@
+	mkdir -p "$$(dirname $@)"
+	nasm $(KNASMFLAGS) $< -o $@
 	@echo "--> Assembled:	" $<
 
 run: $(OS_CODENAME).iso
-	@qemu-system-x86_64 \
+	qemu-system-x86_64 \
 		$(QEMU_FLAGS) \
 		-cdrom $<
 
 run-wsl: $(OS_CODENAME).iso
-	@qemu-system-x86_64.exe \
+	qemu-system-x86_64.exe \
 		$(QEMU_FLAGS) \
-		-cdrom $<
+		-cdrom $< \
+		-accel whpx
 
 
 debug: $(OS_CODENAME).iso
-	@gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
+	gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
 
 # Remove object files and the final executable.
 .PHONY: clean
 
 clean:
-	@rm -rf $(ISO_DIR)
-	@rm -rf $(BUILD_DIR)
+	rm -rf $(ISO_DIR)
+	rm -rf $(BUILD_DIR)
