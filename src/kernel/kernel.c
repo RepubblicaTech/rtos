@@ -362,6 +362,8 @@ void kstart(void) {
     vmm_switch_ctx(kernel_vmm_ctx);
     kprintf_ok("Initialized VMM\n");
 
+    tlsf_beap_init();
+
     size_t malloc_test_start_timestamp = get_current_ticks();
     debugf("Malloc Test:\n");
     void *ptr1 = kmalloc(0xA0);

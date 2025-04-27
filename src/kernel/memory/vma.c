@@ -59,6 +59,7 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
 
     cur_vmo = split_vmo_at(cur_vmo, pages);
     FLAG_SET(cur_vmo->flags, VMO_ALLOCATED);
+
     ptr = (void *)(cur_vmo->base);
 
     void *phys_to_map = phys != NULL ? phys : pmm_alloc_pages(pages);

@@ -18,4 +18,4 @@
 [submodule "libs/beap"]
 	path = libs/beap
 	url = https://github.com/purpleK2/beap.git
-	branch = reset
+	branch = tlsf

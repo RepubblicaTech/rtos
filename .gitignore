@@ -65,6 +65,7 @@ src/kernel/system/limine.*
 src/kernel/system/nanoprintf.*
 src/kernel/flanterm
 src/kernel/memory/heap/beap.*
+src/kernel/memory/heap/tlsf.*
 src/kernel/acpi/uacpi
 
 # ISO files
