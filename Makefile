@@ -130,7 +130,7 @@ override HEADER_DEPS := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.d) $(ASFILES:.S=
 all: $(OS_CODENAME).iso
 
 # Define the ISO image file as an explicit target with dependencies
-$(OS_CODENAME).iso: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/$(KERNEL) $(ISO_DIR)/initrd.img $(ISO_DIR)/EFI/BOOT/BOOTX64.EFI
+$(OS_CODENAME).iso: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/$(KERNEL) $(ISO_DIR)/initrd.img $(ISO_DIR)/EFI/BOOT/BOOTX64.EFI limine_build
 	@# Create the bootable ISO.
 	xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
@@ -167,16 +167,10 @@ $(ISO_DIR)/EFI/BOOT/BOOTIA32.EFI: $(LIBS_DIR)/limine/BOOTIA32.EFI
 bootloader-files: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/EFI/BOOT/BOOTX64.EFI $(ISO_DIR)/EFI/BOOT/BOOTIA32.EFI
 
 limine_build: $(LIBS_DIR)/limine/limine
-	@# Build "limine" utility
-	make -C $(LIBS_DIR)/limine
 
 $(LIBS_DIR)/limine/limine:
-	$(MAKE) libs
-
-# Get required libraries
-libs:
-	chmod +x $(LIBS_DIR)/get_deps.sh
-	./libs/get_deps.sh $(SRC_DIR)/kernel $(LIBS_DIR)
+	@# Build "limine" utility
+	make -C $(LIBS_DIR)/limine
 
 # Create initrd image
 # Create initrd image
