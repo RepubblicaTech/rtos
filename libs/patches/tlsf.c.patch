@@ -1,14 +1,14 @@
---- src/kernel/memory/heap/tlsf.c	2025-04-27 11:50:56.747305168 +0200
-+++ libs/beap/beap/tlsf.c	2025-04-27 11:41:46.239448179 +0200
-@@ -1,8 +1,9 @@
-+#include <assert.h>
+--- libs/beap/beap/tlsf.c	2025-04-28 10:29:16.163500862 +0200
++++ src/kernel/memory/heap/tlsf.c	2025-04-28 10:35:09.389222509 +0200
+@@ -1,9 +1,8 @@
+-#include <assert.h>
  #include <limits.h>
  #include <stddef.h>
  #include <stdio.h>
--#include <util/assert.h>
--#include <util/string.h>
-+#include <stdlib.h>
-+#include <string.h>
+-#include <stdlib.h>
+-#include <string.h>
++#include <util/assert.h>
++#include <util/string.h>
  
  #include "beap.h"
  #include "tlsf.h"
