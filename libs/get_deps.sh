@@ -101,6 +101,7 @@ copy_if_exists $LIBS_DIR/beap/beap/tlsf.h $KERNEL_DIR/memory/heap
 copy_if_exists $LIBS_DIR/beap/beap/tlsf.c $KERNEL_DIR/memory/heap
 
 patch -u $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch
+# patch -u $KERNEL_DIR/memory/heap/tlsf.c -i $LIBS_DIR/patches/tlsf.c.patch
 
 # copy uACPI
 # NOTE: very wacky, must make it better
