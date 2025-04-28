@@ -45,7 +45,7 @@ The base of the kernel is the [Limine Bare Bones Template](https://wiki.osdev.or
 > [!CAUTION]
 > The building of this project has been only properly tested on Linux, but if you can report anything about other platforms (Windows, MacOS, Ubuntu, ...) feel free to open an issue/PR! Here is a list of currently tested (and supported) platorms
 
-- Fedora Workstation 41 (at least one build per week)
+- Fedora 42 XFCE (at least one build per week)
 - OS X Mavericks (last tested: January 2024)
 - Arch Linux (last tested: December 2024)
 - Debain 12 on WSL2 (Windows 10 21H2 build 19044, last tested: September 2024)
