@@ -33,18 +33,18 @@ void _term_set_bg(uint32_t rgb) {
     if (!init)
         _term_init();
 
-    bg_color[0] = (rgb >> 16) & 0xFF;
-    bg_color[1] = (rgb >> 8) & 0xFF;
-    bg_color[2] = rgb & 0xFF;
+    bg_color[0] = (rgb >> framebuffer_86->red_mask_shift) & 0xFF;
+    bg_color[1] = (rgb >> framebuffer_86->green_mask_shift) & 0xFF;
+    bg_color[2] = (rgb >> framebuffer_86->blue_mask_shift) & 0xFF;
 }
 
 void _term_set_fg(uint32_t rgb) {
     if (!init)
         _term_init();
 
-    fg_color[0] = (rgb >> 16) & 0xFF;
-    fg_color[1] = (rgb >> 8) & 0xFF;
-    fg_color[2] = rgb & 0xFF;
+    fg_color[0] = (rgb >> framebuffer_86->red_mask_shift) & 0xFF;
+    fg_color[1] = (rgb >> framebuffer_86->green_mask_shift) & 0xFF;
+    fg_color[2] = (rgb >> framebuffer_86->blue_mask_shift) & 0xFF;
 }
 
 static void render_screen() {

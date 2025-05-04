@@ -10,7 +10,9 @@ void drawPixel(uint32_t x, uint32_t y, uint32_t r, uint32_t g, uint32_t b) {
         x >= framebuffer_86->width || y >= framebuffer_86->height)
         return;
 
-    uint32_t color = (r << 16) | (g << 8) | b;
-    uint32_t *fb   = (uint32_t *)framebuffer_86->address;
+    uint32_t color = (r << framebuffer_86->red_mask_shift) |
+                     (g << framebuffer_86->green_mask_shift) |
+                     (b << framebuffer_86->blue_mask_shift);
+    uint32_t *fb = (uint32_t *)framebuffer_86->address;
     fb[y * (framebuffer_86->pitch / 4) + x] = color;
 }
