@@ -339,8 +339,8 @@ void kstart(void) {
     // just checking if the PIT works :)
     uint64_t start        = get_current_ticks();
     // kernel PML4 table
-    uint64_t *kernel_pml4 = (uint64_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
-    paging_init(kernel_pml4);
+    uint64_t *kernel_pml4 = (uint64_t *)pmm_alloc_page();
+    paging_init((uint64_t *)PHYS_TO_VIRTUAL(kernel_pml4));
     uint64_t time  = get_current_ticks();
     time          -= start;
     kprintf_ok("Paging init done\n\t\tTime taken: %llu seconds %llums\n",
