@@ -83,7 +83,7 @@ void pf_handler(void *ctx) {
 
     uint64_t pf_error_code = (uint64_t)regs->error;
 
-    debugf(ANSI_COLOR_PANIC);
+    debugf(ANSI_COLOR_BLUE);
     mprintf("--- PANIC! ---\n");
     mprintf("Page fault code %#016b\n\n-------------------------------\n",
             pf_error_code);

@@ -59,7 +59,7 @@ void isr_init() {
 }
 
 void print_reg_dump(void *ctx) {
-    debugf(ANSI_COLOR_PANIC);
+    debugf(ANSI_COLOR_BLUE);
 
     registers_t *regs = ctx;
 
@@ -97,7 +97,7 @@ void print_reg_dump(void *ctx) {
 void panic_common(void *ctx) {
     registers_t *regs = ctx;
 
-    debugf(ANSI_COLOR_PANIC);
+    debugf(ANSI_COLOR_BLUE);
 
     if (regs->interrupt != 0xE) {
         rsod_init();
@@ -170,7 +170,6 @@ void isr_handler(void *ctx) {
                     lapic_get_id());
     } else {
         stdio_panic_init();
-        fb_set_fg(PANIC_FG);
 
         mprintf("KERNEL PANIC! \"%s\" (Exception n. %d) on CPU %hhu\n",
                 exceptions[regs->interrupt], regs->interrupt, cpu);
