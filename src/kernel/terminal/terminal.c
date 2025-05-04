@@ -123,7 +123,12 @@ void _term_putc(char c) {
         _term_init();
 
     if (c == '\n') {
-        draw_char_at(char_cursor_x, char_cursor_y, ' ');
+        // 8 should be the char width
+        for (; char_cursor_x < (framebuffer_86->width / 8);) {
+            draw_char_at(char_cursor_x, char_cursor_y, ' ');
+            char_cursor_x++;
+        }
+
         char_cursor_x = 0;
         char_cursor_y++;
     } else if (c == '\r') {
