@@ -172,6 +172,11 @@ $(LIBS_DIR)/limine/limine:
 	@# Build "limine" utility
 	make -C $(LIBS_DIR)/limine
 
+libs:
+	@./libs/clone_repos.sh libs/
+	@./libs/get_deps.sh src/kernel libs/
+	@$(MAKE) limine_build
+
 # Create initrd image
 # Create initrd image
 $(ISO_DIR)/initrd.img: $(shell find $(INITRD_DIR) -type f)
