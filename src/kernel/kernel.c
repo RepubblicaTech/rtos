@@ -1,4 +1,6 @@
 #include "dev/pcie/pcie.h"
+#include "memory/heap/kheap.h"
+#include "memory/heap/kheap_glue.h"
 #include "terminal/psf.h"
 #include <kernel.h>
 #include <terminal/terminal.h>
@@ -25,7 +27,7 @@
 #include <pit.h>
 #include <time.h>
 
-#include <memory/heap/beap.h>
+#include <memory/heap/kheap.h>
 #include <memory/paging/paging.h>
 #include <memory/pmm.h>
 #include <memory/vma.h>
@@ -351,7 +353,7 @@ void kstart(void) {
     vmm_switch_ctx(kernel_vmm_ctx);
     kprintf_ok("Initialized VMM\n");
 
-    tlsf_beap_init();
+    kheap_init();
 
     size_t malloc_test_start_timestamp = get_current_ticks();
     debugf("Malloc Test:\n");
@@ -368,7 +370,7 @@ void kstart(void) {
     malloc_test_end_timestamp        -= malloc_test_start_timestamp;
     debugf_ok("Malloc test complete: Time taken: %dms\n",
               malloc_test_end_timestamp);
-    kprintf_ok("Beap init done\n");
+    kprintf_ok("kheap init done\n");
 
     if (rsdp_request.response == NULL) {
         kprintf_panic("Couldn't get RSDP address!\n");

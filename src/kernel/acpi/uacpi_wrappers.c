@@ -8,7 +8,7 @@
 #include <isr.h>
 #include <pit.h>
 
-#include <memory/heap/beap.h>
+#include <memory/heap/kheap.h>
 #include <memory/paging/paging.h>
 #include <memory/vma.h>
 

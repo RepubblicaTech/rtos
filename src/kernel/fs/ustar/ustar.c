@@ -1,6 +1,6 @@
 #include "ustar.h"
 
-#include <memory/heap/beap.h>
+#include <memory/heap/kheap.h>
 
 #include <util/string.h>
 #include <util/util.h>

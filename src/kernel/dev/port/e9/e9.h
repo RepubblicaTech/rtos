@@ -5,7 +5,7 @@
 
 #include <../arch/x86_64/io.h>
 #include <dev/device.h>
-#include <memory/heap/beap.h>
+#include <memory/heap/kheap.h>
 #include <util/string.h>
 
 void dev_e9_init();

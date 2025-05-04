@@ -9,7 +9,6 @@ LIBS_DIR=$2
 # required libraries
 declare -a libs=("limine"
 				 "nanoprintf"
-                 "beap"
                  "uacpi"
                  )
 
@@ -82,14 +81,6 @@ copy_if_exists $LIBS_DIR/limine/limine.h $KERNEL_DIR/system/limine.h
 
 # copy npf
 copy_if_exists $LIBS_DIR/nanoprintf/nanoprintf.h $KERNEL_DIR/system/nanoprintf.h
-
-# beap
-copy_if_exists $LIBS_DIR/beap/beap/beap.h $KERNEL_DIR/memory/heap
-copy_if_exists $LIBS_DIR/beap/beap/beap.c $KERNEL_DIR/memory/heap
-copy_if_exists $LIBS_DIR/beap/beap/tlsf.h $KERNEL_DIR/memory/heap
-copy_if_exists $LIBS_DIR/beap/beap/tlsf.c $KERNEL_DIR/memory/heap
-
-patch -u $KERNEL_DIR/memory/heap/tlsf.c -i $LIBS_DIR/patches/tlsf.c.patch
 
 # copy uACPI
 # NOTE: very wacky, must make it better
