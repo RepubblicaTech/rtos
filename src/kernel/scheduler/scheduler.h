@@ -2,7 +2,7 @@
 #define SCHEDULER_H
 
 #include <fs/vfs/vfs.h>
-#include <isr.h>
+#include <interrupts/isr.h>
 #include <limits.h>
 #include <stdatomic.h>
 #include <stdbool.h>

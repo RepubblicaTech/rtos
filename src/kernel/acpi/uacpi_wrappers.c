@@ -5,12 +5,11 @@
 
 #include <kernel.h>
 
-#include <isr.h>
-#include <pit.h>
+#include <interrupts/isr.h>
 
 #include <memory/heap/kheap.h>
-#include <memory/paging/paging.h>
-#include <memory/vma.h>
+#include <memory/vmm/vma.h>
+#include <paging/paging.h>
 
 #include <util/assert.h>
 #include <util/string.h>
@@ -24,6 +23,8 @@
 
 #include <semaphore.h>
 #include <spinlock.h>
+
+#include <arch.h>
 
 #include <cpu.h>
 
@@ -461,7 +462,7 @@ void uacpi_kernel_stall(uacpi_u8 usec) {
 
 // TODO: timer-agnostic sleep
 void uacpi_kernel_sleep(uacpi_u64 msec) {
-    pit_sleep(msec);
+    sleep(msec);
 }
 
 uacpi_handle uacpi_kernel_create_mutex(void) {

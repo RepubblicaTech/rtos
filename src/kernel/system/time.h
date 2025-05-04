@@ -3,12 +3,12 @@
 
 #include <stdint.h>
 
-#include <isr.h>
+#include <interrupts/isr.h>
 
-uint64_t get_current_ticks();
-void set_ticks(uint64_t new_ticks);
+uint64_t get_ticks();
+void set_ticks(uint64_t new);
 
-void timer_tick(void *ctx);
+void pit_tick(void *ctx);
 void sched_timer_tick(void *ctx);
 
 #endif

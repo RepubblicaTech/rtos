@@ -1,8 +1,8 @@
-#include "memory/vma.h"
-#include "memory/vmm.h"
 #include "util/util.h"
 #include <memory/heap/kheap.h>
 #include <memory/heap/kheap_glue.h>
+#include <memory/vmm/vma.h>
+#include <memory/vmm/vmm.h>
 
 void *os_alloc_pages(size_t pages) {
     return vma_alloc(get_current_ctx(), pages, NULL);

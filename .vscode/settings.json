@@ -103,7 +103,8 @@
         "initrd.h": "c",
         "beap.h": "c",
         "device.h": "c",
-        "limits.h": "c"
+        "limits.h": "c",
+        "kheap.h": "c"
     },
     "dotnet.defaultSolution": "disable",
     "cmake.configureOnOpen": false,

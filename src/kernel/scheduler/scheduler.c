@@ -4,16 +4,14 @@
 #include <stdio.h>
 
 #include <fs/vfs/vfs.h>
-#include <gdt.h>
-#include <isr.h>
+#include <gdt/gdt.h>
+#include <interrupts/isr.h>
 #include <kernel.h>
 #include <spinlock.h>
 
 #include <memory/heap/kheap.h>
-#include <memory/paging/paging.h>
-#include <memory/vmm.h>
-
-#include <mmio/apic/apic.h>
+#include <memory/vmm/vmm.h>
+#include <paging/paging.h>
 
 #include <smp/smp.h>
 #include <util/assert.h>
@@ -75,7 +73,7 @@ void scheduler_init() {
     for (size_t i = 0; i < scheduler_manager->core_count; i++) {
         scheduler_manager->core_schedulers[i] =
             kmalloc(sizeof(core_scheduler_t));
-        lapic_timer_init();
+        // lapic_timer_init(); we maybe just init this outside of scheduler
         scheduler_init_cpu(i);
     }
 

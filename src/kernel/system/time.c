@@ -5,24 +5,18 @@
 
 #include <stdio.h>
 
-uint64_t ticks;
+static uint64_t ticks;
 
-uint64_t get_current_ticks() {
+uint64_t get_ticks() {
     return ticks;
 }
 
-void set_ticks(uint64_t new_ticks) {
-    ticks = new_ticks;
+void set_ticks(uint64_t new) {
+    ticks = new;
 }
 
-void timer_tick(void *ctx) {
+void pit_tick(void *ctx) {
     UNUSED(ctx);
-    // debugf(".");
-    set_ticks(get_current_ticks() + 1);
-}
 
-void sched_timer_tick(void *ctx) {
-    UNUSED(ctx);
-    // debugf(".");
-    set_ticks(get_current_ticks() + 1);
+    set_ticks(get_ticks() + 1);
 }

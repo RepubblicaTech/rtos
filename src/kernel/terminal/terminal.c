@@ -124,7 +124,7 @@ void _term_putc(char c) {
 
     if (c == '\n') {
         // 8 should be the char width
-        for (; char_cursor_x < (framebuffer_86->width / 8);) {
+        for (; char_cursor_x < terminal_ctx.columns;) {
             draw_char_at(char_cursor_x, char_cursor_y, ' ');
             char_cursor_x++;
         }

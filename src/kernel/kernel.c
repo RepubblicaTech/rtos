@@ -1,11 +1,10 @@
-#include "dev/pcie/pcie.h"
-#include "memory/heap/kheap.h"
-#include "memory/heap/kheap_glue.h"
-#include "terminal/psf.h"
+#include <dev/pcie/pcie.h>
 #include <kernel.h>
-#include <terminal/terminal.h>
 
 #include <limine.h>
+
+#include <terminal/psf.h>
+#include <terminal/terminal.h>
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -14,24 +13,17 @@
 
 #include <ahci/ahci.h>
 
-#include <gdt.h>
-#include <idt.h>
-#include <irq.h>
-#include <isr.h>
-#include <tsc.h>
-
+#include <arch.h>
 #include <cpu.h>
-#include <mmio/apic/apic.h>
-#include <mmio/apic/io_apic.h>
-#include <pic.h>
-#include <pit.h>
+
 #include <time.h>
 
 #include <memory/heap/kheap.h>
-#include <memory/paging/paging.h>
-#include <memory/pmm.h>
-#include <memory/vma.h>
-#include <memory/vmm.h>
+#include <memory/heap/kheap_glue.h>
+#include <memory/pmm/pmm.h>
+#include <memory/vmm/vma.h>
+#include <memory/vmm/vmm.h>
+#include <paging/paging.h>
 
 #include <scheduler/scheduler.h>
 #include <smp/ipi.h>
@@ -52,8 +44,6 @@
 
 #include <util/assert.h>
 #include <util/string.h>
-
-#define PIT_TICKS 1000 / 1 // 1 ms
 
 #define INITRD_FILE "initrd.img"
 #define INITRD_PATH "/" INITRD_FILE
@@ -135,8 +125,6 @@ __attribute__((
 
 extern void _crash_test();
 
-volatile int tsc = 0;
-
 struct limine_framebuffer *framebuffer;
 
 struct limine_memmap_response *memmap_response;
@@ -186,6 +174,11 @@ void kstart(void) {
     kprintf("Welcome to purpleK2!\n");
 
     debugf_debug("Kernel built on %s\n", __DATE__);
+
+    arch_base_init();
+
+    uint64_t system_startup_time;
+    mark_time(&system_startup_time);
 
     char *FIRMWARE_TYPE;
 
@@ -237,32 +230,6 @@ void kstart(void) {
     debugf_debug("\tlimine_requests_start: %p; limine_requests_end: %p\n",
                  &__limine_reqs_start, &__limine_reqs_end);
     debugf_debug("\tkernel_end: %p\n", &__kernel_end);
-
-    gdt_init();
-    kprintf_ok("Initialized GDT\n");
-    idt_init();
-    kprintf_ok("Initialized IDT\n");
-    isr_init();
-    kprintf_ok("Initialized ISRs\n");
-    isr_registerHandler(14, pf_handler);
-
-    // _crash_test();
-
-    irq_init();
-    kprintf_ok("Initialized PIC and IRQs\n");
-    pic_registerHandler(0, timer_tick);
-    pit_init(PIT_TICKS);
-    kprintf_ok("Initialized PIT\n");
-
-    size_t start_tick_after_pit_init = get_current_ticks();
-
-    if (check_tsc()) {
-        tsc_init();
-        tsc = 1;
-        kprintf_ok("Initialized TSC\n");
-    } else {
-        debugf_debug("TSC not supported!\n");
-    }
 
     if (memmap_request.response == NULL ||
         memmap_request.response->entry_count < 1) {
@@ -338,15 +305,9 @@ void kstart(void) {
     }
 
     debugf_debug("Initializing paging\n");
-    // just checking if the PIT works :)
-    uint64_t start        = get_current_ticks();
     // kernel PML4 table
     uint64_t *kernel_pml4 = (uint64_t *)pmm_alloc_page();
     paging_init((uint64_t *)PHYS_TO_VIRTUAL(kernel_pml4));
-    uint64_t time  = get_current_ticks();
-    time          -= start;
-    kprintf_ok("Paging init done\n\t\tTime taken: %llu seconds %llums\n",
-               time / PIT_TICKS, time % 1000);
 
     kernel_vmm_ctx = vmm_ctx_init(kernel_pml4, VMO_KERNEL_RW);
     vmm_init(kernel_vmm_ctx);
@@ -355,7 +316,6 @@ void kstart(void) {
 
     kheap_init();
 
-    size_t malloc_test_start_timestamp = get_current_ticks();
     debugf("Malloc Test:\n");
     void *ptr1 = kmalloc(0xA0);
     debugf("[1] kmalloc(0xA0) @ %p\n", ptr1);
@@ -366,10 +326,6 @@ void kstart(void) {
     ptr1 = kmalloc(0xF00);
     debugf("[3] kmalloc(0xF00) @ %p\n", ptr1);
     kfree(ptr1);
-    size_t malloc_test_end_timestamp  = get_current_ticks();
-    malloc_test_end_timestamp        -= malloc_test_start_timestamp;
-    debugf_ok("Malloc test complete: Time taken: %dms\n",
-              malloc_test_end_timestamp);
     kprintf_ok("kheap init done\n");
 
     if (rsdp_request.response == NULL) {
@@ -401,7 +357,12 @@ void kstart(void) {
         // --- TODO: use uACPI for the tables
         // apic_init();
         // ioapic_init();
-        apic_registerHandler(0, timer_tick);
+
+#if defined(__x86_64__)
+#include <interrupts/irq.h>
+
+        irq_registerHandler(0, pit_tick);
+#endif
 
         kprintf_ok("APIC init done\n");
         asm("sti");
@@ -526,12 +487,11 @@ void kstart(void) {
     pci_scan(pci_ids);
     pci_print_list();
 
-    size_t end_tick_after_init  = get_current_ticks();
-    end_tick_after_init        -= start_tick_after_pit_init;
-    kprintf("System started: Time took: %d seconds %d ms.\n",
-            end_tick_after_init / PIT_TICKS, end_tick_after_init % PIT_TICKS);
+    limine_parsed_data.boot_time = get_ms(system_startup_time);
 
-    limine_parsed_data.boot_time = (uint64_t)end_tick_after_init / PIT_TICKS;
+    kprintf("System started: Time took: %d seconds %d ms.\n",
+            limine_parsed_data.boot_time / 1000,
+            limine_parsed_data.boot_time % 1000);
 
     for (;;)
         ;
