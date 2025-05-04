@@ -39,7 +39,7 @@ void arch_base_init() {
     irq_init();
     kprintf_ok("Initialized PIC and IRQs\n");
 
-    if (!check_tsc()) {
+    if (check_tsc()) {
         tsc_init();
         tsc = true;
         kprintf_ok("Initialized TSC\n");
