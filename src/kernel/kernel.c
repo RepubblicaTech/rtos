@@ -1,5 +1,7 @@
 #include "dev/pcie/pcie.h"
+#include "terminal/psf.h"
 #include <kernel.h>
+#include <terminal/terminal.h>
 
 #include <limine.h>
 
@@ -7,10 +9,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-
-#include <flanterm/backends/fb.h>
-#include <flanterm/flanterm.h>
-#include <flanterm/flanterm_private.h>
 
 #include <ahci/ahci.h>
 
@@ -138,7 +136,6 @@ extern void _crash_test();
 volatile int tsc = 0;
 
 struct limine_framebuffer *framebuffer;
-struct flanterm_context *ft_ctx;
 
 struct limine_memmap_response *memmap_response;
 struct limine_memmap_entry *memmap_entry;
@@ -175,22 +172,14 @@ void kstart(void) {
 
     // Fetch the first framebuffer.
     framebuffer = framebuffer_request.response->framebuffers[0];
+    limine_parsed_data.framebuffer = framebuffer;
 
-    ft_ctx = flanterm_fb_init(
-        NULL, NULL, (uint32_t *)framebuffer->address, framebuffer->width,
-        framebuffer->height, framebuffer->pitch, framebuffer->red_mask_size,
-        framebuffer->red_mask_shift, framebuffer->green_mask_size,
-        framebuffer->green_mask_shift, framebuffer->blue_mask_size,
-        framebuffer->blue_mask_shift, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, 0, 0, 1, 0, 0, 0);
+    psfLoadDefaults();
+    _term_init();
+
+    clearscreen();
 
     set_screen_bg_fg(DEFAULT_BG, DEFAULT_FG); // black-ish, white-ish
-
-    for (size_t i = 0; i < ft_ctx->rows; i++) {
-        for (size_t i = 0; i < ft_ctx->cols; i++)
-            kprintf(" ");
-    }
-    clearscreen();
 
     kprintf("Welcome to purpleK2!\n");
 

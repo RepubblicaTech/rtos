@@ -19,6 +19,8 @@ QEMU_FLAGS = 	-m 32M \
 			 	-debugcon stdio \
 				-M q35 \
 				-smp 2 \
+				-no-reboot \
+				-no-shutdown \
 
 # Nuke built-in rules and variables.
 override MAKEFLAGS += -rR --no-print-directory
@@ -83,7 +85,6 @@ override KCFLAGS += \
 	-mno-sse2 \
 	-mno-red-zone \
 	-mcmodel=kernel \
-	-D FLANTERM_IN_FLANTERM \
 	-D UACPI_KERNEL_INITIALIZATION \
 	-D UACPI_FORMATTED_LOGGING \
 	-D CHAR_BIT=8 \

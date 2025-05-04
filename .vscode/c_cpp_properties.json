@@ -9,7 +9,6 @@
                 "${workspaceFolder}/src/arch/x86_64"
             ],
             "defines": [
-                "FLANTERM_IN_FLANTERM",
                 "UACPI_KERNEL_INITIALIZATION",
                 "UACPI_FORMATTED_LOGGING"
             ],

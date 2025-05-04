@@ -59,7 +59,7 @@ void isr_init() {
 }
 
 void print_reg_dump(void *ctx) {
-    debugf(ANSI_COLOR_RED);
+    debugf(ANSI_COLOR_PANIC);
 
     registers_t *regs = ctx;
 
@@ -96,6 +96,12 @@ void print_reg_dump(void *ctx) {
 
 void panic_common(void *ctx) {
     registers_t *regs = ctx;
+
+    debugf(ANSI_COLOR_PANIC);
+
+    if (regs->interrupt != 0xE) {
+        rsod_init();
+    }
 
     print_reg_dump(regs);
 

@@ -45,6 +45,9 @@ typedef struct bootloader_data {
     uint64_t p_lapic_base;
     uint32_t p_ioapic_base;
 
+    // framebuffer
+    struct limine_framebuffer *framebuffer;
+
     // SMP stuff
     uint64_t cpu_count;
     LIMINE_PTR(struct limine_smp_info **) cpus;

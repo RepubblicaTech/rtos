@@ -6,7 +6,6 @@ LIBS_DIR=$1
 
 # all libs
 declare -a libs=("limine"
-             "flanterm"
              "nanoprintf"
              "beap"
              "uacpi"
