@@ -8,7 +8,6 @@ LIBS_DIR=$2
 
 # required libraries
 declare -a libs=("limine"
-                 "flanterm"
 				 "nanoprintf"
                  "beap"
                  "uacpi"
@@ -78,21 +77,11 @@ do
 	check_submodule "$LIBS_FULL_DIR/$lib"
 done
 
-# copy required files
-
+# copy limine
 copy_if_exists $LIBS_DIR/limine/limine.h $KERNEL_DIR/system/limine.h
+
+# copy npf
 copy_if_exists $LIBS_DIR/nanoprintf/nanoprintf.h $KERNEL_DIR/system/nanoprintf.h
-
-# copy flanterm headers
-copy_if_exists $LIBS_DIR/flanterm/flanterm_private.h $KERNEL_DIR/flanterm
-copy_if_exists $LIBS_DIR/flanterm/flanterm.h $KERNEL_DIR/flanterm
-copy_if_exists $LIBS_DIR/flanterm/flanterm.c $KERNEL_DIR/flanterm
-copy_if_exists $LIBS_DIR/flanterm/backends/fb_private.h $KERNEL_DIR/flanterm/backends
-copy_if_exists $LIBS_DIR/flanterm/backends/fb.h $KERNEL_DIR/flanterm/backends
-copy_if_exists $LIBS_DIR/flanterm/backends/fb.c $KERNEL_DIR/flanterm/backends
-
-# custom font for flanterm
-copy_if_exists $LIBS_DIR/patches/font.h $KERNEL_DIR/flanterm/backends
 
 # beap
 copy_if_exists $LIBS_DIR/beap/beap/beap.h $KERNEL_DIR/memory/heap
@@ -100,7 +89,6 @@ copy_if_exists $LIBS_DIR/beap/beap/beap.c $KERNEL_DIR/memory/heap
 copy_if_exists $LIBS_DIR/beap/beap/tlsf.h $KERNEL_DIR/memory/heap
 copy_if_exists $LIBS_DIR/beap/beap/tlsf.c $KERNEL_DIR/memory/heap
 
-patch -u $KERNEL_DIR/flanterm/backends/fb.c -i $LIBS_DIR/patches/fb.c.patch
 patch -u $KERNEL_DIR/memory/heap/tlsf.c -i $LIBS_DIR/patches/tlsf.c.patch
 
 # copy uACPI

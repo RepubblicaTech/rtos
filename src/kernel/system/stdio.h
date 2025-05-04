@@ -6,10 +6,6 @@
 
 #include <stdint.h>
 
-#include <flanterm/backends/fb.h>
-#include <flanterm/flanterm.h>
-#include <flanterm/flanterm_private.h>
-
 #include <nanoprintf.h>
 
 #define DEFAULT_FG 0xeeeeee
@@ -18,7 +14,7 @@
 #define INFO_FG    0xa4a5a4
 #define SUCCESS_FG 0x00e826
 #define WARNING_FG 0xea7500
-#define PANIC_FG   0xea0000
+#define PANIC_FG   0x0104a0
 
 uint32_t fb_get_bg();
 void fb_set_bg(uint32_t bg_rgb);
@@ -101,6 +97,7 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
 #define ANSI_COLOR_ORANGE "\33[33m"
 #define ANSI_COLOR_GRAY   "\33[90m"
 #define ANSI_COLOR_RESET  "\33[0m"
+#define ANSI_COLOR_PANIC  "\x1b[38;2;102;163;255m"
 
 #define COLOR(color, str) color str ANSI_COLOR_RESET
 

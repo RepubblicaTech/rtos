@@ -19,6 +19,8 @@ QEMU_FLAGS = 	-m 32M \
 			 	-debugcon stdio \
 				-M q35 \
 				-smp 2 \
+				-no-reboot \
+				-no-shutdown \
 
 # Nuke built-in rules and variables.
 override MAKEFLAGS += -rR --no-print-directory
@@ -83,7 +85,6 @@ override KCFLAGS += \
 	-mno-sse2 \
 	-mno-red-zone \
 	-mcmodel=kernel \
-	-D FLANTERM_IN_FLANTERM \
 	-D UACPI_KERNEL_INITIALIZATION \
 	-D UACPI_FORMATTED_LOGGING \
 	-D CHAR_BIT=8 \
@@ -171,6 +172,11 @@ limine_build: $(LIBS_DIR)/limine/limine
 $(LIBS_DIR)/limine/limine:
 	@# Build "limine" utility
 	make -C $(LIBS_DIR)/limine
+
+libs:
+	@./libs/clone_repos.sh libs/
+	@./libs/get_deps.sh src/kernel libs/
+	@$(MAKE) limine_build
 
 # Create initrd image
 # Create initrd image

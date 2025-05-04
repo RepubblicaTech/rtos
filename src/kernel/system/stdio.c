@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "terminal/terminal.h"
 
 #include <io.h>
 
@@ -8,9 +9,6 @@
 
 #include <stdarg.h>
 #include <util/va_list.h>
-
-extern struct flanterm_context *ft_ctx;
-extern struct flanterm_fb_context *ft_fb_ctx;
 
 #define NANOPRINTF_USE_FIELD_WIDTH_FORMAT_SPECIFIERS     1
 #define NANOPRINTF_USE_PRECISION_FORMAT_SPECIFIERS       1
@@ -49,12 +47,12 @@ uint32_t fb_get_fg() {
 
 void fb_set_bg(uint32_t bg_rgb) {
     current_bg = bg_rgb;
-    ft_ctx->set_text_bg_rgb(ft_ctx, bg_rgb);
+    _term_set_bg(bg_rgb);
 }
 
 void fb_set_fg(uint32_t fg_rgb) {
     current_fg = fg_rgb;
-    ft_ctx->set_text_fg_rgb(ft_ctx, fg_rgb);
+    _term_set_fg(fg_rgb);
 }
 
 void set_screen_bg_fg(uint32_t bg_rgb, uint32_t fg_rgb) {
@@ -63,11 +61,11 @@ void set_screen_bg_fg(uint32_t bg_rgb, uint32_t fg_rgb) {
 }
 
 void clearscreen() {
-    ft_ctx->clear(ft_ctx, true);
+    _term_cls();
 }
 
 void putc(char c) {
-    flanterm_write(ft_ctx, &c, sizeof(c));
+    _term_putc(c);
 }
 
 void dputc(char c) {
@@ -75,13 +73,7 @@ void dputc(char c) {
 }
 
 void rsod_init() {
-    set_screen_bg_fg(0xff0000, 0xffffff);
-    ft_ctx->set_cursor_pos(ft_ctx, 0, 0);
-
-    for (size_t i = 0; i < ft_ctx->rows; i++) {
-        for (size_t i = 0; i < ft_ctx->cols; i++)
-            putc(' ');
-    }
+    set_screen_bg_fg(0x0024b7, 0xffffff);
 
     clearscreen();
 }
