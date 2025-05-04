@@ -72,7 +72,6 @@ The following packages are required to build the kernel:
 
 - `nasm`: The assembler used by this kernel
 - `xorriso` and `mkisofs`: To create the ISO disk image
-- `diff` and `patch`: They are required fpr patching certain dependencies, so they are compatible with the kernels codebase
 
 ### Setting up a cross compiler
 
