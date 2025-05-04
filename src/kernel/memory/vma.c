@@ -63,7 +63,8 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
     ptr = (void *)(cur_vmo->base);
 
     void *phys_to_map = phys != NULL ? phys : pmm_alloc_pages(pages);
-    map_region_to_page(ctx->pml4_table, (uint64_t)phys_to_map, (uint64_t)ptr,
+    map_region_to_page((uint64_t *)PHYS_TO_VIRTUAL(ctx->pml4_table),
+                       (uint64_t)phys_to_map, (uint64_t)ptr,
                        (uint64_t)(pages * PFRAME_SIZE),
                        vmo_to_page_flags(cur_vmo->flags));
 
@@ -106,10 +107,12 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool free) {
     FLAG_UNSET(cur_vmo->flags, VMO_ALLOCATED);
 
     // find the physical address of the VMO
-    uint64_t phys = pg_virtual_to_phys(ctx->pml4_table, cur_vmo->base);
+    uint64_t phys = pg_virtual_to_phys(
+        (uint64_t *)PHYS_TO_VIRTUAL(ctx->pml4_table), cur_vmo->base);
     if (free)
         pmm_free((void *)phys, cur_vmo->len);
-    unmap_region(ctx->pml4_table, cur_vmo->base, (cur_vmo->len * PFRAME_SIZE));
+    unmap_region((uint64_t *)PHYS_TO_VIRTUAL(ctx->pml4_table), cur_vmo->base,
+                 (cur_vmo->len * PFRAME_SIZE));
 
     virtmem_object_t *to_dealloc = cur_vmo;
     virtmem_object_t *d_next     = to_dealloc->next;
