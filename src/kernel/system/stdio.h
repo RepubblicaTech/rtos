@@ -16,6 +16,8 @@
 #define WARNING_FG 0xea7500
 #define PANIC_FG   0x66a3ff
 
+#define PANIC_BG 0x0104a0
+
 uint32_t fb_get_bg();
 void fb_set_bg(uint32_t bg_rgb);
 
@@ -96,8 +98,8 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
 #define ANSI_COLOR_GREEN  "\33[32m"
 #define ANSI_COLOR_ORANGE "\33[33m"
 #define ANSI_COLOR_GRAY   "\33[90m"
+#define ANSI_COLOR_BLUE   "\x1b[38;2;102;163;255m"
 #define ANSI_COLOR_RESET  "\33[0m"
-#define ANSI_COLOR_PANIC  "\x1b[38;2;102;163;255m"
 
 #define COLOR(color, str) color str ANSI_COLOR_RESET
 

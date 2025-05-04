@@ -73,7 +73,7 @@ void dputc(char c) {
 }
 
 void rsod_init() {
-    set_screen_bg_fg(0x0024b7, 0xffffff);
+    set_screen_bg_fg(PANIC_BG, DEFAULT_FG);
 
     clearscreen();
 }
