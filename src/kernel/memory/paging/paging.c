@@ -127,8 +127,8 @@ uint64_t *get_create_pmlt(uint64_t *pml_table, uint64_t pmlt_index,
                           uint64_t flags) {
     // is there something at pml_table[pmlt_index]?
     if (!(pml_table[pmlt_index] & PMLE_PRESENT)) {
-        // debugf_debug("Table %llp entry %#llx is not present, creating
-        // it...\n", pml_table, pmlt_index);
+        /*debugf_debug("Table %llp entry %#llx is not present, creating
+           it...\n", pml_table, pmlt_index);*/
 
         pml_table[pmlt_index] = (uint64_t)pmm_alloc_page() | flags;
     }

@@ -9,7 +9,7 @@
 #include <uacpi/tables.h>
 #include <uacpi/uacpi.h>
 
-#include <memory/heap/beap.h>
+#include <memory/heap/kheap.h>
 
 #include <kernel.h>
 

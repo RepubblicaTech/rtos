@@ -2,7 +2,7 @@
 #define DEV_NULL_H
 
 #include <dev/device.h>
-#include <memory/heap/beap.h>
+#include <memory/heap/kheap.h>
 #include <stddef.h>
 #include <util/string.h>
 

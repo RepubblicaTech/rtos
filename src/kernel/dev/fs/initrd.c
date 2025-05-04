@@ -1,5 +1,5 @@
 #include "initrd.h"
-#include <memory/heap/beap.h>
+#include <memory/heap/kheap.h>
 
 void dev_initrd_init(void *ramfs_disk) {
     device_t *dev = kmalloc(sizeof(device_t));

@@ -8,7 +8,7 @@
 #include <idt.h>
 #include <isr.h>
 #include <kernel.h>
-#include <memory/heap/beap.h>
+#include <memory/heap/kheap.h>
 #include <memory/paging/paging.h>
 #include <memory/vmm.h>
 #include <mmio/apic/apic.h>
