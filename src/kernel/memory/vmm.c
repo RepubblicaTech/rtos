@@ -34,6 +34,7 @@ void vmo_dump(virtmem_object_t *vmo) {
     debugf_debug("\tnext: %p\n", vmo->next);
 }
 
+// @param length IT'S IN PAGESSSS
 virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
 
     size_t vmosize_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
@@ -159,16 +160,17 @@ uint64_t page_to_vmo_flags(uint64_t pg_flags) {
     return vmo_flags;
 }
 
-virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
+// @param len after how many pages should we split the VMO
+virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t where) {
     virtmem_object_t *new_vmo;
 
-    if ((src_vmo->len * PFRAME_SIZE) - len <= 0) {
+    if (src_vmo->len - where <= 0) {
         return src_vmo; // we are not going to split it
     }
 
-    size_t offset = (uint64_t)(len * PFRAME_SIZE);
-    new_vmo       = vmo_init(src_vmo->base + offset,
-                             (src_vmo->len * PFRAME_SIZE) - len, src_vmo->flags);
+    size_t offset = (uint64_t)(where * PFRAME_SIZE);
+    new_vmo =
+        vmo_init(src_vmo->base + offset, src_vmo->len - where, src_vmo->flags);
     /*
     src_vmo		  new_vmo
     [     [                        ]
@@ -180,7 +182,7 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t len) {
                  src_vmo->base + offset);
 #endif
 
-    src_vmo->len = len;
+    src_vmo->len = where;
 
     if (src_vmo->next != NULL) {
         new_vmo->next = src_vmo->next;
