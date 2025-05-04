@@ -199,6 +199,6 @@ Now there should be `compile_commands.json`
 
 ## License 
 
-RTOS is licensed under the MIT License. See [LICENSE](LICENSE)
+purpleK2 is licensed under the MIT License. See [LICENSE](LICENSE)
 
 Copyright (c) 2024-2025 Omar and Contributors
