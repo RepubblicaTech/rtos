@@ -77,7 +77,7 @@ The following packages are required to build the kernel:
 
 You will not be able to build the kernel using the C compiler on the host machine (`gcc` or `clang`). To compile it you will need a cross-compiler that targets the x86_64 platform.
 
-Below are two ways of installing a cross-compiler
+Below are two ways of installing a cross-compiler:
 
 #### Prebuilt binaries
 
