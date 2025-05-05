@@ -62,7 +62,7 @@ isr_common:
 global isr_stub_%+%1
 isr_stub_%+%1:
     ; error code gets pushed to the stack
-    push 14             ; interrupt number
+    push %1             ; interrupt number
     jmp isr_common
     iretq
 %endmacro
