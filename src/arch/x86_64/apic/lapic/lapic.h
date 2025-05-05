@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define LAPIC_BASE_MSR  0x1B
+#define LAPIC_BASE_MASK 0xffffff000
+
 #define LAPIC_ID_REG         0x020
 #define LAPIC_VER_REG        0x030
 #define LAPIC_TASKPR_REG     0x080
@@ -34,10 +37,10 @@
 
 #define LAPIC_ENABLE_BIT (1 << 8)
 
-#define LAPIC_IRQ_OFFSET 239
+#define LAPIC_IRQ_OFFSET 0x20
 
 #define LAPIC_TIMER_VECTOR    0
-#define LAPIC_SPURIOUS_VECTOR 7
+#define LAPIC_SPURIOUS_VECTOR 0xFF
 
 #define LAPIC_DISABLE (1 << 16)
 #define LAPIC_NMI     (4 << 8)
@@ -53,13 +56,16 @@ bool is_lapic_enabled();
 void set_lapic_base(uint64_t base);
 
 void lapic_write_reg(uint64_t reg, uint32_t value);
+uint64_t lapic_read_reg(uint64_t reg);
 
 uint64_t lapic_get_id();
-
-void lapic_timer_init();
-
 void lapic_send_eoi();
 
 void lapic_init();
+
+uint32_t lapic_timer_calibrate_pit(void);
+uint32_t calibrate_apic_timer_tsc(void);
+void lapic_timer_init();
+void lapic_timer_handler(void *ctx);
 
 #endif

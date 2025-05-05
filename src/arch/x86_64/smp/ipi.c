@@ -18,9 +18,11 @@ void register_ipi(void) {
     isr_registerHandler(IPI_VECTOR_RESCHEDULE, ipi_handler_reschedule);
     isr_registerHandler(IPI_VECTOR_TEST, ipi_handler_test);
 
-    isr_registerHandler(
-        254,
-        do_nothing_and_shut_up_im_talking_to_you_vector_254_yes_you_just_dont_spam_logs_ok_thanks); // * note: this is not malware. Context: the logs would always be full with "Unhandled interrupt 254"
+    // isr_registerHandler(
+    //     254,
+    //     do_nothing_and_shut_up_im_talking_to_you_vector_254_yes_you_just_dont_spam_logs_ok_thanks);
+    //     // * note: this is not malware. Context: the logs would always be
+    //     full with "Unhandled interrupt 254"
 }
 
 void ipi_send(uint8_t vector, uint8_t cpu) {

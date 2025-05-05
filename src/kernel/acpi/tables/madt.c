@@ -15,16 +15,19 @@
 
 #include <cpu.h>
 
-int madt_init() {
-    struct acpi_madt *madt = kmalloc(sizeof(struct acpi_madt));
+void *madt_find_record(struct acpi_madt *madt,
+                       enum acpi_madt_entry_type record_type) {
+    void *addr = ((void *)madt + MADT_RECORD_OFFSET);
 
-    /* --- TODOs ---
+    for (; addr < ((void *)madt + madt->hdr.length);) {
+        struct acpi_entry_hdr *record_header = (struct acpi_entry_hdr *)(addr);
 
-    1. Get the table
-    2. Get required info for L/IO-APIC (ISOs, base address(es), etc.)
-    3. MAKE SURE TO free()
+        if (record_header->type == record_type) {
+            return (void *)record_header;
+        }
 
-    */
+        addr += record_header->length;
+    }
 
-    return 0;
+    return NULL;
 }

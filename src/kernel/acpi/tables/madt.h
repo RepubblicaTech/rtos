@@ -13,4 +13,6 @@
 #define MADT_ENTRY_LAPIC_NMI    4
 #define MADT_ENTRY_LOCAL_X2APIC 9
 
+#define MADT_RECORD_OFFSET 0x2C
+
 #endif

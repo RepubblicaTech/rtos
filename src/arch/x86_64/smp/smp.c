@@ -54,9 +54,9 @@ int smp_init() {
 }
 
 void mp_trampoline(struct limine_smp_info *cpu) {
+    asm("cli");
     gdt_init();
     idt_init();
-    asm("cli");
     isr_init();
 
     vmm_switch_ctx(kernel_vmm_ctx);
@@ -65,11 +65,11 @@ void mp_trampoline(struct limine_smp_info *cpu) {
 
     register_ipi();
 
-    // tsc_init();
-
-    // lapic_timer_init();
+    tsc_init();
 
     asm("sti");
+
+    lapic_timer_init();
 
     debugf_ok("CPU %lu initialized and ready.\n", lapic_get_id());
 

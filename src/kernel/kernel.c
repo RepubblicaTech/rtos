@@ -336,7 +336,7 @@ void kstart(void) {
     limine_parsed_data.rsdp_table_address = (uint64_t *)rsdp_response->address;
     debugf_debug("Address of RSDP: %p\n",
                  limine_parsed_data.rsdp_table_address);
-    /// acpi_init();    we'll use
+
     if (uacpi_init() == 0) {
         kprintf_ok("uACPI initialized successfully!!\n");
     } else {
@@ -350,25 +350,24 @@ void kstart(void) {
         }
     }
 
+#if defined(__x86_64__)
+#include <apic/ioapic/ioapic.h>
+#include <apic/lapic/lapic.h>
+#include <interrupts/irq.h>
+
     if (check_apic()) {
         asm("cli");
         debugf_debug("APIC device is supported\n");
 
-        // --- TODO: use uACPI for the tables
-        // apic_init();
-        // ioapic_init();
+        lapic_init();
+        ioapic_init();
 
-#if defined(__x86_64__)
-#include <interrupts/irq.h>
-
-        irq_registerHandler(0, pit_tick);
-#endif
-
-        kprintf_ok("APIC init done\n");
+        kprintf_ok("LAPIC + IOAPIC init done\n");
         asm("sti");
     } else {
         debugf_debug("APIC is not supported. Going on with legacy PIC\n");
     }
+#endif
 
     {
         char *cpu_name = kmalloc(49);
@@ -477,6 +476,8 @@ void kstart(void) {
 
     limine_parsed_data.cpu_count = smp_request.response->cpu_count;
     limine_parsed_data.cpus      = smp_request.response->cpus;
+
+    scheduler_init();
 
     smp_init();
 
