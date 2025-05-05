@@ -15,7 +15,7 @@ void set_ticks(uint64_t new) {
     ticks = new;
 }
 
-void pit_tick(void *ctx) {
+void timer_tick(void *ctx) {
     UNUSED(ctx);
 
     set_ticks(get_ticks() + 1);

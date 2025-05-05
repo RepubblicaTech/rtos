@@ -5,6 +5,15 @@
 
 void sleep(unsigned long ms);
 
+/* initialises basic arch-specific components:
+
+    - GDT
+    - IDT
+    - ISRs
+    - PIC and IRQs
+    - PIT (or TSC if supported)
+
+*/
 void arch_base_init();
 
 // sets the given `marker` to the current time, either TSC/PIT/any timer that

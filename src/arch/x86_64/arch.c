@@ -49,7 +49,7 @@ void arch_base_init() {
         kprintf_ok("Initialized PIT\n");
     }
 
-    irq_registerHandler(0, pit_tick);
+    irq_registerHandler(0, timer_tick);
 }
 
 void sleep(unsigned long ms) {
