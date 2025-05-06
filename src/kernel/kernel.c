@@ -479,9 +479,9 @@ void kstart(void) {
 
     scheduler_init();
 
-    smp_init();
+    // smp_init();
 
-    limine_parsed_data.smp_enabled = true;
+    // limine_parsed_data.smp_enabled = true;
 
     ustar_file_tree_t *pci_ids = file_lookup(initramfs_disk, "pci.ids");
 

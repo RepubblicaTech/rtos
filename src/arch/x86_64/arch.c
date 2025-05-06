@@ -1,4 +1,6 @@
 #include "arch.h"
+#include "math/fpu.h"
+#include "math/sse.h"
 
 #include <stdio.h>
 
@@ -38,6 +40,11 @@ void arch_base_init() {
 
     irq_init();
     kprintf_ok("Initialized PIC and IRQs\n");
+
+    init_fpu();
+    kprintf_ok("Initialized FPU\n");
+    init_sse();
+    kprintf_ok("Initialized SSE1 + SSE2\n");
 
     if (check_tsc()) {
         tsc_init();

@@ -30,6 +30,30 @@ bool check_x2apic() {
     return edx & CPUID_FEAT_ECX_X2APIC;
 }
 
+bool check_fpu() {
+    uint32_t eax, edx, unused;
+    __get_cpuid(1, &eax, &unused, &unused, &edx);
+    return edx & CPUID_FEAT_EDX_FPU;
+}
+
+bool check_sse() {
+    uint32_t eax, edx, unused;
+    __get_cpuid(1, &eax, &unused, &unused, &edx);
+    return edx & CPUID_FEAT_EDX_SSE;
+}
+
+bool check_sse2() {
+    uint32_t eax, edx, unused;
+    __get_cpuid(1, &eax, &unused, &unused, &edx);
+    return edx & CPUID_FEAT_EDX_SSE2;
+}
+
+bool check_fxsr() {
+    uint32_t eax, edx, unused;
+    __get_cpuid(1, &eax, &unused, &unused, &edx);
+    return edx & CPUID_FEAT_EDX_FXSR;
+}
+
 void cpu_reg_write(uint32_t *reg, uint32_t value) {
     *reg = value;
 }

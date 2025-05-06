@@ -121,6 +121,10 @@ bool check_msr();
 bool check_tsc();
 bool check_apic();
 bool check_x2apic();
+bool check_sse();
+bool check_fpu();
+bool check_sse2();
+bool check_fxsr();
 
 const char *get_cpu_vendor();
 
