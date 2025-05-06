@@ -15,11 +15,10 @@
 
 #include <cpu.h>
 
-void *madt_find_record(struct acpi_madt *madt,
-                       enum acpi_madt_entry_type record_type) {
-    void *addr = ((void *)madt + MADT_RECORD_OFFSET);
+void *madt_find_record(void *madt, int record_type) {
+    void *addr = (madt + MADT_RECORD_OFFSET);
 
-    for (; addr < ((void *)madt + madt->hdr.length);) {
+    for (; addr < ((void *)madt + ((struct acpi_madt *)madt)->hdr.length);) {
         struct acpi_entry_hdr *record_header = (struct acpi_entry_hdr *)(addr);
 
         if (record_header->type == record_type) {

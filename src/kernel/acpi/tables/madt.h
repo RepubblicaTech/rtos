@@ -2,7 +2,8 @@
 #define MADT_H 1
 
 #include <acpi/acpi.h>
-#include <uacpi/uacpi.h>
+#include <acpi/uacpi/tables.h>
+#include <acpi/uacpi/uacpi.h>
 
 #define MADT_ENTRY_LAPIC               0
 #define MADT_ENTRY_IOAPIC              1
@@ -14,5 +15,7 @@
 #define MADT_ENTRY_LOCAL_X2APIC 9
 
 #define MADT_RECORD_OFFSET 0x2C
+
+void *madt_find_record(void *madt, int record_type);
 
 #endif
