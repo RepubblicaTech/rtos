@@ -75,7 +75,7 @@ void pmm_init() {
     for (freelist_node *fl_node = fl_head; fl_node != NULL;
          fl_node                = fl_node->next) {
         debugf_debug("ENTRY n. %p\n", fl_node);
-        debugf_debug("\tlength: %#llx\n", fl_node->length);
+        debugf_debug("\tlength: %llx\n", fl_node->length);
         debugf_debug("\tnext: %p\n", fl_node->next);
     }
 }
@@ -152,7 +152,7 @@ void *pmm_alloc_page() {
 
 #ifdef PMM_DEBUG
     debugf_debug("old head %p is now %p\n", ptr, fl_head);
-    debugf_debug("\tsize: %#zx\n", fl_head->length);
+    debugf_debug("\tsize: %zx\n", fl_head->length);
     debugf_debug("\tnext: %p\n", fl_head->next);
 #endif
 

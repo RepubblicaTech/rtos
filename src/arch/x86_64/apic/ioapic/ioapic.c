@@ -51,7 +51,7 @@ void apic_irq_handler(void *ctx) {
     if (apic_irq_handlers[apic_irq] != NULL) {
         apic_irq_handlers[apic_irq](regs);
     } else {
-        debugf_warn("Unhandled IRQ %d  ISR=%#llx  IRR=%#llx\n", apic_irq,
+        debugf_warn("Unhandled IRQ %d  ISR=%llx  IRR=%llx\n", apic_irq,
                     apic_isr, apic_irr);
     }
 
@@ -97,7 +97,7 @@ void ioapic_init() {
     struct acpi_madt_ioapic *madt_record_ioapic =
         madt_find_record(madt, ACPI_MADT_ENTRY_TYPE_IOAPIC);
 
-    debugf_debug("I/O APIC base: %#llx\n", madt_record_ioapic->address);
+    debugf_debug("I/O APIC base: %llx\n", madt_record_ioapic->address);
 
     ioapic_base = PHYS_TO_VIRTUAL(madt_record_ioapic->address);
 
@@ -106,8 +106,8 @@ void ioapic_init() {
                        PMLE_KERNEL_READ_WRITE);
 
     uint8_t ioapic_max_redir_entry = (ioapic_reg_read(0x01) >> 16) & 0xFF;
-    debugf_debug("Redirection entries: %#hhu\n", ioapic_max_redir_entry + 1);
-    debugf_debug("Global I/O APIC IRQ base: %#llx\n",
+    debugf_debug("Redirection entries: %hhu\n", ioapic_max_redir_entry + 1);
+    debugf_debug("Global I/O APIC IRQ base: %llx\n",
                  madt_record_ioapic->gsi_base);
 
     // find the first redirection entry, we should then be good to parse the

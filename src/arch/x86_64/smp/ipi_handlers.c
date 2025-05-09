@@ -31,7 +31,7 @@ void ipi_handler_halt(void *ctx) {
 void ipi_handler_tlb_flush(void *ctx) {
     uint64_t cpu = get_cpu();
 
-    debugf_debug("Processor %lu flushed TLB @ %#llx\n", cpu,
+    debugf_debug("Processor %lu flushed TLB @ %llx\n", cpu,
                  ((registers_t *)ctx)->rip);
 
     asm("mov %0, %%cr3" : : "r"(get_current_ctx()->pml4_table));

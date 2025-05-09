@@ -29,9 +29,9 @@ void vmm_switch_ctx(vmm_context_t *new_ctx) {
 void vmo_dump(virtmem_object_t *vmo) {
     debugf_debug("VMO %p\n", vmo);
     debugf_debug("\tprev: %p\n", vmo->prev);
-    debugf_debug("\tbase: %#llx\n", vmo->base);
+    debugf_debug("\tbase: %llx\n", vmo->base);
     debugf_debug("\tlen %zu\n", vmo->len);
-    debugf_debug("\tflags: %#llb\n", vmo->flags);
+    debugf_debug("\tflags: %llb\n", vmo->flags);
     debugf_debug("\tnext: %p\n", vmo->next);
 }
 
@@ -179,7 +179,7 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t where) {
     */
 
 #ifdef VMM_DEBUG
-    debugf_debug("VMO %p has been split at (virt)%#llx\n", src_vmo,
+    debugf_debug("VMO %p has been split at (virt)%llx\n", src_vmo,
                  src_vmo->base + offset);
 #endif
 
@@ -208,7 +208,7 @@ void pagemap_copy_to(uint64_t *non_kernel_pml4) {
         return;
 
     for (int i = 0; i < 512; i++) {
-        // debugf("Copying %p[%d](%#llx) to %p[%d]\n", k_pml4, i, k_pml4[i],
+        // debugf("Copying %p[%d](%llx) to %p[%d]\n", k_pml4, i, k_pml4[i],
         //        non_kernel_pml4, i);
 
         ((uint64_t *)PHYS_TO_VIRTUAL(non_kernel_pml4))[i] = k_pml4[i];

@@ -215,12 +215,12 @@ void kstart(void) {
         kernel_address_response->physical_base;
     limine_parsed_data.kernel_base_virtual =
         kernel_address_response->virtual_base;
-    debugf_debug("Kernel address: (phys)%#llx (virt)%#llx\n\n",
+    debugf_debug("Kernel address: (phys)%llx (virt)%llx\n\n",
                  limine_parsed_data.kernel_base_physical,
                  limine_parsed_data.kernel_base_virtual);
 
     debugf_debug("Kernel sections:\n");
-    debugf_debug("\tkernel_start: %#p\n", &__kernel_start);
+    debugf_debug("\tkernel_start: %p\n", &__kernel_start);
     debugf_debug("\tkernel_text_start: %p; kernel_text_end: %p\n",
                  &__kernel_text_start, &__kernel_text_end);
     debugf_debug("\tkernel_rodata_start: %p; kernel_rodata_end: %p\n",
@@ -253,7 +253,7 @@ void kstart(void) {
         }
 
         debugf_debug(
-            "Entry n. %lld; Region start: %#llx; length: %#llx; type: %s\n", i,
+            "Entry n. %lld; Region start: %llx; length: %llx; type: %s\n", i,
             memmap_entry->base, memmap_entry->length,
             memory_block_type[memmap_entry->type]);
     }
@@ -277,7 +277,7 @@ void kstart(void) {
     hhdm_response = hhdm_request.response;
 
     limine_parsed_data.hhdm_offset = hhdm_response->offset;
-    debugf_debug("Higher Half Direct Map offset: %#llx\n",
+    debugf_debug("Higher Half Direct Map offset: %llx\n",
                  limine_parsed_data.hhdm_offset);
 
     pmm_init();

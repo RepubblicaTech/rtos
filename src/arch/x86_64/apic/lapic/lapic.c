@@ -59,7 +59,7 @@ void lapic_init() {
         debugf_warn("No LAPIC base was found! Quitting\n");
         return;
     }
-    debugf_debug("LAPIC base: %#llx\n", lapic_msr_phys);
+    debugf_debug("LAPIC base: %llx\n", lapic_msr_phys);
 
     lapic_base = PHYS_TO_VIRTUAL(lapic_msr_phys + HHDM_OFFSET);
     map_region_to_page((uint64_t *)PHYS_TO_VIRTUAL(_get_pml4()), lapic_msr_phys,
@@ -70,10 +70,10 @@ void lapic_init() {
 
     lapic_write_reg(LAPIC_TASKPR_REG, 0);
     lapic_write_reg(LAPIC_DEST_FMT_REG, 0xFFFFFFFF);
-    debugf_debug("LAPIC is globally enabled and MSR is now %#llx\n",
+    debugf_debug("LAPIC is globally enabled and MSR is now %llx\n",
                  _cpu_get_msr(0x1b));
     lapic_write_reg(LAPIC_SPURIOUS_REG, 0x1ff);
-    debugf_debug("LAPIC_SPURIOUS_REG: %#lx\n",
+    debugf_debug("LAPIC_SPURIOUS_REG: %lx\n",
                  lapic_read_reg(LAPIC_SPURIOUS_REG));
 
     lapic_write_reg(LAPIC_LINT0_REG, 0xfe);
@@ -84,7 +84,7 @@ void lapic_init() {
     lapic_write_reg(LAPIC_THERM_REG, 0xfe);
     lapic_write_reg(LAPIC_TIMER_REG, 0xfe);
 
-    debugf_debug("LAPIC ID: %#hhx\n", lapic_get_id());
+    debugf_debug("LAPIC ID: %hhx\n", lapic_get_id());
 
     lapic_status = true;
 }

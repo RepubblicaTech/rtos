@@ -81,18 +81,18 @@ void print_reg_dump(void *ctx) {
             regs->rdx, regs->r11, regs->r12, regs->r13, regs->r14, regs->r15);
 
     mprintf("\n--- SEGMENT REGS ---\n");
-    mprintf("\tcs (Code segment):   %#llx\n"
-            "\tds (Data segment):   %#llx\n"
-            "\tss (Stack segment):  %#llx\n",
+    mprintf("\tcs (Code segment):   %llx\n"
+            "\tds (Data segment):   %llx\n"
+            "\tss (Stack segment):  %llx\n",
             regs->cs, regs->ds, regs->ss);
 
     mprintf("\n--- FLAGS, POINTER AND INDEX REGISTERS ---\n");
-    mprintf("\teflags:%#llx\n"
-            "\trip (Instruction address):  %#llx\n"
-            "\trbp (Base pointer):         %#llx\n"
-            "\trsp (Stack pointer):        %#llx\n"
-            "\trdi:                        %#llx\n"
-            "\trsi:                        %#llx\n",
+    mprintf("\teflags:%llx\n"
+            "\trip (Instruction address):  %llx\n"
+            "\trbp (Base pointer):         %llx\n"
+            "\trsp (Stack pointer):        %llx\n"
+            "\trdi:                        %llx\n"
+            "\trsi:                        %llx\n",
             regs->rflags, regs->rip, regs->rbp, regs->rsp, regs->rdi,
             regs->rsi);
 }
@@ -137,10 +137,10 @@ void panic_common(void *ctx) {
         if (return_addr >= bootloader_data->kernel_base_virtual) {
             // Using HHDM offset from limine bootloader
             phys_addr = return_addr - bootloader_data->kernel_base_virtual;
-            mprintf("Frame %d: [%p] func addr: %#llx (phys: %#llx)\n", frame,
-                    rbp, approx_func_addr, phys_addr);
+            mprintf("Frame %d: [%p] func addr: %llx (phys: %llx)\n", frame, rbp,
+                    approx_func_addr, phys_addr);
         } else {
-            mprintf("Frame %d: [%p] func addr: %#llx\n", frame, rbp,
+            mprintf("Frame %d: [%p] func addr: %llx\n", frame, rbp,
                     approx_func_addr);
         }
 
@@ -176,7 +176,7 @@ void isr_handler(void *ctx) {
 
         mprintf("KERNEL PANIC! \"%s\" (Exception n. %d) on CPU %hhu\n",
                 exceptions[regs->interrupt], regs->interrupt, cpu);
-        mprintf("\terrcode: %#llx\n", regs->error);
+        mprintf("\terrcode: %llx\n", regs->error);
 
         panic_common(regs);
 

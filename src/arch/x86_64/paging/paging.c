@@ -85,7 +85,7 @@ void pf_handler(void *ctx) {
 
     debugf(ANSI_COLOR_BLUE);
     mprintf("--- PANIC! ---\n");
-    mprintf("Page fault code %#016b\n\n-------------------------------\n",
+    mprintf("Page fault code %016b\n\n-------------------------------\n",
             pf_error_code);
 
     mprintf(PG_RING(pf_error_code) == 0 ? "Kernel " : "User ");
@@ -96,7 +96,7 @@ void pf_handler(void *ctx) {
 
     // CR2 contains the address that caused the fault
     uint64_t cr2 = cpu_get_cr(2);
-    mprintf("\nAttempt to access address %#llx\n\n", cr2);
+    mprintf("\nAttempt to access address %llx\n\n", cr2);
 
     mprintf("RESERVED WRITE: %d\n", PG_RESERVED(pf_error_code));
     mprintf("INSTRUCTION_FETCH: %d\n", PG_IF(pf_error_code));
@@ -127,13 +127,13 @@ uint64_t *get_create_pmlt(uint64_t *pml_table, uint64_t pmlt_index,
                           uint64_t flags) {
     // is there something at pml_table[pmlt_index]?
     if (!(pml_table[pmlt_index] & PMLE_PRESENT)) {
-        /*debugf_debug("Table %llp entry %#llx is not present, creating
+        /*debugf_debug("Table %llp entry %llx is not present, creating
            it...\n", pml_table, pmlt_index);*/
 
         pml_table[pmlt_index] = (uint64_t)pmm_alloc_page() | flags;
     }
 
-    // kprintf_info("Table %llp entry %#llx contents:%#llx flags:%#llx\n",
+    // kprintf_info("Table %llp entry %llx contents:%llx flags:%llx\n",
     // pml_table, pmlt_index, pml_table[pmlt_index], flags);
 
     return get_pmlt(pml_table, pmlt_index);
@@ -163,8 +163,8 @@ uint64_t pg_virtual_to_phys(uint64_t *pml4_table, uint64_t virtual) {
 void map_phys_to_page(uint64_t *pml4_table, uint64_t physical, uint64_t virtual,
                       uint64_t flags) {
     // if (virtual % PFRAME_SIZE) {
-    // 	kprintf_panic("Attempted to map non-aligned addresses (phys)%#llx
-    // (virt)%#llx!\n", physical, virtual); 	_hcf();
+    // 	kprintf_panic("Attempted to map non-aligned addresses (phys)%llx
+    // (virt)%llx!\n", physical, virtual); 	_hcf();
     // }
 
     uint64_t pml4_index = PML4_INDEX(virtual);
@@ -177,9 +177,9 @@ void map_phys_to_page(uint64_t *pml4_table, uint64_t physical, uint64_t virtual,
     uint64_t *page_table = get_create_pmlt(pdir_table, pdir_index, 0b111);
 
     page_table[ptab_index] = PG_GET_ADDR(physical) | flags;
-    // debugf_debug("Page table %llp entry %llu mapped to (virt)%#llx
-    // (phys)%#llx \n", page_table, ptab_index, virtual, physical);
-    // debugf_debug("\tcontents of table[entry]: %#llx\n",
+    // debugf_debug("Page table %llp entry %llu mapped to (virt)%llx
+    // (phys)%llx \n", page_table, ptab_index, virtual, physical);
+    // debugf_debug("\tcontents of table[entry]: %llx\n",
     // page_table[ptab_index]);
 
     _invalidate(virtual);
@@ -212,7 +212,7 @@ void map_region_to_page(uint64_t *pml4_table, uint64_t physical_start,
 
     uint64_t pages = ROUND_UP(len, PFRAME_SIZE) / PFRAME_SIZE;
 #ifdef VMM_DEBUG
-    debugf_debug("Mapping address range (phys)%#llx-%#llx (virt)%#llx-%#llx\n",
+    debugf_debug("Mapping address range (phys)%llx-%llx (virt)%llx-%llx\n",
                  physical_start, physical_start + len, virtual_start,
                  virtual_start + len);
 #endif
@@ -228,7 +228,7 @@ void unmap_region(uint64_t *pml4_table, uint64_t virtual_start, uint64_t len) {
 
     uint64_t pages = ROUND_UP(len, PFRAME_SIZE) / PFRAME_SIZE;
 #ifdef VMM_DEBUG
-    debugf_debug("Unmapping address range (virt)%#llx-%#llx\n", virtual_start,
+    debugf_debug("Unmapping address range (virt)%llx-%llx\n", virtual_start,
                  virtual_start + len);
 #endif
     for (uint64_t i = 0; i < pages; i++) {
@@ -276,12 +276,12 @@ void paging_init(uint64_t *kernel_pml4) {
     debugf_debug("Limine's PML4 sits at %llp\n", limine_pml4);
 
     // set up a custom PAT
-    debugf_debug("PAT MSR: %#.16llx\n", _cpu_get_msr(0x277));
+    debugf_debug("PAT MSR: %.16llx\n", _cpu_get_msr(0x277));
 
     uint64_t custom_pat = PAT_WRITEBACK | (PAT_WRITE_THROUGH << 8) |
                           (PAT_WRITE_COMBINING << 16) | (PAT_UNCACHEABLE << 24);
     _cpu_set_msr(0x277, custom_pat);
-    debugf_debug("Custom PAT has been set up: %#.16llx\n", _cpu_get_msr(0x277));
+    debugf_debug("Custom PAT has been set up: %.16llx\n", _cpu_get_msr(0x277));
 
     /*
             24/12/2024
@@ -345,7 +345,7 @@ void paging_init(uint64_t *kernel_pml4) {
     global_pml4 = (uint64_t *)VIRT_TO_PHYSICAL(kernel_pml4);
 
     // load our page table
-    debugf_debug("Loading pml4 %#llp into CR3\n", global_pml4);
+    debugf_debug("Loading pml4 %llp into CR3\n", global_pml4);
     _load_pml4(global_pml4);
     debugf_debug("Guys, we're in.\n");
 }
