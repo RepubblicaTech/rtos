@@ -79,6 +79,15 @@ int strcmp(const char *s1, const char *s2) {
     return 0;
 }
 
+int strncmp(const char *s1, const char *s2, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        if (s1[i] != s2[i]) {
+            return s1[i] < s2[i] ? -1 : 1;
+        }
+    }
+    return 0;
+}
+
 char *strstr(const char *s1, const char *s2) {
     char *orig_s2 = (char *)s2;
     if (*s2 == '\0') {

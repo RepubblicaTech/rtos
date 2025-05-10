@@ -9,7 +9,8 @@
 ustar_fs_t *ramfs_init(void *ramfs) {
     ustar_file_header *ustar_start = (ustar_file_header *)ramfs;
 
-    if (strcmp(USTAR_FILE_IDENTIFIER, ustar_start->identifier) != 0) {
+    if (strncmp(USTAR_FILE_IDENTIFIER, ustar_start->identifier,
+                sizeof(USTAR_FILE_IDENTIFIER)) != 0) {
         debugf_warn("Identifier's not correct, found \"%6s\"\n",
                     ustar_start->identifier);
     }
@@ -19,7 +20,8 @@ ustar_fs_t *ramfs_init(void *ramfs) {
     ustar_file_header *header = (ustar_file_header *)ptr;
     size_t files_found        = 0;
     do {
-        if (strcmp(USTAR_FILE_IDENTIFIER, header->identifier) == 0) {
+        if (strncmp(USTAR_FILE_IDENTIFIER, header->identifier,
+                    sizeof(USTAR_FILE_IDENTIFIER)) == 0) {
             debugf_ok("Found entry %s\n", header->path);
             files_found++;
         }
@@ -28,7 +30,8 @@ ustar_fs_t *ramfs_init(void *ramfs) {
 
         ptr    += (((entry_size + 511) / 512) + 1) * 512;
         header  = (ustar_file_header *)ptr;
-    } while (strcmp(USTAR_FILE_IDENTIFIER, header->identifier) == 0);
+    } while (strncmp(USTAR_FILE_IDENTIFIER, header->identifier,
+                     sizeof(USTAR_FILE_IDENTIFIER)) == 0);
 
     ustar_fs_t *ustar_structure = kmalloc(sizeof(ustar_fs_t));
     memset(ustar_structure, 0, sizeof(ustar_fs_t));
@@ -40,7 +43,8 @@ ustar_fs_t *ramfs_init(void *ramfs) {
     for (size_t i = 0; i < ustar_structure->file_count; i++) {
         ustar_file_header *header = (ustar_file_header *)ptr;
 
-        if (strcmp(USTAR_FILE_IDENTIFIER, header->identifier) != 0)
+        if (strncmp(USTAR_FILE_IDENTIFIER, header->identifier,
+                    sizeof(USTAR_FILE_IDENTIFIER)) != 0)
             continue; // we should be done with parsing
 
         ustar_structure->files[i] = header;
