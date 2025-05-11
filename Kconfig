@@ -60,3 +60,25 @@ endmenu # DevFS Options
 endif
 
 endmenu # Filesystems
+
+menu "Advanced debugging"
+
+config PMM_DEBUG
+	bool "Outputs detailed info when PMM allocates/frees a page frame"
+	default n
+	help
+		Enables detailed debugging when calling PMM-related functions
+
+config VMM_DEBUG
+	bool "Outputs detailed info when VMM allocates/frees a virtual page"
+	default n
+	help
+		Enables detailed debugging when calling VMM-related functions
+
+config SCHED_DEBUG
+	bool "Outputs detailed info about scheduler-related operations"
+	default n
+	help
+		Outputs detailed info about scheduler-related operations
+	
+endmenu # Advanced debugging
