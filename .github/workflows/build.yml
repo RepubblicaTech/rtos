@@ -25,7 +25,7 @@ jobs:
 
       - name: Kconfig
         run: |
-          sudo apt install python-kconfiglib
+          pip install kconfiglib
           make defconfig
       
       - name: Install kernel dependencies
