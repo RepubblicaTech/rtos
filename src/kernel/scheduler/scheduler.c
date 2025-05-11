@@ -17,6 +17,8 @@
 #include <util/assert.h>
 #include <util/string.h>
 
+#include <autoconf.h>
+
 scheduler_manager_t *scheduler_manager;
 
 void idle(void) {
