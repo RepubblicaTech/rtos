@@ -1,3 +1,4 @@
+#include "interrupts/isr.h"
 #include <dev/pcie/pcie.h>
 #include <kernel.h>
 
@@ -44,6 +45,8 @@
 
 #include <util/assert.h>
 #include <util/string.h>
+
+#include <autoconf.h>
 
 #define INITRD_FILE "initrd.img"
 #define INITRD_PATH "/" INITRD_FILE
@@ -174,6 +177,11 @@ void kstart(void) {
     kprintf("Welcome to purpleK2!\n");
 
     debugf_debug("Kernel built on %s\n", __DATE__);
+
+#ifndef CONFIG_ENABLE_64_BIT
+    kprintf_panic("Kernel wasn't configured with 64-Bit support!\n");
+    _hcf(); // hcf also works on 32-Bit
+#endif
 
     arch_base_init();
 
@@ -350,6 +358,7 @@ void kstart(void) {
         }
     }
 
+#ifdef CONFIG_ENABLE_APIC
 #if defined(__x86_64__)
 #include <apic/ioapic/ioapic.h>
 #include <apic/lapic/lapic.h>
@@ -367,6 +376,7 @@ void kstart(void) {
     } else {
         debugf_debug("APIC is not supported. Going on with legacy PIC\n");
     }
+#endif
 #endif
 
     {
@@ -460,6 +470,7 @@ void kstart(void) {
 
     vfs_init();
 
+#ifdef CONFIG_DEVFS_ENABLE
     devfs_init();
 
     device_t *dev_e9       = get_device("e9");
@@ -468,11 +479,21 @@ void kstart(void) {
     device_t *dev_initrd   = get_device("initrd");
     device_t *dev_null     = get_device("null");
 
+#ifdef CONFIG_DEVFS_ENABLE_E9
     devfs_add_dev(dev_e9);
+#endif
+
+#ifdef CONFIG_DEVFS_ENABLE_PORTIO
     devfs_add_dev(dev_serial);
     devfs_add_dev(dev_parallel);
+#endif
+
     devfs_add_dev(dev_initrd);
+
+#ifdef CONFIG_DEVFS_ENABLE_NULL
     devfs_add_dev(dev_null);
+#endif
+#endif
 
     limine_parsed_data.cpu_count = smp_request.response->cpu_count;
     limine_parsed_data.cpus      = smp_request.response->cpus;

@@ -29,8 +29,6 @@ bool psfLoad(void *buffer) {
     psf           = buffer;
     framebuffer_b = get_bootloader_data()->framebuffer;
 
-    debugf("[console] Initiated with font: dim(xy){%dx%d}\n", 8, psf->height);
-
     return true;
 }
 

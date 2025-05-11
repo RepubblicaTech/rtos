@@ -15,6 +15,11 @@ ISO_DIR=iso
 OBJS_DIR=$(BUILD_DIR)/objs
 INITRD_DIR=target
 
+KCONFIG_CONFIG = .config
+KCONFIG_DEPS = Kconfig
+KCONFIG_AUTOCONF = $(KERNEL_SRC_DIR)/autoconf.h
+
+
 QEMU_FLAGS = 	-m 32M \
 			 	-debugcon stdio \
 				-M q35 \
@@ -218,6 +223,21 @@ run-wsl: $(OS_CODENAME).iso
 		-cdrom $< \
 		-accel whpx
 
+menuconfig:
+	kconfig-mconf $(KCONFIG_DEPS)
+	python scripts/kconfig.py
+	
+savedefconfig:
+	kconfig-conf --savedefconfig=defconfig $(KCONFIG_DEPS)
+	python scripts/kconfig.py
+
+defconfig:
+	kconfig-conf --defconfig=defconfig $(KCONFIG_DEPS)
+	python scripts/kconfig.py
+
+allyesconfig:
+	kconfig-conf --allyesconfig $(KCONFIG_DEPS)
+	python scripts/kconfig.py
 
 debug: $(OS_CODENAME).iso
 	gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)

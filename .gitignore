@@ -74,3 +74,8 @@ src/kernel/acpi/uacpi
 *.cache
 *.ccls-cache
 compile_commands.json
+
+# Kconf / autoconf files
+src/kernel/autoconf.h
+.config
+.config*

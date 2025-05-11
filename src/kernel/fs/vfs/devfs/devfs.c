@@ -3,6 +3,7 @@
 #include "fs/vfs/vfs.h"
 #include "stdio.h"
 #include "util/assert.h"
+#include <autoconf.h>
 #include <memory/heap/kheap.h>
 
 mount_t *devfs_root = NULL;
@@ -50,7 +51,7 @@ void devfs_init() {
     assert(devfs_dir);
     devfs_dir->flags = VNODE_FLAG_MOUNTPOINT;
 
-    mount_t *mount = vfs_mount("/dev", "devfs");
+    mount_t *mount = vfs_mount(CONFIG_DEVFS_MOUNT_PATH, "devfs");
     if (!mount) {
         debugf_warn("Failed to mount devfs at '/dev'.\n");
         return;
