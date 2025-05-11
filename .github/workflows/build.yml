@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y nasm xorriso diffutils patch kconfig-frontends python
+          sudo apt install -y nasm xorriso diffutils patch kconfig-frontends
 
       - name: Kconfig
         run: |
