@@ -2,11 +2,11 @@
 	path = libs/limine
 	url = https://github.com/limine-bootloader/limine.git
 	branch = v9.x-binary
-    
-[submodule "libs/nanoprintf"]
-	path = libs/nanoprintf
-	url = https://github.com/charlesnicholson/nanoprintf.git
-	
+
 [submodule "libs/uacpi"]
 	path = libs/uacpi
 	url = https://github.com/uACPI/uACPI.git
+
+[submodule "libs/nanoprintf"]
+	path = libs/nanoprintf
+	url = https://github.com/charlesnicholson/nanoprintf.git
