@@ -79,7 +79,7 @@ void scheduler_init() {
 
     spinlock_release(&scheduler_manager->glob_lock);
 
-#ifdef SCHED_DEBUG
+#ifdef CONFIG_SCHED_DEBUG
     debugf_debug("Scheduler initialized with %zu cores\n",
                  scheduler_manager->core_count);
 #endif
@@ -182,7 +182,7 @@ proc_t *scheduler_add(void (*entry_point)(), int flags) {
     proc->next  = NULL;
     proc->state = PROC_STATE_READY;
 
-#ifdef SCHED_DEBUG
+#ifdef CONFIG_SCHED_DEBUG
     debugf_debug("Added process %d to CPU %d, RIP: 0x%.16llx, RBP 0x%.16llx, "
                  "PML4: 0x%.16llx\n",
                  proc->pid, least_loaded_cpu, proc->regs.rip, proc->regs.rbp,

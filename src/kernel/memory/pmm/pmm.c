@@ -18,6 +18,8 @@
 
 #include <spinlock.h>
 
+#include <autoconf.h>
+
 lock_t PMM_LOCK;
 
 int usable_entry_count;
@@ -105,14 +107,14 @@ int pmm_frees  = 0; // keeping track of how many times pmm_free was called
 // Omar, this is a PAGE FRAME allocator no need for custom <bytes> parameter
 void *pmm_alloc_page() {
     pmm_allocs++;
-#ifdef PMM_DEBUG
+#ifdef CONFIG_PMM_DEBUG
     debugf_debug("--- Allocation n.%d ---\n", pmm_allocs);
 #endif
 
     void *ptr = NULL;
     freelist_node *cur_node;
     for (cur_node = fl_head; cur_node != NULL; cur_node = cur_node->next) {
-#ifdef PMM_DEBUG
+#ifdef CONFIG_PMM_DEBUG
         debugf_debug("Looking for available memory at address %p\n", cur_node);
 #endif
 
@@ -120,7 +122,7 @@ void *pmm_alloc_page() {
             break;
 
 // if not, go to the next block
-#ifdef PMM_DEBUG
+#ifdef CONFIG_PMM_DEBUG
         debugf_debug("Not enough memory found at %p. Going on...", cur_node);
 #endif
     }
@@ -131,7 +133,7 @@ void *pmm_alloc_page() {
         _hcf();
     }
 
-#ifdef PMM_DEBUG
+#ifdef CONFIG_PMM_DEBUG
     debugf_debug("allocated %lu byte%sat address %p\n", PFRAME_SIZE,
                  PFRAME_SIZE > 1 ? "s " : " ", cur_node);
 #endif
@@ -150,7 +152,7 @@ void *pmm_alloc_page() {
 
     fl_update_nodes();
 
-#ifdef PMM_DEBUG
+#ifdef CONFIG_PMM_DEBUG
     debugf_debug("old head %p is now %p\n", ptr, fl_head);
     debugf_debug("\tsize: %zx\n", fl_head->length);
     debugf_debug("\tnext: %p\n", fl_head->next);
@@ -174,7 +176,7 @@ void *pmm_alloc_pages(size_t pages) {
 
 void pmm_free(void *ptr, size_t pages) {
     pmm_frees++;
-#ifdef PMM_DEBUG
+#ifdef CONFIG_PMM_DEBUG
     debugf_debug("--- Deallocation n.%d ---\n", pmm_frees);
 
     debugf_debug("deallocating address range %p-%p\n\n", ptr,

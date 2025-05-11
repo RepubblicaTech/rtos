@@ -20,20 +20,20 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
     virtmem_object_t *new_vmo;
 
     for (; cur_vmo != NULL; cur_vmo = cur_vmo->next) {
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
         debugf_debug("Checking for available memory\n");
         vmo_dump(cur_vmo);
 #endif
 
         if ((cur_vmo->len >= pages) && (BIT_GET(cur_vmo->flags, 8) == 0)) {
 
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
             debugf_debug("Well, we've got enough memory :D\n");
 #endif
             break;
         }
 
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
         debugf_debug("Current VMO is either too small or already "
                      "allocated. Skipping...\n");
 #endif
@@ -43,7 +43,7 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
                                        cur_vmo->flags & ~(VMO_ALLOCATED));
             cur_vmo->next   = new_vmo;
             new_vmo->prev   = cur_vmo;
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
             debugf_debug("VMO %p created successfully. Proceeding to next "
                          "iteration\n",
                          new_vmo);
@@ -68,7 +68,7 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
                        (uint64_t)(pages * PFRAME_SIZE),
                        vmo_to_page_flags(cur_vmo->flags));
 
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
     debugf_debug("Returning pointer %p\n", ptr);
 #endif
 
@@ -79,25 +79,25 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
 // the PMM? (this will zero out that region on next allocation)
 void vma_free(vmm_context_t *ctx, void *ptr, bool free) {
 
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
     debugf_debug("Deallocating pointer %p\n", ptr);
 #endif
 
     virtmem_object_t *cur_vmo = ctx->root_vmo;
     for (; cur_vmo != NULL; cur_vmo = cur_vmo->next) {
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
         vmo_dump(cur_vmo);
 #endif
         if ((uint64_t)ptr == cur_vmo->base) {
             break;
         }
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
         debugf_debug("Pointer and vmo->base don't match. Skipping\n");
 #endif
     }
 
     if (cur_vmo == NULL) {
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
         debugf_debug(
             "Tried to deallocate a non-existing pointer. Quitting...\n");
 #endif

@@ -13,6 +13,8 @@
 
 #include <kernel.h>
 
+#include <autoconf.h>
+
 #include <cpu.h>
 
 vmm_context_t *current_vmm_ctx;
@@ -178,7 +180,7 @@ virtmem_object_t *split_vmo_at(virtmem_object_t *src_vmo, size_t where) {
     0	  0+len					   X
     */
 
-#ifdef VMM_DEBUG
+#ifdef CONFIG_VMM_DEBUG
     debugf_debug("VMO %p has been split at (virt)%llx\n", src_vmo,
                  src_vmo->base + offset);
 #endif
