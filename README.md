@@ -72,6 +72,10 @@ The following packages are required to build the kernel:
 
 - `nasm`: The assembler used by this kernel
 - `xorriso` and `mkisofs`: To create the ISO disk image
+- `kconfig`: or more likely `kconfig-frontends` to use the `menuconfig`
+
+> [!NOTE]
+> for Fedora users: if you know how to read a `PKGBUILD` file, you can follow the commands in the AUR to install the latest version of `kconfig-frontends` (4.11.0.1 at the time of writing this) to your `/usr/bin`
 
 ### Setting up a cross compiler
 
@@ -145,12 +149,16 @@ make build_limine
 `libs` is the path to the Git submodules and the required patches (if needed)
 You *can* change them, but you *shouldn't* since these are the paths in the project
 
-3. Build the ISO file 
-```bash
-make -j$(nproc)
-```
+3. Build the ISO file
 
-Now there should be a `.iso` file in the project repository
+Run `make menuconfig` and then click on Exit.
+
+> [!NOTE]
+> Why?
+> Project just won't compile without the autoconf.h and right now, the menuconfig options aren't fully working yet.
+
+Then run `make [optional: -j$(nproc)]`
+To build the project and create the ISO file. Now there should be a `.iso` file in the project root directory.
 
 > [!TIP]
 > You can grab an ISO from artifacts of the latest successful Github Actions build.
