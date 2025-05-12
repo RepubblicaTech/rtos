@@ -54,15 +54,19 @@ virtmem_object_t *vmo_init(uint64_t base, size_t length, uint64_t flags) {
     return vmo;
 }
 
+// @note We will not care if `pml4` is 0x0 :^)
 vmm_context_t *vmm_ctx_init(uint64_t *pml4, uint64_t flags) {
 
     size_t vmcsize_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
     vmm_context_t *ctx     = (vmm_context_t *)PHYS_TO_VIRTUAL(
         pmm_alloc_pages(vmcsize_aligned / PFRAME_SIZE));
 
+    /*
+    For some reason UEFI gives out region 0x0-0x1000 as usable :/
     if (pml4 == NULL) {
         pml4 = (uint64_t *)PHYS_TO_VIRTUAL(pmm_alloc_page());
     }
+    */
 
     ctx->pml4_table = pml4;
     ctx->root_vmo   = vmo_init(0x1000, 1, flags);
