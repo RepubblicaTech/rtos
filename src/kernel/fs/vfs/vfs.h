@@ -1,85 +1,134 @@
 #ifndef VFS_H
 #define VFS_H
 
+#include "structures/avltree.h"
 #include "types.h"
-#include <stdatomic.h>
-#include <stddef.h>
-#include <stdint.h>
+
+typedef struct fs_vfs fs_vfs_t;
+typedef struct fs_node fs_node_t;
+typedef struct fs_mount fs_mount_t;
+typedef struct fs_open_file fs_open_file_t;
+typedef struct fs_node_ops fs_node_ops_t;
+typedef struct fs_vfs_ops fs_vfs_ops_t;
+typedef struct stat stat_t;
 
 typedef enum {
-    VNODE_DIR  = 0x0001,
-    VNODE_FILE = 0x0002,
-    VNODE_DEV  = 0x0003,
-} vnode_type_t;
+    FS_DEV,
+    FS_PROC,
+    FS_TMP,
+    FS_EXT,
+    FS_CUSTOM
+} fs_type;
 
-#define VNODE_FLAG_MOUNTPOINT 0x0001
+typedef enum fs_node_type {
+    VNON,
+    VREG,
+    VDIR,
+    VBLK,
+    VCHR,
+    VLNK,
+    VSOCK,
+    VBAD
+} fs_node_type;
 
-struct vnode;
-struct mount;
+typedef struct fs_node {
+    char *name;
+    char *prefix;
 
-typedef struct vnode_ops {
-    int (*read)(struct vnode *vnode, void *buf, size_t size, size_t offset);
-    int (*write)(struct vnode *vnode, const void *buf, size_t size,
-                 size_t offset);
-} vnode_ops_t;
+    int flags;
+    lock_t lock;
+    fs_node_type type;
 
-typedef struct vnode {
-    struct vnode *parent;
-    struct vnode *next;
-    struct vnode *child;
-    struct mount *mount;
+    void *data;
+    fs_node_ops_t *ops;
 
-    vnode_type_t type;
-    char name[256];
-    uint64_t size;
+    fs_vfs_t *vfs;
+
+    fs_node_t *parent;
+    AVLTree *children;
+    AVLTree *next;
+} fs_node_t;
+
+typedef struct fs_node_ops {
+    int (*open)(fs_node_t *node, fs_open_file_t *file);
+    int (*close)(fs_node_t *node, fs_open_file_t *file);
+    int (*read)(fs_node_t *node, char *buf, size_t len, size_t offset);
+    int (*write)(fs_node_t *node, const char *buf, size_t len, size_t offset);
+    int (*seek)(fs_node_t *node, size_t offset, int whence);
+    int (*ioctl)(fs_node_t *node, int request, void *arg);
+    int (*stat)(fs_node_t *node, stat_t *st);
+    int (*mmap)(fs_node_t *node, size_t offset, size_t len, int prot,
+                int flags);
+    int (*poll)(fs_node_t *node, int events, void *arg);
+    int (*fcntl)(fs_node_t *node, int cmd, void *arg);
+    int (*lookup)(fs_node_t *dir, const char *name, fs_node_t **out);
+    int (*mkdir)(fs_node_t *dir, const char *name, int flags);
+    int (*unlink)(fs_node_t *dir, const char *name);
+    int (*rename)(fs_node_t *old_dir, const char *old_name, fs_node_t *new_dir,
+                  const char *new_name);
+} fs_node_ops_t;
+
+typedef struct fs_vfs_ops {
+    int (*mount)(fs_vfs_t *vfs, fs_mount_t *mount);
+    int (*unmount)(fs_vfs_t *vfs, fs_mount_t *mount);
+    int (*statfs)(fs_vfs_t *vfs, stat_t *st);
+    int (*sync)(fs_vfs_t *vfs);
+    int (*create)(fs_vfs_t *vfs, fs_node_t *node, const char *name,
+                  fs_node_type type, int flags);
+    int (*remove)(fs_vfs_t *vfs, fs_node_t *node);
+    int (*rename)(fs_vfs_t *vfs, fs_node_t *old_node, fs_node_t *new_node);
+} fs_vfs_ops_t;
+
+typedef struct fs_vfs {
+    fs_type type;
+    lock_t lock;
+
+    fs_node_t *root;
+
+    void *data;
+    fs_vfs_ops_t *ops;
+} fs_vfs_t;
+
+typedef struct fs_mount {
+    fs_vfs_t *vfs;
+    fs_node_t *node;
+
+    char *path;
+    char *prefix;
+
+    int flags;
+    lock_t lock;
+
+    void *data;
+} fs_mount_t;
+
+typedef struct fs_open_file {
+    fs_node_t *node;
     void *data;
 
-    vnode_ops_t *ops;
-    uint32_t flags; // some flags ored together
+    size_t offset;
+    size_t len;
 
-    lock_t lock;
-} vnode_t;
+    int mode;
+    int flags;
+} fs_open_file_t;
 
-typedef struct mount {
-    vnode_t *root;      // Root vnode of the filesystem
-    struct mount *next; // Next mount point
-    struct mount *prev; // Previous mount point
-    char *mountpoint;   // Path to the mount point, e.g. /mnt/
-    char *type;         // File system type, e.g. "ramfs"
-    void *data;         // Private data for the file system
-} mount_t;
-
-extern mount_t *root_mount;
-
-void vfs_init(void);
-vnode_t *vfs_lookup(vnode_t *parent, const char *name);
-mount_t *vfs_mount(const char *path, const char *type);
-vnode_t *vfs_create_vnode(vnode_t *parent, const char *name, vnode_type_t type);
-void vfs_umount(mount_t *mount);
-int vfs_read(vnode_t *vnode, void *buf, size_t size, size_t offset);
-int vfs_write(vnode_t *vnode, const void *buf, size_t size, size_t offset);
-vnode_t *vfs_lazy_lookup(mount_t *mount, const char *path);
-char *vfs_get_full_path(vnode_t *vnode);
-void vfs_debug_print(mount_t *mount);
-char *vfs_type_to_str(vnode_type_t type);
-void vfs_delete_node(vnode_t *vnode);
-
-#define VFS_ROOT()    (root_mount->root)
-#define VFS_GET(path) (vfs_lazy_lookup(root_mount, path))
-#define VFS_READ(path)                                                         \
-    ({                                                                         \
-        vnode_t *node = VFS_GET(path);                                         \
-        assert(node);                                                          \
-        char *buf       = kmalloc(node->size + 1);                             \
-        buf[node->size] = 0;                                                   \
-        vfs_read(node, buf, node->size, 0);                                    \
-        buf;                                                                   \
-    })
-#define VFS_WRITE(path, data)                                                  \
-    ({                                                                         \
-        vnode_t *node = VFS_GET(path);                                         \
-        assert(node);                                                          \
-        vfs_write(node, data, strlen(data), 0);                                \
-    })
+// Core VFS functions
+int vfs_register(fs_vfs_t *vfs);
+int vfs_unregister(fs_vfs_t *vfs);
+int vfs_mount(const char *path, fs_vfs_t *vfs, int flags);
+int vfs_unmount(const char *path);
+int vfs_lookup(const char *path, fs_node_t **out);
+int vfs_open(const char *path, int flags, fs_open_file_t **out);
+int vfs_close(fs_open_file_t *file);
+int vfs_read(fs_open_file_t *file, void *buf, size_t len);
+int vfs_write(fs_open_file_t *file, const void *buf, size_t len);
+int vfs_seek(fs_open_file_t *file, size_t offset, int whence);
+int vfs_stat(const char *path, stat_t *st);
+int vfs_mkdir(const char *path, int flags);
+int vfs_unlink(const char *path);
+int vfs_rename(const char *oldpath, const char *newpath);
+int vfs_sync(void);
+fs_node_t *vfs_root(void);
 
 #endif // VFS_H
