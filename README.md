@@ -48,7 +48,7 @@ The base of the kernel is the [Limine Bare Bones Template](https://wiki.osdev.or
 - Fedora 42 XFCE (at least one build per week)
 - OS X Mavericks (last tested: January 2024)
 - Arch Linux (last tested: December 2024)
-- Debain 12 on WSL2 (Windows 10 21H2 build 19044, last tested: September 2024)
+- Debian 12 on WSL2 (Windows 10 21H2 build 19044, last tested: September 2024)
 - Ubuntu 24.04 on WSL2 (Windows 11 24H2 build 26100.2033, last tested: March 2025)
 
 > [!NOTE]  
