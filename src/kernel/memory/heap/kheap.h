@@ -8,8 +8,10 @@
 extern "C" {
 #endif
 
-void kmalloc_init(void *(*alloc_pages)(size_t pages),
-                  void (*free_pages)(void *ptr, size_t pages));
+void kmalloc_init();
+
+extern void *os_alloc_pages(size_t pages);
+extern void os_free_pages(void *ptr, size_t pages);
 
 void *kmalloc(size_t size);
 void kfree(void *ptr);

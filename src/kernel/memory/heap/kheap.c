@@ -20,9 +20,6 @@ typedef struct {
     slab_t *slabs;
 } slab_cache_t;
 
-static void *(*os_alloc_pages)(size_t)       = 0;
-static void (*os_free_pages)(void *, size_t) = 0;
-
 static slab_cache_t slab_caches[CACHE_COUNT];
 
 static inline size_t align_up(size_t x, size_t align) {
@@ -98,11 +95,7 @@ static void slab_free(slab_t *slab, void *ptr) {
     }
 }
 
-void kmalloc_init(void *(*alloc_pages_cb)(size_t),
-                  void (*free_pages_cb)(void *, size_t)) {
-    os_alloc_pages = alloc_pages_cb;
-    os_free_pages  = free_pages_cb;
-
+void kmalloc_init() {
     for (int i = 0; i < CACHE_COUNT; i++) {
         slab_caches[i].obj_size = (size_t)1 << (i + 4); // 2^4 = 16
         slab_caches[i].slabs    = NULL;
@@ -110,9 +103,6 @@ void kmalloc_init(void *(*alloc_pages_cb)(size_t),
 }
 
 void *kmalloc(size_t size) {
-    if (!os_alloc_pages || !os_free_pages)
-        return NULL;
-
     if (size == 0)
         return NULL;
 
