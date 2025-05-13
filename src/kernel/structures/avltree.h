@@ -1,33 +1,36 @@
-#ifndef AVLTREE_H
-#define AVLTREE_H
+#ifndef AVL_TREE_H
+#define AVL_TREE_H
 
 #include <stddef.h>
 
-typedef struct AVLNode {
-    int key;
-    void *value;
+typedef int (*AVLComparator)(const void *a, const void *b);
+typedef void (*AVLVisitor)(void *key, void *value);
 
+typedef struct AVLNode {
+    void *key;
+    void *value;
+    int height;
     struct AVLNode *left;
     struct AVLNode *right;
-    int height;
+    struct AVLNode *parent;
 } AVLNode;
 
 typedef struct AVLTree {
     AVLNode *root;
+    AVLComparator compare;
 } AVLTree;
 
-// management
-void avl_init(AVLTree *tree);
-void avl_free(AVLTree *tree);
+AVLTree *avl_create(AVLComparator compare);
+void avl_destroy(AVLTree *tree);
 
-// add and remove
-void avl_insert(AVLTree *tree, int key, void *value);
-void avl_remove(AVLTree *tree, int key);
+int avl_insert(AVLTree *tree, void *key, void *value);
+int avl_remove(AVLTree *tree, void *key);
+void *avl_find(AVLTree *tree, void *key);
 
-// searching
-void *avl_search(AVLTree *tree, int key);
+void avl_traverse_inorder(AVLTree *tree, AVLVisitor visitor);
 
-// traversal
-void avl_inorder(AVLTree *tree, void (*visit)(int key, void *value));
+AVLNode *avl_first(AVLTree *tree);
+AVLNode *avl_next(AVLNode *node);
+void *avl_node_value(AVLNode *node);
 
-#endif // AVLTREE_H
+#endif

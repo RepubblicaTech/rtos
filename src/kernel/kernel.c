@@ -1,3 +1,4 @@
+#include "fs/fakefs/fakefs.h"
 #include "interrupts/isr.h"
 #include <dev/pcie/pcie.h>
 #include <kernel.h>
@@ -468,10 +469,32 @@ void kstart(void) {
     dev_serial_init();
     dev_parallel_init();
 
-    vfs_init();
+    // vfs_init();
+
+    fs_vfs_t *rootfs = fakefs_create();
+    vfs_register(rootfs);
+    vfs_mount("/", rootfs, 0);
+
+    fs_node_t *root;
+    if (vfs_lookup("/", &root) == 0) {
+        root->vfs->ops->create(root->vfs, root, "/myfile.txt", VREG, 0);
+    }
+
+    fs_open_file_t *file = kcalloc(1, sizeof(fs_open_file_t));
+    if (vfs_open("/myfile.txt", 0, &file) == 0) {
+        const char *text = "Hello, fakefs!";
+        vfs_write(file, text, strlen(text));
+        vfs_seek(file, 0, 0); // SEEK_SET
+        char buf[128] = {0};
+        int n         = vfs_read(file, buf, sizeof(buf));
+        if (n > 0) {
+            kprintf("Read %d bytes: %s\n", n, buf);
+        }
+        vfs_close(file);
+    }
 
 #ifdef CONFIG_DEVFS_ENABLE
-    devfs_init();
+    // devfs_init();
 
     device_t *dev_e9       = get_device("e9");
     device_t *dev_serial   = get_device("com1");
@@ -480,18 +503,18 @@ void kstart(void) {
     device_t *dev_null     = get_device("null");
 
 #ifdef CONFIG_DEVFS_ENABLE_E9
-    devfs_add_dev(dev_e9);
+    // devfs_add_dev(dev_e9);
 #endif
 
 #ifdef CONFIG_DEVFS_ENABLE_PORTIO
-    devfs_add_dev(dev_serial);
-    devfs_add_dev(dev_parallel);
+    // devfs_add_dev(dev_serial);
+    // devfs_add_dev(dev_parallel);
 #endif
 
-    devfs_add_dev(dev_initrd);
+    // devfs_add_dev(dev_initrd);
 
 #ifdef CONFIG_DEVFS_ENABLE_NULL
-    devfs_add_dev(dev_null);
+    // devfs_add_dev(dev_null);
 #endif
 #endif
 
@@ -504,10 +527,10 @@ void kstart(void) {
 
     // limine_parsed_data.smp_enabled = true;
 
-    ustar_file_tree_t *pci_ids = file_lookup(initramfs_disk, "pci.ids");
+    // ustar_file_tree_t *pci_ids = file_lookup(initramfs_disk, "pci.ids");
 
-    pci_scan(pci_ids);
-    pci_print_list();
+    // pci_scan(pci_ids);
+    // pci_print_list();
 
     limine_parsed_data.boot_time = get_ms(system_startup_time);
 

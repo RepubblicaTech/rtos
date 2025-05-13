@@ -1,4 +1,4 @@
-#ifndef VFS_DEVFS_H
+/*#ifndef VFS_DEVFS_H
 #define VFS_DEVFS_H
 
 #include "dev/device.h"
@@ -11,4 +11,4 @@ int devfs_add_dev(device_t *dev);
 
 void devfs_init();
 
-#endif // VFS_DEVFS_H
+#endif // VFS_DEVFS_H*/

@@ -35,7 +35,7 @@ typedef struct proc {
     int sched_flags;
 
     fd_t current_fd;
-    vnode_t **fd_table;
+    fs_open_file_t **fd_table;
 
     int errno;
     proc_state_t state;

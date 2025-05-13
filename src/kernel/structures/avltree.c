@@ -1,25 +1,80 @@
 #include "avltree.h"
 #include <memory/heap/kheap.h>
+#include <util/string.h>
 
-static int height(AVLNode *node) {
-    return node ? node->height : 0;
-}
-
+// Helper function to get the maximum of two integers
 static int max(int a, int b) {
     return (a > b) ? a : b;
 }
 
-static AVLNode *create_node(int key, void *value) {
-    AVLNode *node = kmalloc(sizeof(AVLNode));
-    if (!node)
-        return NULL;
-    node->key   = key;
-    node->value = value;
-    node->left = node->right = NULL;
-    node->height             = 1;
-    return node;
+// Get the height of a node, or -1 if node is NULL
+static int get_height(AVLNode *node) {
+    return node ? node->height : -1;
 }
 
+// Calculate the balance factor of a node
+static int get_balance_factor(AVLNode *node) {
+    if (!node)
+        return 0;
+    return get_height(node->left) - get_height(node->right);
+}
+
+// Right rotation
+static AVLNode *right_rotate(AVLNode *y) {
+    AVLNode *x  = y->left;
+    AVLNode *T2 = x->right;
+
+    // Perform rotation
+    x->right = y;
+    y->left  = T2;
+
+    // Update parent pointers
+    x->parent = y->parent;
+    y->parent = x;
+    if (T2)
+        T2->parent = y;
+
+    // Update heights
+    y->height = 1 + max(get_height(y->left), get_height(y->right));
+    x->height = 1 + max(get_height(x->left), get_height(x->right));
+
+    return x;
+}
+
+// Left rotation
+static AVLNode *left_rotate(AVLNode *x) {
+    AVLNode *y  = x->right;
+    AVLNode *T2 = y->left;
+
+    // Perform rotation
+    y->left  = x;
+    x->right = T2;
+
+    // Update parent pointers
+    y->parent = x->parent;
+    x->parent = y;
+    if (T2)
+        T2->parent = x;
+
+    // Update heights
+    x->height = 1 + max(get_height(x->left), get_height(x->right));
+    y->height = 1 + max(get_height(y->left), get_height(y->right));
+
+    return y;
+}
+
+// Create a new AVL tree
+AVLTree *avl_create(AVLComparator compare) {
+    AVLTree *tree = kmalloc(sizeof(AVLTree));
+    if (!tree)
+        return NULL;
+
+    tree->root    = NULL;
+    tree->compare = compare;
+    return tree;
+}
+
+// Recursive function to free all nodes
 static void free_node(AVLNode *node) {
     if (!node)
         return;
@@ -28,163 +83,269 @@ static void free_node(AVLNode *node) {
     kfree(node);
 }
 
-static AVLNode *rotate_right(AVLNode *y) {
-    AVLNode *x  = y->left;
-    AVLNode *T2 = x->right;
-
-    x->right = y;
-    y->left  = T2;
-
-    y->height = max(height(y->left), height(y->right)) + 1;
-    x->height = max(height(x->left), height(x->right)) + 1;
-
-    return x;
+// Destroy the entire AVL tree
+void avl_destroy(AVLTree *tree) {
+    if (!tree)
+        return;
+    free_node(tree->root);
+    kfree(tree);
 }
 
-static AVLNode *rotate_left(AVLNode *x) {
-    AVLNode *y  = x->right;
-    AVLNode *T2 = y->left;
+// Internal insert function
+static AVLNode *insert_node(AVLTree *tree, AVLNode *node, void *key,
+                            void *value, AVLNode *parent) {
+    // 1. Perform standard BST insertion
+    if (!node) {
+        AVLNode *new_node = kmalloc(sizeof(AVLNode));
+        if (!new_node)
+            return NULL;
 
-    y->left  = x;
-    x->right = T2;
+        new_node->key    = key;
+        new_node->value  = value;
+        new_node->height = 1;
+        new_node->left   = NULL;
+        new_node->right  = NULL;
+        new_node->parent = parent;
+        return new_node;
+    }
 
-    x->height = max(height(x->left), height(x->right)) + 1;
-    y->height = max(height(y->left), height(y->right)) + 1;
-
-    return y;
-}
-
-static int get_balance(AVLNode *node) {
-    return node ? height(node->left) - height(node->right) : 0;
-}
-
-static AVLNode *insert_node(AVLNode *node, int key, void *value) {
-    if (!node)
-        return create_node(key, value);
-
-    if (key < node->key)
-        node->left = insert_node(node->left, key, value);
-    else if (key > node->key)
-        node->right = insert_node(node->right, key, value);
-    else {
-        node->value = value;
+    // Compare and insert
+    int compare_result = tree->compare(key, node->key);
+    if (compare_result < 0) {
+        node->left = insert_node(tree, node->left, key, value, node);
+    } else if (compare_result > 0) {
+        node->right = insert_node(tree, node->right, key, value, node);
+    } else {
+        // Duplicate key, return original node
         return node;
     }
 
-    node->height = 1 + max(height(node->left), height(node->right));
-    int balance  = get_balance(node);
+    // 2. Update height of current node
+    node->height = 1 + max(get_height(node->left), get_height(node->right));
 
-    // Balancing
-    if (balance > 1 && key < node->left->key)
-        return rotate_right(node);
+    // 3. Get the balance factor to check if this node became unbalanced
+    int balance = get_balance_factor(node);
 
-    if (balance < -1 && key > node->right->key)
-        return rotate_left(node);
+    // 4. If unbalanced, there are 4 cases
 
-    if (balance > 1 && key > node->left->key) {
-        node->left = rotate_left(node->left);
-        return rotate_right(node);
+    // Left Left Case
+    if (balance > 1 && tree->compare(key, node->left->key) < 0)
+        return right_rotate(node);
+
+    // Right Right Case
+    if (balance < -1 && tree->compare(key, node->right->key) > 0)
+        return left_rotate(node);
+
+    // Left Right Case
+    if (balance > 1 && tree->compare(key, node->left->key) > 0) {
+        node->left = left_rotate(node->left);
+        return right_rotate(node);
     }
 
-    if (balance < -1 && key < node->right->key) {
-        node->right = rotate_right(node->right);
-        return rotate_left(node);
+    // Right Left Case
+    if (balance < -1 && tree->compare(key, node->right->key) < 0) {
+        node->right = right_rotate(node->right);
+        return left_rotate(node);
     }
 
+    // Node didn't change
     return node;
 }
 
-static AVLNode *min_value_node(AVLNode *node) {
+// Public insert function
+int avl_insert(AVLTree *tree, void *key, void *value) {
+    if (!tree)
+        return -1;
+
+    // If tree is empty
+    if (!tree->root) {
+        tree->root = insert_node(tree, tree->root, key, value, NULL);
+        return tree->root ? 0 : -1;
+    }
+
+    // Perform insertion
+    AVLNode *new_root = insert_node(tree, tree->root, key, value, NULL);
+
+    // Update root if it changed due to rotations
+    if (new_root != tree->root) {
+        tree->root = new_root;
+    }
+
+    return 0;
+}
+
+// Find a node with a given key
+static AVLNode *find_node(AVLTree *tree, void *key) {
+    if (!tree || !tree->root)
+        return NULL;
+
+    AVLNode *current = tree->root;
+    while (current) {
+        int compare_result = tree->compare(key, current->key);
+        if (compare_result == 0)
+            return current;
+        current = (compare_result < 0) ? current->left : current->right;
+    }
+    return NULL;
+}
+
+// Find value for a given key
+void *avl_find(AVLTree *tree, void *key) {
+    AVLNode *node = find_node(tree, key);
+    return node ? node->value : NULL;
+}
+
+// Find minimum value node
+static AVLNode *find_min(AVLNode *node) {
     AVLNode *current = node;
-    while (current->left)
+    while (current && current->left) {
         current = current->left;
+    }
     return current;
 }
 
-static AVLNode *remove_node(AVLNode *root, int key) {
+// Internal remove function
+static AVLNode *remove_node(AVLTree *tree, AVLNode *root, void *key) {
+    // Standard BST deletion
     if (!root)
         return NULL;
 
-    if (key < root->key)
-        root->left = remove_node(root->left, key);
-    else if (key > root->key)
-        root->right = remove_node(root->right, key);
+    int compare_result = tree->compare(key, root->key);
+    if (compare_result < 0)
+        root->left = remove_node(tree, root->left, key);
+    else if (compare_result > 0)
+        root->right = remove_node(tree, root->right, key);
     else {
+        // Node with the key to be deleted found
+
+        // Node with only one child or no child
         if (!root->left || !root->right) {
             AVLNode *temp = root->left ? root->left : root->right;
-            kfree(root);
-            return temp;
+
+            // No child case
+            if (!temp) {
+                temp = root;
+                root = NULL;
+            } else { // One child case
+                // Copy the contents of the non-empty child
+                *root = *temp;
+            }
+            kfree(temp);
         } else {
-            AVLNode *temp = min_value_node(root->right);
-            root->key     = temp->key;
-            root->value   = temp->value;
-            root->right   = remove_node(root->right, temp->key);
+            // Node with two children: Get the inorder successor
+            AVLNode *temp = find_min(root->right);
+
+            // Copy the inorder successor's data to this node
+            root->key   = temp->key;
+            root->value = temp->value;
+
+            // Delete the inorder successor
+            root->right = remove_node(tree, root->right, temp->key);
         }
     }
 
-    root->height = 1 + max(height(root->left), height(root->right));
-    int balance  = get_balance(root);
+    // If the tree had only one node, return
+    if (!root)
+        return NULL;
 
-    if (balance > 1 && get_balance(root->left) >= 0)
-        return rotate_right(root);
+    // Update height of current node
+    root->height = 1 + max(get_height(root->left), get_height(root->right));
 
-    if (balance > 1 && get_balance(root->left) < 0) {
-        root->left = rotate_left(root->left);
-        return rotate_right(root);
+    // Get balance factor
+    int balance = get_balance_factor(root);
+
+    // Balance the tree
+
+    // Left Left Case
+    if (balance > 1 && get_balance_factor(root->left) >= 0)
+        return right_rotate(root);
+
+    // Left Right Case
+    if (balance > 1 && get_balance_factor(root->left) < 0) {
+        root->left = left_rotate(root->left);
+        return right_rotate(root);
     }
 
-    if (balance < -1 && get_balance(root->right) <= 0)
-        return rotate_left(root);
+    // Right Right Case
+    if (balance < -1 && get_balance_factor(root->right) <= 0)
+        return left_rotate(root);
 
-    if (balance < -1 && get_balance(root->right) > 0) {
-        root->right = rotate_right(root->right);
-        return rotate_left(root);
+    // Right Left Case
+    if (balance < -1 && get_balance_factor(root->right) > 0) {
+        root->right = right_rotate(root->right);
+        return left_rotate(root);
     }
 
     return root;
 }
 
-static void *search_node(AVLNode *node, int key) {
-    if (!node)
-        return NULL;
-    if (key == node->key)
-        return node->value;
-    else if (key < node->key)
-        return search_node(node->left, key);
-    else
-        return search_node(node->right, key);
+// Public remove function
+int avl_remove(AVLTree *tree, void *key) {
+    if (!tree || !tree->root)
+        return -1;
+
+    AVLNode *new_root = remove_node(tree, tree->root, key);
+
+    // Update root if it changed
+    if (new_root != tree->root) {
+        tree->root = new_root;
+    }
+
+    return 0;
 }
 
-static void inorder_traverse(AVLNode *node, void (*visit)(int, void *)) {
+// Inorder traversal
+static void inorder_recursive(AVLNode *node, AVLVisitor visitor) {
     if (!node)
         return;
-    inorder_traverse(node->left, visit);
-    visit(node->key, node->value);
-    inorder_traverse(node->right, visit);
+
+    inorder_recursive(node->left, visitor);
+    visitor(node->key, node->value);
+    inorder_recursive(node->right, visitor);
 }
 
-// API implementations
-void avl_init(AVLTree *tree) {
-    tree->root = NULL;
+void avl_traverse_inorder(AVLTree *tree, AVLVisitor visitor) {
+    if (!tree || !visitor)
+        return;
+    inorder_recursive(tree->root, visitor);
 }
 
-void avl_free(AVLTree *tree) {
-    free_node(tree->root);
-    tree->root = NULL;
+// Find first (leftmost) node
+AVLNode *avl_first(AVLTree *tree) {
+    if (!tree || !tree->root)
+        return NULL;
+
+    AVLNode *current = tree->root;
+    while (current->left) {
+        current = current->left;
+    }
+    return current;
 }
 
-void avl_insert(AVLTree *tree, int key, void *value) {
-    tree->root = insert_node(tree->root, key, value);
+// Find next node in inorder traversal
+AVLNode *avl_next(AVLNode *node) {
+    if (!node)
+        return NULL;
+
+    // If right subtree exists, find leftmost node in right subtree
+    if (node->right) {
+        AVLNode *current = node->right;
+        while (current->left) {
+            current = current->left;
+        }
+        return current;
+    }
+
+    // Otherwise, go up until we find a node that is a left child
+    AVLNode *current = node;
+    while (current->parent && current == current->parent->right) {
+        current = current->parent;
+    }
+
+    return current->parent;
 }
 
-void avl_remove(AVLTree *tree, int key) {
-    tree->root = remove_node(tree->root, key);
-}
-
-void *avl_search(AVLTree *tree, int key) {
-    return search_node(tree->root, key);
-}
-
-void avl_inorder(AVLTree *tree, void (*visit)(int key, void *value)) {
-    inorder_traverse(tree->root, visit);
+// Get value of a node
+void *avl_node_value(AVLNode *node) {
+    return node ? node->value : NULL;
 }

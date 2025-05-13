@@ -1,4 +1,4 @@
-#include "devfs.h"
+/*#include "devfs.h"
 #include "dev/device.h"
 #include "fs/vfs/vfs.h"
 #include "stdio.h"
@@ -62,4 +62,4 @@ void devfs_init() {
     devfs_dir->mount = mount;
 
     debugf_debug("devfs initialized at /dev\n");
-}
+}*/

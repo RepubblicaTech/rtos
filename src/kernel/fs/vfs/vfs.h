@@ -3,6 +3,7 @@
 
 #include "structures/avltree.h"
 #include "types.h"
+#include <stdint.h>
 
 typedef struct fs_vfs fs_vfs_t;
 typedef struct fs_node fs_node_t;
@@ -112,6 +113,19 @@ typedef struct fs_open_file {
     int mode;
     int flags;
 } fs_open_file_t;
+
+typedef struct stat {
+    uint64_t st_size;  // File size in bytes
+    uint32_t st_mode;  // File mode (permissions)
+    uint32_t st_uid;   // User ID of owner
+    uint32_t st_gid;   // Group ID of owner
+    uint64_t st_ino;   // Inode number
+    uint64_t st_dev;   // Device ID
+    uint64_t st_rdev;  // Device ID (if special file)
+    uint64_t st_atime; // Last access time
+    uint64_t st_mtime; // Last modification time
+    uint64_t st_ctime; // Last status change time
+} stat_t;
 
 // Core VFS functions
 int vfs_register(fs_vfs_t *vfs);
