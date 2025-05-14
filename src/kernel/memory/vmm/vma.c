@@ -10,6 +10,8 @@
 
 #include <spinlock.h>
 
+#include <autoconf.h>
+
 // @param phys optional parameter, maps the newly allocated virtual address to
 // such physical address
 void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
@@ -37,7 +39,7 @@ void *vma_alloc(vmm_context_t *ctx, size_t pages, void *phys) {
         debugf_debug("Current VMO is either too small or already "
                      "allocated. Skipping...\n");
 #endif
-        if (cur_vmo->next == NULL) {
+        if (!cur_vmo->next) {
             uint64_t offset = (uint64_t)(cur_vmo->len * PFRAME_SIZE);
             new_vmo         = vmo_init(cur_vmo->base + offset, pages,
                                        cur_vmo->flags & ~(VMO_ALLOCATED));
@@ -128,6 +130,10 @@ void vma_free(vmm_context_t *ctx, void *ptr, bool free) {
         if (d_prev)
             d_prev->next = d_next;
     }
+
+#ifdef CONFIG_VMM_DEBUG
+    debugf_debug("Region %llx destroyed\n", to_dealloc->base);
+#endif
 
     size_t vmo_size_aligned = ROUND_UP(sizeof(virtmem_object_t), PFRAME_SIZE);
     pmm_free(to_dealloc, vmo_size_aligned / PFRAME_SIZE);
