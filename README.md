@@ -116,7 +116,9 @@ Thankfully, the [toolchain script made by nanobyte](https://github.com/nanobyte-
 
 *(arguments in square brackets are optional)*
 
-`make -C toolchain [CPU_CORES=<number of desired cores, defaults to $(nproc)>]`
+```bash
+make -C toolchain [CPU_CORES=<number of desired cores, defaults to $(nproc)>]
+```
 
 > [!NOTE]
 > If you manage to port this kernel to another architecture supported by Limine, you can add a `TARGET_BASE` or `TARGET` argument to compile a different toolchain. Same applies to the [Makefile](Makefile).
@@ -151,13 +153,18 @@ You *can* change them, but you *shouldn't* since these are the paths in the proj
 
 3. Build the ISO file
 
-Run `make menuconfig` and then click on Exit.
+Run
+```bash
+make menuconfig
+```
+This will show up a menu with options to customise the kernel build process.
+For more info, you can check out the [kernel menuconfig docs](docs/menuconfig.md).
+If you don't really care about such options, just hit `Save` then `Exit`.
 
-> [!NOTE]
-> Why?
-> Project just won't compile without the autoconf.h and right now, the menuconfig options aren't fully working yet.
-
-Then run `make [optional: -j$(nproc)]`
+Then run
+```sh
+make [optional: -j$(nproc)]
+```
 To build the project and create the ISO file. Now there should be a `.iso` file in the project root directory.
 
 > [!TIP]
