@@ -21,9 +21,9 @@ config DEVFS_ENABLE
     help
       Enable the pseudo filesystem for devices 
 
-if DEVFS_ENABLE
-
 menu "DevFS Options"
+
+depends on DEVFS_ENABLE
 
 config DEVFS_MOUNT_PATH
     string "DevFS Mount Path"
@@ -58,7 +58,6 @@ config DEVFS_ENABLE_E9
       Enables the E9 hack port device for debugging on Hypervisors
 
 endmenu # DevFS Options
-endif
 
 endmenu # Filesystems
 
