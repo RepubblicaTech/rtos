@@ -1,6 +1,3 @@
-#include "fs/fakefs/fakefs.h"
-#include "interrupts/isr.h"
-#include <dev/pcie/pcie.h>
 #include <kernel.h>
 
 #include <limine.h>
@@ -33,12 +30,14 @@
 
 #include <acpi/acpi.h>
 
+#include <fs/fakefs/fakefs.h>
 #include <fs/ustar/ustar.h>
 #include <fs/vfs/devfs/devfs.h>
 #include <fs/vfs/vfs.h>
 
 #include <dev/device.h>
 #include <dev/fs/initrd.h>
+#include <dev/pcie/pcie.h>
 #include <dev/port/e9/e9.h>
 #include <dev/port/parallel/parallel.h>
 #include <dev/port/serial/serial.h>
