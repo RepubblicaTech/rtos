@@ -213,7 +213,7 @@ void map_region_to_page(uint64_t *pml4_table, uint64_t physical_start,
                         uint64_t virtual_start, uint64_t len, uint64_t flags) {
 
     uint64_t pages = ROUND_UP(len, PFRAME_SIZE) / PFRAME_SIZE;
-#ifdef CONFIG_VMM_DEBUG
+#ifdef CONFIG_PAGING_DEBUG
     debugf_debug("Mapping address range (phys)%llx-%llx (virt)%llx-%llx\n",
                  physical_start, physical_start + len, virtual_start,
                  virtual_start + len);
@@ -229,7 +229,7 @@ void map_region_to_page(uint64_t *pml4_table, uint64_t physical_start,
 void unmap_region(uint64_t *pml4_table, uint64_t virtual_start, uint64_t len) {
 
     uint64_t pages = ROUND_UP(len, PFRAME_SIZE) / PFRAME_SIZE;
-#ifdef CONFIG_VMM_DEBUG
+#ifdef CONFIG_PAGING_DEBUG
     debugf_debug("Unmapping address range (virt)%llx-%llx\n", virtual_start,
                  virtual_start + len);
 #endif
