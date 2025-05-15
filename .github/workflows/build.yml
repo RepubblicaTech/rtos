@@ -26,7 +26,7 @@ jobs:
       - name: Kconfig
         run: |
           pip install kconfiglib
-          make allyesconfig
+          make defconfig_release
       
       - name: Install kernel dependencies
         run: |

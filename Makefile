@@ -227,9 +227,13 @@ menuconfig:
 savedefconfig:
 	kconfig-conf --savedefconfig=defconfig $(KCONFIG_DEPS)
 	python scripts/kconfig.py
-
+	
 defconfig:
 	kconfig-conf --defconfig=defconfig $(KCONFIG_DEPS)
+	python scripts/kconfig.py
+
+defconfig_release:
+	kconfig-conf --defconfig=build_configs/default_release $(KCONFIG_DEPS)
 	python scripts/kconfig.py
 
 allyesconfig:
