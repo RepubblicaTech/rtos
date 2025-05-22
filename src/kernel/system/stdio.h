@@ -28,7 +28,7 @@ void set_screen_bg_fg(uint32_t bg_rgb, uint32_t fg_rgb);
 
 void stdio_panic_init();
 void clearscreen();
-void rsod_init();
+void bsod_init();
 
 void putc(char c);
 void dputc(char c);

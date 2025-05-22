@@ -79,7 +79,7 @@ unrelated to ordinary paging.
 */
 void pf_handler(void *ctx) {
     stdio_panic_init();
-    rsod_init();
+    bsod_init();
 
     registers_t *regs = ctx;
 
@@ -90,11 +90,20 @@ void pf_handler(void *ctx) {
     mprintf("Page fault code %016b\n\n-------------------------------\n",
             pf_error_code);
 
-    mprintf(PG_RING(pf_error_code) == 0 ? "Kernel " : "User ");
-    mprintf(PG_WR_RD(pf_error_code) == 0 ? "read attempt of a "
-                                         : "write attempt to a ");
-    mprintf(PG_PRESENT(pf_error_code) == 0 ? "non-present page entry\n\n"
-                                           : "present page entry\n\n");
+    switch (PG_PRESENT(pf_error_code)) {
+    case 0:
+        mprintf(PG_RING(pf_error_code) == 0 ? "Kernel " : "User ");
+        mprintf(PG_WR_RD(pf_error_code) == 0 ? "read attempt of a "
+                                             : "write attempt to a ");
+        mprintf("non-present page entry\n\n");
+        break;
+
+    case 1:
+        mprintf("Page-level protection violation\n\n");
+
+    default:
+        break;
+    }
 
     // CR2 contains the address that caused the fault
     uint64_t cr2 = cpu_get_cr(2);
