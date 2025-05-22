@@ -170,9 +170,8 @@ void kstart(void) {
     psfLoadDefaults();
     _term_init();
 
-    clearscreen();
-
     set_screen_bg_fg(DEFAULT_BG, DEFAULT_FG); // black-ish, white-ish
+    clearscreen();
 
     kprintf("Welcome to purpleK2!\n");
 
