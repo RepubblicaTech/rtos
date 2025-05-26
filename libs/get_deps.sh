@@ -25,7 +25,7 @@ check_submodule() {
 	fi
 	# update it
 	printf "Updating module $1\n"
-	git submodule update --remote "$1"
+	git submodule update --remote "$1" >> /dev/null
 	return 0
 }
 
@@ -57,14 +57,14 @@ copy_if_exists() {
 }
 
 if [ -z "$KERNEL_DIR" ]; then
-	stderr_echo "ERROR: You must give the ABSOLUTE path of your kernel source code directory (eg. libs)."
+	stderr_echo "ERROR: You must give the ABSOLUTE path of your kernel source code directory (eg. src)."
 	exit 1
 fi
 
 forbidden_prefix="/"
 
 if [ -z "$LIBS_DIR" ] || [[ "$LIBS_DIR" == "/"* ]]; then
-	stderr_echo "ERROR: You must give the RELATIVE path of the external libraries (eg. src/kernel)."
+	stderr_echo "ERROR: You must give the RELATIVE path of the external libraries (eg. libs)."
 	exit 1
 fi
 
