@@ -5,4 +5,4 @@
 
 fs_vfs_t *fakefs_create(void);
 
-#endif // FAKEFS_H
+#endif

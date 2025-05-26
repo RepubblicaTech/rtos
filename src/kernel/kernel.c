@@ -1,3 +1,4 @@
+#include "memory/heap/kheap.h"
 #include <kernel.h>
 
 #include <limine.h>
@@ -18,7 +19,6 @@
 #include <time.h>
 
 #include <memory/heap/kheap.h>
-#include <memory/heap/kheap_glue.h>
 #include <memory/pmm/pmm.h>
 #include <memory/vmm/vma.h>
 #include <memory/vmm/vmm.h>
@@ -321,7 +321,7 @@ void kstart(void) {
     vmm_switch_ctx(kernel_vmm_ctx);
     kprintf_ok("Initialized VMM\n");
 
-    kheap_init();
+    kmalloc_init();
 
     debugf("Malloc Test:\n");
     void *ptr1 = kmalloc(0xA0);
@@ -467,8 +467,6 @@ void kstart(void) {
     dev_serial_init();
     dev_parallel_init();
 
-    // vfs_init();
-
     fs_vfs_t *rootfs = fakefs_create();
     vfs_register(rootfs);
     vfs_mount("/", rootfs, 0);
@@ -476,6 +474,12 @@ void kstart(void) {
     fs_node_t *root;
     if (vfs_lookup("/", &root) == 0) {
         root->vfs->ops->create(root->vfs, root, "/myfile.txt", VREG, 0);
+    }
+
+    if (vfs_create("/myfile.txt", VREG, 0) == 0) {
+        kprintf_ok("Created /myfile.txt\n");
+    } else {
+        kprintf_warn("Failed to create /myfile.txt\n");
     }
 
     fs_open_file_t *file = kcalloc(1, sizeof(fs_open_file_t));
@@ -489,6 +493,8 @@ void kstart(void) {
             kprintf("Read %d bytes: %s\n", n, buf);
         }
         vfs_close(file);
+    } else {
+        kprintf_warn("Failed to open /myfile.txt\n");
     }
 
 #ifdef CONFIG_DEVFS_ENABLE

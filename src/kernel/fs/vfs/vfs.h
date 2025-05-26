@@ -5,6 +5,10 @@
 #include "types.h"
 #include <stdint.h>
 
+// vfs errors
+#define VENOENT 1
+#define VEBUSY  2
+
 typedef struct fs_vfs fs_vfs_t;
 typedef struct fs_node fs_node_t;
 typedef struct fs_mount fs_mount_t;
@@ -143,6 +147,7 @@ int vfs_mkdir(const char *path, int flags);
 int vfs_unlink(const char *path);
 int vfs_rename(const char *oldpath, const char *newpath);
 int vfs_sync(void);
+int vfs_create(const char *path, fs_node_type type, int flags);
 fs_node_t *vfs_root(void);
 
 #endif // VFS_H

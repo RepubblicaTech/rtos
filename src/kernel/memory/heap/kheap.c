@@ -1,161 +1,191 @@
-#include <memory/heap/kheap.h>
+#include "kheap.h"
+#include "memory/vmm/vmm.h"
+#include <memory/vmm/vma.h>
 #include <util/string.h>
 
-#define MIN_ALLOC   16
-#define MAX_ALLOC   4096
-#define PAGE_SIZE   4096
-#define CACHE_COUNT 9 // log2(4096) - log2(16) + 1
+#define ALIGN8(x)      (((x) + 7) & ~7)
+#define MIN_BLOCK_SIZE 16
+#define MAX_BLOCK_SIZE (PAGE_SIZE * MAX_PAGES)
 
-typedef struct slab {
-    struct slab *next;
-    uint8_t *bitmap;
-    void *mem;
-    size_t obj_size;
-    size_t used;
-    size_t capacity;
-} slab_t;
+typedef struct block_header {
+    struct block_header *next;
+    size_t size;
+    bool free;
+} block_header_t;
 
-typedef struct {
-    size_t obj_size;
-    slab_t *slabs;
-} slab_cache_t;
+static block_header_t *free_lists[SIZE_CLASS_COUNT] = {0};
+static heap_stats stats                             = {0};
 
-static slab_cache_t slab_caches[CACHE_COUNT];
-
-static inline size_t align_up(size_t x, size_t align) {
-    return (x + align - 1) & ~(align - 1);
-}
-
-static inline int log2_floor(size_t x) {
-    int r = 0;
-    while (x >>= 1)
-        r++;
-    return r;
-}
-
-static inline int size_to_index(size_t size) {
-    if (size < MIN_ALLOC)
-        size = MIN_ALLOC;
-    if (size > MAX_ALLOC)
-        return -1;
-    return log2_floor(size) - 4;
-}
-
-static slab_t *slab_create(size_t obj_size) {
-    slab_t *slab = (slab_t *)os_alloc_pages(1);
-    if (!slab)
-        return NULL;
-
-    slab->obj_size = obj_size;
-    slab->capacity = PAGE_SIZE / obj_size;
-    slab->used     = 0;
-
-    slab->mem = os_alloc_pages(1);
-    if (!slab->mem) {
-        os_free_pages(slab, 1);
-        return NULL;
+static inline size_t size_class_index(size_t size) {
+    size_t cls_size = MIN_BLOCK_SIZE;
+    for (size_t i = 0; i < SIZE_CLASS_COUNT; i++) {
+        if (size <= cls_size)
+            return i;
+        cls_size <<= 1;
     }
-
-    size_t bitmap_size = (slab->capacity + 7) / 8;
-    slab->bitmap = os_alloc_pages((bitmap_size + PAGE_SIZE - 1) / PAGE_SIZE);
-    if (!slab->bitmap) {
-        os_free_pages(slab->mem, 1);
-        os_free_pages(slab, 1);
-        return NULL;
-    }
-
-    memset(slab->bitmap, 0, bitmap_size);
-    slab->next = NULL;
-    return slab;
+    return SIZE_CLASS_COUNT - 1;
 }
 
-static void *slab_alloc(slab_t *slab) {
-    for (size_t i = 0; i < slab->capacity; i++) {
-        if (!(slab->bitmap[i / 8] & (1 << (i % 8)))) {
-            slab->bitmap[i / 8] |= (1 << (i % 8));
-            slab->used++;
-            return (uint8_t *)slab->mem + i * slab->obj_size;
+static inline size_t size_class_size(size_t index) {
+    return MIN_BLOCK_SIZE << index;
+}
+
+static void add_block_to_free_list(block_header_t *block) {
+    size_t idx      = size_class_index(block->size);
+    block->free     = true;
+    block->next     = free_lists[idx];
+    free_lists[idx] = block;
+}
+
+static void remove_block_from_free_list(block_header_t **list_head,
+                                        block_header_t *block) {
+    block_header_t *prev = NULL;
+    block_header_t *cur  = *list_head;
+    while (cur) {
+        if (cur == block) {
+            if (prev)
+                prev->next = cur->next;
+            else
+                *list_head = cur->next;
+            cur->next = NULL;
+            return;
         }
+        prev = cur;
+        cur  = cur->next;
     }
-    return NULL;
 }
 
-static void slab_free(slab_t *slab, void *ptr) {
-    uintptr_t base = (uintptr_t)slab->mem;
-    uintptr_t p    = (uintptr_t)ptr;
-    size_t index   = (p - base) / slab->obj_size;
-
-    if (index < slab->capacity) {
-        size_t byte = index / 8;
-        size_t bit  = index % 8;
-        if (slab->bitmap[byte] & (1 << bit)) {
-            slab->bitmap[byte] &= ~(1 << bit);
-            slab->used--;
-        }
+static block_header_t *split_block(block_header_t *block, size_t size) {
+    if (block->size >= size + sizeof(block_header_t) + MIN_BLOCK_SIZE) {
+        block_header_t *new_block =
+            (block_header_t *)((char *)(block + 1) + size);
+        new_block->size = block->size - size - sizeof(block_header_t);
+        new_block->free = true;
+        new_block->next = NULL;
+        block->size     = size;
+        add_block_to_free_list(new_block);
+        return block;
     }
+    return block;
+}
+
+static block_header_t *request_new_page(size_t size_class_idx) {
+    size_t block_size      = size_class_size(size_class_idx);
+    size_t blocks_per_page = PAGE_SIZE / (block_size + sizeof(block_header_t));
+    if (blocks_per_page == 0)
+        blocks_per_page = 1; // at least 1 block per page
+
+    void *page = vma_alloc(get_current_ctx(), 1, NULL);
+    if (!page)
+        return NULL;
+
+    // Create blocks in page and add them to free list
+    char *ptr = (char *)page;
+    for (size_t i = 0; i < blocks_per_page; i++) {
+        block_header_t *block =
+            (block_header_t *)(ptr + i * (block_size + sizeof(block_header_t)));
+        block->size = block_size;
+        block->free = true;
+        block->next = NULL;
+        add_block_to_free_list(block);
+        stats.current_pages_used++;
+    }
+    return free_lists[size_class_idx]; // return first free block in this size
+                                       // class
 }
 
 void kmalloc_init() {
-    for (int i = 0; i < CACHE_COUNT; i++) {
-        slab_caches[i].obj_size = (size_t)1 << (i + 4); // 2^4 = 16
-        slab_caches[i].slabs    = NULL;
+    memset(free_lists, 0, sizeof(free_lists));
+    memset(&stats, 0, sizeof(stats));
+}
+
+// Find suitable free block for size, or request page if none found
+static block_header_t *find_block(size_t size) {
+    size_t idx = size_class_index(size);
+    for (size_t i = idx; i < SIZE_CLASS_COUNT; i++) {
+        block_header_t *list = free_lists[i];
+        if (list) {
+            // take first block in list
+            remove_block_from_free_list(&free_lists[i], list);
+            if (list->size > size) {
+                // split block and add remainder back
+                split_block(list, size);
+            }
+            list->free = false;
+            return list;
+        }
+        // no free block in this class, try next larger size class
     }
+    // no block found, request new page for requested size class
+    block_header_t *new_block = request_new_page(idx);
+    if (!new_block)
+        return NULL;
+    // allocate from new blocks
+    remove_block_from_free_list(&free_lists[idx], new_block);
+    new_block->free = false;
+    if (new_block->size > size) {
+        split_block(new_block, size);
+    }
+    return new_block;
 }
 
 void *kmalloc(size_t size) {
     if (size == 0)
         return NULL;
-
-    if (size > MAX_ALLOC) {
-        size_t pages = (align_up(size, PAGE_SIZE)) / PAGE_SIZE;
-        return os_alloc_pages(pages);
+    size = ALIGN8(size);
+    if (size > MAX_BLOCK_SIZE) {
+        // Large alloc: allocate whole pages
+        size_t pages =
+            (size + sizeof(block_header_t) + PAGE_SIZE - 1) / PAGE_SIZE;
+        void *ptr = vma_alloc(get_current_ctx(), pages, NULL);
+        if (!ptr)
+            return NULL;
+        // Use block header at start of allocated pages
+        block_header_t *block = (block_header_t *)ptr;
+        block->size           = pages * PAGE_SIZE - sizeof(block_header_t);
+        block->free           = false;
+        block->next           = NULL;
+        stats.total_allocs++;
+        stats.total_bytes_allocated += block->size;
+        stats.current_pages_used    += pages;
+        return block + 1;
     }
-
-    int index = size_to_index(size);
-    if (index < 0 || index >= CACHE_COUNT)
+    block_header_t *block = find_block(size);
+    if (!block)
         return NULL;
-
-    slab_cache_t *cache = &slab_caches[index];
-    slab_t *slab        = cache->slabs;
-
-    while (slab) {
-        if (slab->used < slab->capacity) {
-            return slab_alloc(slab);
-        }
-        slab = slab->next;
-    }
-
-    slab = slab_create(cache->obj_size);
-    if (!slab)
-        return NULL;
-
-    slab->next   = cache->slabs;
-    cache->slabs = slab;
-
-    return slab_alloc(slab);
+    stats.total_allocs++;
+    stats.total_bytes_allocated += block->size;
+    return block + 1;
 }
 
 void kfree(void *ptr) {
     if (!ptr)
         return;
+    block_header_t *block = ((block_header_t *)ptr) - 1;
+    if (block->free)
+        return;
+    size_t size = block->size;
+    block->free = true;
+    stats.total_frees++;
+    stats.total_bytes_freed += size;
 
-    uintptr_t uptr = (uintptr_t)ptr;
-
-    for (int i = 0; i < CACHE_COUNT; i++) {
-        slab_t *slab = slab_caches[i].slabs;
-        while (slab) {
-            uintptr_t base = (uintptr_t)slab->mem;
-            if (uptr >= base && uptr < base + PAGE_SIZE) {
-                slab_free(slab, ptr);
-                return;
-            }
-            slab = slab->next;
-        }
+    if (size > MAX_BLOCK_SIZE / 2) {
+        size_t pages =
+            (size + sizeof(block_header_t) + PAGE_SIZE - 1) / PAGE_SIZE;
+        stats.current_pages_used -= pages;
+        vma_free(get_current_ctx(), block, true);
+        return;
     }
 
-    // Large allocation
-    // We don't track size; assume freeing single page
-    os_free_pages(ptr, 1);
+    add_block_to_free_list(block);
+}
+
+void *kcalloc(size_t num, size_t size) {
+    size_t total = num * size;
+    void *ptr    = kmalloc(total);
+    if (ptr)
+        memset(ptr, 0, total);
+    return ptr;
 }
 
 void *krealloc(void *ptr, size_t new_size) {
@@ -165,20 +195,19 @@ void *krealloc(void *ptr, size_t new_size) {
         kfree(ptr);
         return NULL;
     }
+    block_header_t *block = ((block_header_t *)ptr) - 1;
+    if (block->size >= new_size)
+        return ptr;
 
     void *new_ptr = kmalloc(new_size);
     if (!new_ptr)
         return NULL;
-
-    memcpy(new_ptr, ptr, new_size); // over-copy, but simple
+    memcpy(new_ptr, ptr, block->size);
     kfree(ptr);
     return new_ptr;
 }
 
-void *kcalloc(size_t num, size_t size) {
-    size_t total = num * size;
-    void *ptr    = kmalloc(total);
-    if (ptr)
-        memset(ptr, 0, total);
-    return ptr;
+// Optional: function to get stats pointer
+const heap_stats *kmalloc_get_stats(void) {
+    return &stats;
 }
