@@ -60,7 +60,7 @@ The hardware being tested on is the following:
 - Intel Core i7-5820K (6C12T)
 - ASUS X99-A
 - 16GB RAM
-- Sapphire Radeon R9 280X
+- Sapphire Radeon R9 280
 
 If you want to try the kernel with legacy booting, make sure you run `limine bios-install <your target drive>`.
 
@@ -73,21 +73,22 @@ The following packages are required to build the kernel:
 - `nasm`: The assembler used by this kernel
 - `xorriso` and `mkisofs`: To create the ISO disk image
 - `kconfig`: or more likely `kconfig-frontends` to use the `menuconfig`
-
 > [!NOTE]
-> for Fedora users: if you know how to read a `PKGBUILD` file, you can follow the commands in the AUR to install the latest version of `kconfig-frontends` (4.11.0.1 at the time of writing this) to your `/usr/bin`
+> Fedora users: if you know how to read a `PKGBUILD` file, you can follow the commands in the AUR to install the latest version of `kconfig-frontends` (4.11.0.1 at the time of writing this) to your `/usr/bin`
+- [OPTIONAL] `edk2-ovmf`: useful for running QEMU with UEFI support
+
 
 ### Setting up a cross compiler
 
-You will not be able to build the kernel using the C compiler on the host machine (`gcc` or `clang`). To compile it you will need a cross-compiler that targets the x86_64 platform.
+You will not be able to build the kernel using the C compiler on the host machine (`gcc` or `clang`). To compile it you will need a cross-compiler that targets the x86_64 (or any other 64-bit architecture) platform.
 
 Below are two ways of installing a cross-compiler:
 
 #### Prebuilt binaries
 
 If you either are lazy or don't have time for compiling the toolchain, you can grab a pre-made one from [newos.org](https://newos.org/toolchains/).
-You should grab the one that says `x86_64-elf-[a version less or equal to the GCC installed in your OS]-[Linux/FreeBSD/Darwin]-x86_64.tar.xz`.
-Make sure to extract the contents of the folder inside the xz to a `x86_64-elf` directory inside the `toolchain` folder.
+You should grab the one that says `[target architecture eg. x86_64]-elf-[a version less or equal to the GCC installed in your OS]-[Linux/FreeBSD/Darwin]-x86_64.tar.xz`.
+Make sure to extract the contents of the folder inside the xz to a `[target arch]-elf` directory inside the `toolchain` folder.
 
 You should end up with a structure like this:
 ```
@@ -97,14 +98,14 @@ rtos
 │   └── ...
 └── toolchain
     ├── Makefile
-    └── x86_64-elf	<-- You should create this directory
+    └── [target architecture]-elf	<-- You should create this directory
 	--- All of these folders should come from the downloaded tar archive ---
         ├── bin
         ├── include
         ├── lib
         ├── libexec
         ├── share
-        └── x86_64-elf
+        └── [target architecture]-elf
 ```
 
 #### Build it yourself
@@ -117,7 +118,7 @@ Thankfully, the [toolchain script made by nanobyte](https://github.com/nanobyte-
 *(arguments in square brackets are optional)*
 
 ```bash
-make -C toolchain [CPU_CORES=<number of desired cores, defaults to $(nproc)>]
+make -C toolchain [CPU_CORES=number of cpu cores for parallel jobs, defaults to $(nproc)]
 ```
 
 > [!NOTE]
@@ -128,8 +129,6 @@ make -C toolchain [CPU_CORES=<number of desired cores, defaults to $(nproc)>]
 \- [Nanobyte, 2021](https://youtu.be/TgIdFVOV_0U?t=709)
 
 After this, you now have built your own toolchain for building this project but also any other one that relies on the base mentioned earlier (i'd suggest to update both `BINUTILS_VERSION` `GCC_VERSION` in the Makefile when an update of such package is available on your system and maybe re-run the `make -C toolchain` command, *if you always have time and will to do so*).
-
-### Building the ISO
 
 When you installed the cross-compiler and the dependencies you can build now build the kernel. Follow the steps below:
 
@@ -151,7 +150,7 @@ make build_limine
 `libs` is the path to the Git submodules and the required patches (if needed)
 You *can* change them, but you *shouldn't* since these are the paths in the project
 
-3. Build the ISO file
+### Building the ISO
 
 Run
 ```bash
@@ -162,7 +161,7 @@ For more info, you can check out the [kernel menuconfig docs](docs/menuconfig.md
 If you don't really care about such options, just hit `Save` then `Exit`.
 
 Then run
-```sh
+```bash
 make [optional: -j$(nproc)]
 ```
 To build the project and create the ISO file. Now there should be a `.iso` file in the project root directory.
@@ -170,25 +169,57 @@ To build the project and create the ISO file. Now there should be a `.iso` file 
 > [!TIP]
 > You can grab an ISO from artifacts of the latest successful Github Actions build.
 
+### Building the HDD
+
+Yup, you heard it. I (Omar) yoinked the hdd targets from the limine C template. You can also make a virtual hard drive image.
+
+Run
+```bash
+make all-hdd [optional: -j$(nproc)]
+```
+You should now have a `.hdd` file in the project root directory. 
+
+
 ## Emulating the Kernel using QEMU
 The Makefile supports emulating the kernel in QEMU. This both works in native Linux and in WSL.
 
 > [!WARNING]  
 > On WSL make sure that QEMU is installed on Windows since we use passthrough execute to run it
 
+### If you run with the ISO:
+
 - To run it on native Linux use
 ```bash
 make run
 ```
 
-- To run it on WSL Linux use
+- To run it on WSL use
 ```bash
 make run-wsl
 ```
 
+### If you run with the HDD:
+
+- To run it on native Linux use
+```bash
+make run-hdd
+```
+
+- To run it on WSL Linux use
+```bash
+make run-wsl-hdd
+```
+
+
 ## Debugging the Kernel using QEMU and GDB
 
+### If you run with the ISO:
+
 To debug the kernel using QEMU and GDB run `make debug`
+
+### If you run with the HDD:
+
+To debug the kernel using QEMU and GDB run `make debug-hdd`
 
 This will launch GDB using the [`debug.gdb`](debug.gdb) file as configuration. All output of the E9 debug port will be redirected into the `qemu_gdb.log` file.
 
