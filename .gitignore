@@ -67,8 +67,9 @@ src/kernel/memory/heap/beap.*
 src/kernel/memory/heap/tlsf.*
 src/kernel/acpi/uacpi
 
-# ISO files
+# final OS build files
 *.iso
+*.hdd
 
 # Cache and stuff made by LSPs
 *.cache

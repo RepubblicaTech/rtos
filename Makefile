@@ -1,4 +1,5 @@
-TARGET_BASE=x86_64
+ARCH=x86_64
+TARGET_BASE=$(ARCH)
 TARGET=$(TARGET_BASE)-elf
 TOOLCHAIN_PREFIX=$(abspath toolchain/$(TARGET))
 export PATH:=$(TOOLCHAIN_PREFIX)/bin:$(PATH)
@@ -14,6 +15,7 @@ BUILD_DIR=build
 ISO_DIR=iso
 OBJS_DIR=$(BUILD_DIR)/objs
 INITRD_DIR=target
+INITRD=initrd.img
 
 KCONFIG_CONFIG = .config
 KCONFIG_DEPS = Kconfig
@@ -128,8 +130,10 @@ override HEADER_DEPS := $(addprefix $(OBJS_DIR)/,$(CFILES:.c=.c.d) $(ASFILES:.S=
 
 all: $(OS_CODENAME).iso
 
+all-hdd: $(OS_CODENAME).hdd
+
 # Define the ISO image file as an explicit target with dependencies
-$(OS_CODENAME).iso: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/$(KERNEL) $(ISO_DIR)/initrd.img $(ISO_DIR)/EFI/BOOT/BOOTX64.EFI limine_build
+$(OS_CODENAME).iso: $(ISO_DIR)/$(KERNEL) $(ISO_DIR)/$(INITRD) $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/limine/limine-uefi-cd.bin $(ISO_DIR)/EFI/BOOT/BOOTX64.EFI limine_build
 	@# Create the bootable ISO.
 	xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
@@ -141,8 +145,29 @@ $(OS_CODENAME).iso: $(ISO_DIR)/boot/limine/limine-bios-cd.bin $(ISO_DIR)/boot/li
 	./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso
 	@echo "--> ISO:	" $@
 
+$(OS_CODENAME).hdd: $(BUILD_DIR)/$(INITRD) $(BUILD_DIR)/$(KERNEL) limine_build
+	rm -f $(OS_CODENAME).hdd
+	dd if=/dev/zero bs=1M count=0 seek=64 of=$(OS_CODENAME).hdd
+	
+	PATH=$$PATH:/usr/sbin:/sbin sgdisk $(OS_CODENAME).hdd -n 1:2048 -t 1:ef00 -m 1
+	./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).hdd
+
+	mformat -i $(OS_CODENAME).hdd@@1M
+	mmd -i $(OS_CODENAME).hdd@@1M ::/EFI ::/EFI/BOOT ::/boot ::/boot/limine
+	mcopy -i $(OS_CODENAME).hdd@@1M $(BUILD_DIR)/$(KERNEL) ::/
+	mcopy -i $(OS_CODENAME).hdd@@1M $(BUILD_DIR)/$(INITRD) ::/
+	mcopy -i $(OS_CODENAME).hdd@@1M $(SRC_DIR)/limine.conf ::/boot/limine
+
+	mcopy -i $(OS_CODENAME).hdd@@1M $(LIBS_DIR)/limine/limine-bios.sys ::/boot/limine
+	mcopy -i $(OS_CODENAME).hdd@@1M $(LIBS_DIR)/limine/BOOTX64.EFI ::/EFI/BOOT
+	mcopy -i $(OS_CODENAME).hdd@@1M $(LIBS_DIR)/limine/BOOTIA32.EFI ::/EFI/BOOT
+
 # Copy kernel to ISO directory
 $(ISO_DIR)/$(KERNEL): $(BUILD_DIR)/$(KERNEL)
+	cp -v $< $@
+
+# Copy initramfs to ISO directory
+$(ISO_DIR)/$(INITRD): $(BUILD_DIR)/$(INITRD)
 	cp -v $< $@
 
 # Copy Limine bootloader files
@@ -178,8 +203,8 @@ libs:
 
 # Create initrd image
 # Create initrd image
-$(ISO_DIR)/initrd.img: $(shell find $(INITRD_DIR) -type f)
-	cd $(INITRD_DIR) && tar -cvf ../$(ISO_DIR)/initrd.img --format=ustar *
+$(BUILD_DIR)/$(INITRD): $(shell find $(INITRD_DIR) -type f)
+	tar -cvf $@ --format=ustar $(INITRD_DIR)/*
 	@echo "--> Initrd:	" $@
 
 # Link rules for the final kernel executable.
@@ -210,14 +235,25 @@ $(OBJS_DIR)/%.asm.o: $(SRC_DIR)/%.asm
 	@echo "--> Assembled:	" $<
 
 run: $(OS_CODENAME).iso
-	qemu-system-x86_64 \
+	qemu-system-$(ARCH) \
 		$(QEMU_FLAGS) \
 		-cdrom $<
 
+run-hdd: $(OS_CODENAME).hdd
+	qemu-system-$(ARCH) \
+		$(QEMU_FLAGS) \
+		-hda $<
+
 run-wsl: $(OS_CODENAME).iso
-	qemu-system-x86_64.exe \
+	qemu-system-$(ARCH).exe \
 		$(QEMU_FLAGS) \
 		-cdrom $< \
+		-accel whpx
+
+run-wsl-hdd: $(OS_CODENAME).hdd
+	qemu-system-$(ARCH).exe \
+		$(QEMU_FLAGS) \
+		-hda $< \
 		-accel whpx
 
 menuconfig:
