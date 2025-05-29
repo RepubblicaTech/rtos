@@ -138,28 +138,31 @@ $(OS_CODENAME).iso: $(ISO_DIR)/$(KERNEL) $(ISO_DIR)/$(INITRD) $(ISO_DIR)/boot/li
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot boot/limine/limine-uefi-cd.bin \
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
-		$(ISO_DIR) -o $(OS_CODENAME).iso
+		$(ISO_DIR) -o $@
 
 	@# Install Limine stage 1 and 2 for legacy BIOS boot.
-	./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).iso
+	./$(LIBS_DIR)/limine/limine bios-install $@
 	@echo "--> ISO:	" $@
 
 $(OS_CODENAME).hdd: $(BUILD_DIR)/$(INITRD) $(BUILD_DIR)/$(KERNEL) limine_build
-	rm -f $(OS_CODENAME).hdd
-	dd if=/dev/zero bs=1M count=0 seek=64 of=$(OS_CODENAME).hdd
+	rm -f $@
+	dd if=/dev/zero bs=1M count=0 seek=64 of=$@
 	
-	PATH=$$PATH:/usr/sbin:/sbin sgdisk $(OS_CODENAME).hdd -n 1:2048 -t 1:ef00 -m 1
-	./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).hdd
+	sgdisk $@ -n 1:2048 -t 1:ef00 -m 1
+	@# fix for "The kernel is still using the old partition table"
+	partprobe $@
 
 	mformat -i $(OS_CODENAME).hdd@@1M
-	mmd -i $(OS_CODENAME).hdd@@1M ::/EFI ::/EFI/BOOT ::/boot ::/boot/limine
-	mcopy -i $(OS_CODENAME).hdd@@1M $(BUILD_DIR)/$(KERNEL) ::/
-	mcopy -i $(OS_CODENAME).hdd@@1M $(BUILD_DIR)/$(INITRD) ::/
-	mcopy -i $(OS_CODENAME).hdd@@1M $(SRC_DIR)/limine.conf ::/boot/limine
+	./$(LIBS_DIR)/limine/limine bios-install $(OS_CODENAME).hdd
 
-	mcopy -i $(OS_CODENAME).hdd@@1M $(LIBS_DIR)/limine/limine-bios.sys ::/boot/limine
-	mcopy -i $(OS_CODENAME).hdd@@1M $(LIBS_DIR)/limine/BOOTX64.EFI ::/EFI/BOOT
-	mcopy -i $(OS_CODENAME).hdd@@1M $(LIBS_DIR)/limine/BOOTIA32.EFI ::/EFI/BOOT
+	mmd -i $@@@1M ::/EFI ::/EFI/BOOT ::/boot ::/boot/limine
+	mcopy -i $@@@1M $(BUILD_DIR)/$(KERNEL) ::/
+	mcopy -i $@@@1M $(BUILD_DIR)/$(INITRD) ::/
+	mcopy -i $@@@1M $(SRC_DIR)/limine.conf ::/boot/limine
+
+	mcopy -i $@@@1M $(LIBS_DIR)/limine/limine-bios.sys ::/boot/limine
+	mcopy -i $@@@1M $(LIBS_DIR)/limine/BOOTX64.EFI ::/EFI/BOOT
+	mcopy -i $@@@1M $(LIBS_DIR)/limine/BOOTIA32.EFI ::/EFI/BOOT
 
 # Copy kernel to ISO directory
 $(ISO_DIR)/$(KERNEL): $(BUILD_DIR)/$(KERNEL)
