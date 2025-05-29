@@ -51,12 +51,13 @@ void arch_base_init() {
         tsc = true;
         kprintf_ok("Initialized TSC\n");
     } else {
-        pit_init(PIT_TICKS);
-        pit = true;
-        kprintf_ok("Initialized PIT\n");
     }
 
     irq_registerHandler(0, timer_tick);
+
+    pit_init(PIT_TICKS);
+    pit = true;
+    kprintf_ok("Initialized PIT\n");
 }
 
 void sleep(unsigned long ms) {

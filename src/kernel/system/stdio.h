@@ -7,6 +7,10 @@
 #include <stdint.h>
 
 #include <nanoprintf.h>
+#include <time.h>
+#include <tsc/tsc.h>
+
+extern bool pit;
 
 #define DEFAULT_FG 0xeeeeee
 #define DEFAULT_BG 0x050505
@@ -56,7 +60,7 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
     npf_vsnprintf(buf, len, fmt, ##__VA_ARGS__)
 #define snprintf(buf, len, fmt, ...) npf_snprintf(buf, len, fmt, ##__VA_ARGS__)
 
-#define kprintf_ok(fmt, ...)                                                   \
+/*#define kprintf_ok(fmt, ...) \
     ({                                                                         \
         uint32_t prev_fg = fb_get_fg();                                        \
         fb_set_fg(0x00e826);                                                   \
@@ -90,6 +94,66 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
         kprintf("--- [ PANIC @ %s():%d ] --- " fmt " Halting...",              \
                 __FUNCTION__, __LINE__, ##__VA_ARGS__);                        \
         fb_set_fg(prev_fg);                                                    \
+    })*/
+
+#define kprintf_ok(fmt, ...)                                                   \
+    ({                                                                         \
+        uint32_t prev_fg = fb_get_fg();                                        \
+        fb_set_fg(0x00e826);                                                   \
+        if (!(pit)) {                                                          \
+            kprintf("early: (%s:%d) " fmt, __FUNCTION__, __LINE__,             \
+                    ##__VA_ARGS__);                                            \
+        } else {                                                               \
+            kprintf("[%llu.%03llu] (%s:%d) " fmt, get_ticks() / 1000,          \
+                    get_ticks() % 1000, __FUNCTION__, __LINE__,                \
+                    ##__VA_ARGS__);                                            \
+        }                                                                      \
+        fb_set_fg(prev_fg);                                                    \
+    })
+
+#define kprintf_info(fmt, ...)                                                 \
+    ({                                                                         \
+        uint32_t prev_fg = fb_get_fg();                                        \
+        fb_set_fg(INFO_FG);                                                    \
+        if (!(pit)) {                                                          \
+            kprintf("early: (%s:%d) " fmt, __FUNCTION__, __LINE__,             \
+                    ##__VA_ARGS__);                                            \
+        } else {                                                               \
+            kprintf("[%llu.%03llu] (%s:%d) " fmt, get_ticks() / 1000,          \
+                    get_ticks() % 1000, __FUNCTION__, __LINE__,                \
+                    ##__VA_ARGS__);                                            \
+        }                                                                      \
+        fb_set_fg(prev_fg);                                                    \
+    })
+
+#define kprintf_warn(fmt, ...)                                                 \
+    ({                                                                         \
+        uint32_t prev_fg = fb_get_fg();                                        \
+        fb_set_fg(WARNING_FG);                                                 \
+        if (!(pit)) {                                                          \
+            kprintf("early: (%s:%d) " fmt, __FUNCTION__, __LINE__,             \
+                    ##__VA_ARGS__);                                            \
+        } else {                                                               \
+            kprintf("[%llu.%03llu] (%s:%d) " fmt, get_ticks() / 1000,          \
+                    get_ticks() % 1000, __FUNCTION__, __LINE__,                \
+                    ##__VA_ARGS__);                                            \
+        }                                                                      \
+        fb_set_fg(prev_fg);                                                    \
+    })
+
+#define kprintf_panic(fmt, ...)                                                \
+    ({                                                                         \
+        uint32_t prev_fg = fb_get_fg();                                        \
+        fb_set_fg(PANIC_FG);                                                   \
+        if (!(pit)) {                                                          \
+            kprintf("early: (%s:%d) " fmt " Halting...", __FUNCTION__,         \
+                    __LINE__, ##__VA_ARGS__);                                  \
+        } else {                                                               \
+            kprintf("[%llu.%03llu] %s:%d) " fmt " Halting...",                 \
+                    get_ticks() / 1000, get_ticks() % 1000, __FUNCTION__,      \
+                    __LINE__, ##__VA_ARGS__);                                  \
+        }                                                                      \
+        fb_set_fg(prev_fg);                                                    \
     })
 
 #define debugf(fmt, ...) printf(debugf_impl, fmt, ##__VA_ARGS__)
@@ -103,7 +167,7 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
 
 #define COLOR(color, str) color str ANSI_COLOR_RESET
 
-#define debugf_debug(fmt, ...)                                                 \
+/*#define debugf_debug(fmt, ...) \
     debugf(COLOR(ANSI_COLOR_GRAY, "[ %s()::DEBUG ] " fmt), __FUNCTION__,       \
            ##__VA_ARGS__)
 #define debugf_ok(fmt, ...)                                                    \
@@ -116,6 +180,54 @@ int printf(void (*putc_function)(const char *, int), const char *fmt, ...);
 
 #define debugf_panic(fmt, ...)                                                 \
     debugf(COLOR(ANSI_COLOR_RED, "[ %s()::PANIC ] " fmt), __FUNCTION__,        \
-           ##__VA_ARGS__)
+           ##__VA_ARGS__)*/
+
+#define debugf_debug(fmt, ...)                                                 \
+    ({                                                                         \
+        if (!(pit)) {                                                          \
+            debugf(COLOR(ANSI_COLOR_GRAY, "early: (%s:%d) " fmt),              \
+                   __FUNCTION__, __LINE__, ##__VA_ARGS__);                     \
+        } else {                                                               \
+            debugf(COLOR(ANSI_COLOR_GRAY, "[%llu.%03llu] (%s:%d) " fmt),       \
+                   get_ticks() / 1000, get_ticks() % 1000, __FUNCTION__,       \
+                   __LINE__, ##__VA_ARGS__);                                   \
+        }                                                                      \
+    })
+
+#define debugf_ok(fmt, ...)                                                    \
+    ({                                                                         \
+        if (!(pit)) {                                                          \
+            debugf(COLOR(ANSI_COLOR_GREEN, "early: (%s:%d) " fmt),             \
+                   __FUNCTION__, __LINE__, ##__VA_ARGS__);                     \
+        } else {                                                               \
+            debugf(COLOR(ANSI_COLOR_GREEN, "[%llu.%03llu] (%s:%d) " fmt),      \
+                   get_ticks() / 1000, get_ticks() % 1000, __FUNCTION__,       \
+                   __LINE__, ##__VA_ARGS__);                                   \
+        }                                                                      \
+    })
+
+#define debugf_warn(fmt, ...)                                                  \
+    ({                                                                         \
+        if (!(pit)) {                                                          \
+            debugf(COLOR(ANSI_COLOR_ORANGE, "early: (%s:%d) " fmt),            \
+                   __FUNCTION__, __LINE__, ##__VA_ARGS__);                     \
+        } else {                                                               \
+            debugf(COLOR(ANSI_COLOR_ORANGE, "[%llu.%03llu] (%s:%d) " fmt),     \
+                   get_ticks() / 1000, get_ticks() % 1000, __FUNCTION__,       \
+                   __LINE__, ##__VA_ARGS__);                                   \
+        }                                                                      \
+    })
+
+#define debugf_panic(fmt, ...)                                                 \
+    ({                                                                         \
+        if (!(pit)) {                                                          \
+            debugf(COLOR(ANSI_COLOR_RED, "early: (%s:%d) " fmt), __FUNCTION__, \
+                   __LINE__, ##__VA_ARGS__);                                   \
+        } else {                                                               \
+            debugf(COLOR(ANSI_COLOR_RED, "[%llu.%03llu] (%s:%d) " fmt),        \
+                   get_ticks() / 1000, get_ticks() % 1000, __FUNCTION__,       \
+                   __LINE__, ##__VA_ARGS__);                                   \
+        }                                                                      \
+    })
 
 #endif

@@ -1,3 +1,4 @@
+#include "time.h"
 #include "uacpi/kernel_api.h"
 
 #include <acpi/uacpi/types.h>
@@ -74,26 +75,34 @@ void uacpi_kernel_log(uacpi_log_level log_level, const uacpi_char *fmt) {
 
     switch (log_level) {
     case UACPI_LOG_DEBUG:
-        debugf("[ uacpi::DEBUG ] %s\n", fmt);
+        debugf(ANSI_COLOR_GRAY "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, fmt);
         break;
     case UACPI_LOG_TRACE:
-        debugf(ANSI_COLOR_GRAY "[ uacpi::TRACE ] %s\n", fmt);
+        debugf(ANSI_COLOR_GRAY "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, fmt);
         break;
 
     case UACPI_LOG_INFO:
-        debugf(ANSI_COLOR_GRAY);
+        debugf(ANSI_COLOR_GRAY "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, fmt);
         fb_set_fg(INFO_FG);
-        mprintf("[ uacpi::INFO ] %s\n", fmt);
+        kprintf("[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+                get_ticks() % 1000, fmt);
         break;
     case UACPI_LOG_WARN:
         fb_set_fg(WARNING_FG);
-        debugf(ANSI_COLOR_ORANGE);
-        mprintf("[ uacpi::WARNING ] %s\n", fmt);
+        debugf(ANSI_COLOR_ORANGE "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, fmt);
+        kprintf("[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+                get_ticks() % 1000, fmt);
         break;
     case UACPI_LOG_ERROR:
         fb_set_fg(PANIC_FG);
-        debugf(ANSI_COLOR_RED);
-        mprintf("[ uacpi::CRITICAL ] %s\n", fmt);
+        debugf(ANSI_COLOR_RED "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, fmt);
+        kprintf("[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+                get_ticks() % 1000, fmt);
 
     default:
         break;
@@ -120,26 +129,34 @@ void uacpi_kernel_log(uacpi_log_level log_level, const uacpi_char *fmt, ...) {
 
     switch (log_level) {
     case UACPI_LOG_DEBUG:
-        debugf(ANSI_COLOR_GRAY "[ uacpi::DEBUG ] %s", buffer);
+        debugf(ANSI_COLOR_GRAY "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, buffer);
         break;
     case UACPI_LOG_TRACE:
-        debugf(ANSI_COLOR_GRAY "[ uacpi::TRACE ] %s", buffer);
+        debugf(ANSI_COLOR_GRAY "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, buffer);
         break;
 
     case UACPI_LOG_INFO:
-        debugf(ANSI_COLOR_GRAY);
+        debugf(ANSI_COLOR_GRAY "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, buffer);
         fb_set_fg(INFO_FG);
-        mprintf("[ uacpi::INFO ] %s", buffer);
+        kprintf("[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+                get_ticks() % 1000, buffer);
         break;
     case UACPI_LOG_WARN:
         fb_set_fg(WARNING_FG);
-        debugf(ANSI_COLOR_ORANGE);
-        mprintf("[ uacpi::WARNING ] %s", buffer);
+        debugf(ANSI_COLOR_ORANGE "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, buffer);
+        kprintf("[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+                get_ticks() % 1000, buffer);
         break;
     case UACPI_LOG_ERROR:
         fb_set_fg(PANIC_FG);
-        debugf(ANSI_COLOR_RED);
-        mprintf("[ uacpi::CRITICAL ] %s", buffer);
+        debugf(ANSI_COLOR_RED "[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+               get_ticks() % 1000, buffer);
+        kprintf("[%llu.%03llu] (uacpi) %s", get_ticks() / 1000,
+                get_ticks() % 1000, buffer);
 
     default:
         break;
