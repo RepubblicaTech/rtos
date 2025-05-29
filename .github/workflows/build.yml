@@ -35,11 +35,17 @@ jobs:
             make -C libs/limine
         
       - name: Build kernel
-        run: make -j$(nproc) KCC=gcc KLD=ld
+        run: make -j$(nproc) KCC=gcc KLD=ld all all-hdd
 
       - name: Upload kernel-v0.iso as artifact
         uses: actions/upload-artifact@v4
         with:
           name: kernel-v0.iso
           path: kernel-v0.iso
+
+      - name: Upload kernel-v0.hdd as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-v0.hdd
+          path: kernel-v0.hdd
 
