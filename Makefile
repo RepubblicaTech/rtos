@@ -21,7 +21,6 @@ KCONFIG_CONFIG = .config
 KCONFIG_DEPS = Kconfig
 KCONFIG_AUTOCONF = $(KERNEL_SRC_DIR)/autoconf.h
 
-
 QEMU_FLAGS = 	-m 32M \
 			 	-debugcon stdio \
 				-M q35 \
@@ -277,7 +276,10 @@ allyesconfig:
 	python scripts/kconfig.py
 
 debug: $(OS_CODENAME).iso
-	gdb -x debug.gdb $(BUILD_DIR)/$(KERNEL)
+	gdb -x debug_iso.gdb $(BUILD_DIR)/$(KERNEL)
+
+debug-hdd: $(OS_CODENAME).hdd
+	gdb -x debug_hdd.gdb $(BUILD_DIR)/$(KERNEL)
 
 # Remove object files and the final executable.
 .PHONY: clean
